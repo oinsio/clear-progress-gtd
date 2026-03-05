@@ -1,4 +1,4 @@
-import type { Task, Goal } from '../types/index';
+import type { Task, Goal } from '../types';
 
 const VALID_BOXES = ['inbox', 'today', 'week', 'later'];
 const VALID_GOAL_STATUSES = ['not_started', 'in_progress', 'paused', 'completed', 'cancelled'];
