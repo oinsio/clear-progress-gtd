@@ -1,0 +1,5 @@
+# Environment variables (contains deployment IDs)
+.env
+
+# clasp config (contains script ID)
+.clasp.json
