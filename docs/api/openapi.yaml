@@ -1,0 +1,1135 @@
+openapi: 3.0.3
+
+info:
+  title: Clear Progress (GTD) API
+  version: 1.0.0
+  description: |
+    Google Apps Script Web App API for the Clear Progress GTD application.
+
+    **Single endpoint, routing by `action` field:**
+    - GET `/exec?action=ping` — health check
+    - POST `/exec` — all other operations
+
+    **Conventions:**
+    - All responses return HTTP 200; operation status is determined by the `ok` field
+    - All IDs are UUID v4
+    - All dates are ISO 8601 UTC (`2026-03-04T12:00:00.000Z`)
+    - Optional string fields use `""` instead of `null`
+    - `version` is an integer starting at 1, incremented by 1 on every change
+    - Conflicts are resolved using **last-write-wins** strategy (`updated_at`)
+
+servers:
+  - url: https://script.google.com/macros/s/{deployId}/exec
+    description: Google Apps Script Web App
+    variables:
+      deployId:
+        default: YOUR_DEPLOY_ID
+        description: Deployment ID from Apps Script
+
+tags:
+  - name: Health
+    description: Health check
+  - name: Setup
+    description: Data structure initialization
+  - name: Sync
+    description: Data synchronization (pull/push)
+  - name: Covers
+    description: Upload and delete goal cover images
+  - name: Maintenance
+    description: Maintenance operations (purge)
+
+paths:
+  /?action=ping:
+    get:
+      operationId: ping
+      tags: [Health]
+      summary: Health check
+      description: |
+        Verifies that the Web App URL is valid and the script is responding.
+        Used during initial backend connection setup.
+      parameters:
+        - name: action
+          in: query
+          required: true
+          schema:
+            type: string
+            enum: [ping]
+      responses:
+        '200':
+          description: Script is reachable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PingResponse'
+              examples:
+                initialized:
+                  summary: System is initialized
+                  value:
+                    ok: true
+                    app: clear_progress
+                    version: "1.0"
+                    initialized: true
+                not_initialized:
+                  summary: System is NOT initialized — init must be called
+                  value:
+                    ok: true
+                    app: clear_progress
+                    version: "1.0"
+                    initialized: false
+
+  # All POST operations go to the same URL, routed by the action field.
+  # Each action is documented as a separate path for readability.
+
+  /#init:
+    post:
+      operationId: init
+      tags: [Setup]
+      summary: Initialize data structure
+      description: |
+        Creates the "Clear Progress" folder on Google Drive, a Google Sheets file
+        with 6 sheets, and a "Covers" subfolder. Idempotent: repeated calls
+        return the existing IDs without creating duplicates.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InitRequest'
+            example:
+              action: init
+      responses:
+        '200':
+          description: Initialization result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InitResponse'
+              examples:
+                created:
+                  summary: First call — structure created
+                  value:
+                    ok: true
+                    created: true
+                    spreadsheet_id: 1BxOa7m2kQ3r5TvZ9pLnYjW8dCfEgHiKlMnOpQrStUv
+                    folder_id: 0B7x_K2mN3pQ4rS5tU6vW7xY8zA
+                already_exists:
+                  summary: Repeated call — structure already exists
+                  value:
+                    ok: true
+                    created: false
+                    spreadsheet_id: 1BxOa7m2kQ3r5TvZ9pLnYjW8dCfEgHiKlMnOpQrStUv
+                    folder_id: 0B7x_K2mN3pQ4rS5tU6vW7xY8zA
+
+  /#pull:
+    post:
+      operationId: pull
+      tags: [Sync]
+      summary: Fetch changes from server
+      description: |
+        The client sends the maximum known `version` per entity type.
+        The server returns all records with `version > client_version`.
+
+        When all versions are 0, all data is returned (initial pull).
+        Settings (`settings`) are always returned in full.
+        Deleted records (`is_deleted: true`) are also included in the response.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PullRequest'
+            examples:
+              initial_pull:
+                summary: Initial pull — all versions = 0
+                value:
+                  action: pull
+                  versions:
+                    tasks: 0
+                    goals: 0
+                    contexts: 0
+                    categories: 0
+                    checklist_items: 0
+              incremental_pull:
+                summary: Incremental pull
+                value:
+                  action: pull
+                  versions:
+                    tasks: 38
+                    goals: 5
+                    contexts: 1
+                    categories: 1
+                    checklist_items: 2
+      responses:
+        '200':
+          description: Changes from server
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PullResponse'
+              examples:
+                empty:
+                  summary: No changes
+                  value:
+                    ok: true
+                    data:
+                      tasks: []
+                      goals: []
+                      contexts: []
+                      categories: []
+                      checklist_items: []
+                    settings:
+                      - key: default_box
+                        value: inbox
+                        updated_at: "2026-03-04T10:00:00.000Z"
+                      - key: accent_color
+                        value: green
+                        updated_at: "2026-03-04T10:00:00.000Z"
+                    server_time: "2026-03-04T11:10:00.000Z"
+                not_initialized:
+                  summary: Error — init was not called
+                  value:
+                    ok: false
+                    error: NOT_INITIALIZED
+                    message: "Call init before using the API"
+
+  /#push:
+    post:
+      operationId: push
+      tags: [Sync]
+      summary: Send local changes to server
+      description: |
+        The client sends a batch of changed records. Each record must contain
+        **all fields** of the entity (full snapshot, not a diff).
+
+        The server applies last-write-wins by `updated_at` and returns
+        a status per record:
+        - `created` — new record was inserted
+        - `accepted` — change was applied, `version` was incremented
+        - `conflict` — server record is newer; response includes `server_record`
+
+        On conflict, the client must overwrite its local copy with `server_record`.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PushRequest'
+            examples:
+              create_task:
+                summary: Create a new task
+                value:
+                  action: push
+                  changes:
+                    tasks:
+                      - id: b8c9d0e1-f2a3-4b4c-5d6e-7f8a9b0c1d2e
+                        title: Schedule a doctor's appointment
+                        notes: Annual check-up with the GP
+                        box: week
+                        goal_id: ""
+                        context_id: ""
+                        category_id: ""
+                        is_completed: false
+                        completed_at: ""
+                        repeat_rule: ""
+                        sort_order: 4000
+                        is_deleted: false
+                        created_at: "2026-03-04T13:00:00.000Z"
+                        updated_at: "2026-03-04T13:00:00.000Z"
+                        version: 1
+                    goals: []
+                    contexts: []
+                    categories: []
+                    checklist_items: []
+                    settings: []
+              soft_delete:
+                summary: Soft-delete a task
+                value:
+                  action: push
+                  changes:
+                    tasks:
+                      - id: d4e5f6a7-b8c9-4d0e-1f2a-3b4c5d6e7f8a
+                        title: Call the dentist
+                        notes: ""
+                        box: today
+                        goal_id: ""
+                        context_id: ""
+                        category_id: ""
+                        is_completed: false
+                        completed_at: ""
+                        repeat_rule: ""
+                        sort_order: 3000
+                        is_deleted: true
+                        created_at: "2026-03-04T07:00:00.000Z"
+                        updated_at: "2026-03-04T16:00:00.000Z"
+                        version: 4
+                    goals: []
+                    contexts: []
+                    categories: []
+                    checklist_items: []
+                    settings: []
+      responses:
+        '200':
+          description: Processing results
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PushResponse'
+              examples:
+                all_created:
+                  summary: All records created
+                  value:
+                    ok: true
+                    results:
+                      tasks:
+                        - id: b8c9d0e1-f2a3-4b4c-5d6e-7f8a9b0c1d2e
+                          status: created
+                          version: 1
+                      goals: []
+                      contexts: []
+                      categories: []
+                      checklist_items: []
+                      settings: []
+                    server_time: "2026-03-04T13:00:02.000Z"
+                conflict:
+                  summary: Conflict — server record is newer
+                  value:
+                    ok: true
+                    results:
+                      tasks:
+                        - id: f47ac10b-58cc-4372-a567-0e02b2c3d479
+                          status: conflict
+                          server_record:
+                            id: f47ac10b-58cc-4372-a567-0e02b2c3d479
+                            title: Buy groceries
+                            notes: Milk, bread, eggs, cheese
+                            box: today
+                            goal_id: ""
+                            context_id: 9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d
+                            category_id: c4a760a8-dbcf-4e6a-9b3a-4f7c6d8e9f00
+                            is_completed: true
+                            completed_at: "2026-03-04T14:30:00.000Z"
+                            repeat_rule: ""
+                            sort_order: 1000
+                            is_deleted: false
+                            created_at: "2026-03-04T08:30:00.000Z"
+                            updated_at: "2026-03-04T14:30:00.000Z"
+                            version: 3
+                      goals: []
+                      contexts: []
+                      categories: []
+                      checklist_items: []
+                      settings: []
+                    server_time: "2026-03-04T14:35:00.000Z"
+
+  /#upload_cover:
+    post:
+      operationId: uploadCover
+      tags: [Covers]
+      summary: Upload a goal cover image
+      description: |
+        Uploads a cover image for a goal to Google Drive in the Covers subfolder.
+        The image is sent as base64 **without** the `data:image/...;base64,` prefix.
+
+        **Deduplication:** the server computes a SHA-256 hash and checks whether
+        an identical file already exists. If it does, the existing `file_id` is
+        returned without creating a duplicate (`reused: true`).
+
+        Files are named by the first 12 characters of SHA-256: `{hash_prefix}.{ext}`.
+        The full hash is stored in the file's `description` on Google Drive.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UploadCoverRequest'
+            example:
+              action: upload_cover
+              goal_id: aabbccdd-eeff-4112-2334-556677889900
+              filename: cover.jpg
+              mime_type: image/jpeg
+              data: /9j/4AAQSkZJRgABAQEASABIAAD...
+      responses:
+        '200':
+          description: Upload result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UploadCoverResponse'
+              examples:
+                new_file:
+                  summary: New file uploaded
+                  value:
+                    ok: true
+                    file_id: 1XyZ_aBcDeFgHiJkLmNoPqRsTuVwXyZ
+                    thumbnail_url: https://drive.google.com/thumbnail?id=1XyZ_aBcDeFgHiJkLmNoPqRsTuVwXyZ&sz=w400
+                    reused: false
+                reused:
+                  summary: Duplicate file — existing file reused
+                  value:
+                    ok: true
+                    file_id: 1XyZ_aBcDeFgHiJkLmNoPqRsTuVwXyZ
+                    thumbnail_url: https://drive.google.com/thumbnail?id=1XyZ_aBcDeFgHiJkLmNoPqRsTuVwXyZ&sz=w400
+                    reused: true
+                too_large:
+                  summary: Error — file exceeds 2 MB
+                  value:
+                    ok: false
+                    error: FILE_TOO_LARGE
+                    message: Cover image must be 2 MB or less
+
+  /#delete_cover:
+    post:
+      operationId: deleteCover
+      tags: [Covers]
+      summary: Delete a goal cover image
+      description: |
+        Deletes a cover image file from Google Drive. Before deleting, checks
+        `ref_count` — how many goals (including soft-deleted ones) reference the file.
+
+        Physical deletion only occurs when `ref_count = 0`.
+        Call when changing or removing a cover, but **not** when deleting a goal.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeleteCoverRequest'
+            example:
+              action: delete_cover
+              file_id: 1MnOpQrStUvWxYzAbCdEfGhIjKlMnOp
+      responses:
+        '200':
+          description: Deletion result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeleteCoverResponse'
+              examples:
+                deleted:
+                  summary: File deleted
+                  value:
+                    ok: true
+                    deleted: true
+                    ref_count: 0
+                still_used:
+                  summary: File is still referenced by another goal — not deleted
+                  value:
+                    ok: true
+                    deleted: false
+                    ref_count: 1
+                not_found:
+                  summary: File not found on Google Drive
+                  value:
+                    ok: false
+                    error: FILE_NOT_FOUND
+                    message: "File not found: 1NONEXISTENT"
+
+  /#purge:
+    post:
+      operationId: purge
+      tags: [Maintenance]
+      summary: Hard-delete soft-deleted records (v2.0)
+      description: |
+        Permanently deletes all records with `is_deleted: true` from all Google Sheets
+        and unused cover files from Google Drive.
+
+        Requires explicit confirmation: `confirm: true`.
+        Triggered manually by the user from the app settings.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PurgeRequest'
+            example:
+              action: purge
+              confirm: true
+      responses:
+        '200':
+          description: Purge result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PurgeResponse'
+              examples:
+                purged:
+                  summary: Records deleted
+                  value:
+                    ok: true
+                    purged:
+                      tasks: 5
+                      goals: 1
+                      contexts: 2
+                      categories: 0
+                      checklist_items: 12
+                      cover_files: 1
+                no_confirm:
+                  summary: Error — confirmation not provided
+                  value:
+                    ok: false
+                    error: CONFIRMATION_REQUIRED
+                    message: "Field confirm must be true to execute purge"
+
+components:
+  schemas:
+
+    # ─── Base schemas ─────────────────────────────────────────────────────────
+
+    ErrorResponse:
+      type: object
+      required: [ok, error, message]
+      properties:
+        ok:
+          type: boolean
+          enum: [false]
+        error:
+          type: string
+          description: Error code
+          enum:
+            - INVALID_ACTION
+            - NOT_INITIALIZED
+            - INVALID_PAYLOAD
+            - CONFIRMATION_REQUIRED
+            - FILE_TOO_LARGE
+            - FILE_NOT_FOUND
+            - INTERNAL_ERROR
+        message:
+          type: string
+          description: Human-readable error description
+
+    # ─── Entities ─────────────────────────────────────────────────────────────
+
+    Task:
+      type: object
+      required:
+        - id
+        - title
+        - notes
+        - box
+        - goal_id
+        - context_id
+        - category_id
+        - is_completed
+        - completed_at
+        - repeat_rule
+        - sort_order
+        - is_deleted
+        - created_at
+        - updated_at
+        - version
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: UUID v4, generated on the client
+          example: f47ac10b-58cc-4372-a567-0e02b2c3d479
+        title:
+          type: string
+          description: Task title
+          example: Buy groceries
+        notes:
+          type: string
+          description: Text notes. Empty string if no notes
+          example: "Milk, bread, eggs"
+        box:
+          type: string
+          enum: [inbox, today, week, later]
+          description: Time horizon of the task
+          example: today
+        goal_id:
+          type: string
+          description: UUID of the linked goal. Empty string if not linked
+          example: ""
+        context_id:
+          type: string
+          description: UUID of the context. Empty string if not set
+          example: 9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d
+        category_id:
+          type: string
+          description: UUID of the category. Empty string if not set
+          example: ""
+        is_completed:
+          type: boolean
+          description: Completion flag
+          example: false
+        completed_at:
+          type: string
+          description: ISO 8601 UTC. Empty string if task is not completed
+          example: ""
+        repeat_rule:
+          type: string
+          description: |
+            Repeat rule (v1.1). Formats:
+            - `daily` — every day
+            - `weekly` — every week
+            - `monthly` — every month
+            - `weekdays:1,2,3,4,5` — on specific weekdays (1=Mon)
+            - `custom:N` — every N days
+            - `""` — no repeat
+          example: ""
+        sort_order:
+          type: integer
+          description: Sort position within the box. Lower = higher in list
+          example: 1000
+        is_deleted:
+          type: boolean
+          description: Soft-delete flag. Row remains in Sheets
+          example: false
+        created_at:
+          type: string
+          format: date-time
+          description: ISO 8601 UTC
+          example: "2026-03-04T08:30:00.000Z"
+        updated_at:
+          type: string
+          format: date-time
+          description: ISO 8601 UTC. Used for last-write-wins conflict resolution
+          example: "2026-03-04T08:30:00.000Z"
+        version:
+          type: integer
+          minimum: 1
+          description: Version counter for sync. Incremented by 1 on every change
+          example: 1
+
+    Goal:
+      type: object
+      required:
+        - id
+        - title
+        - description
+        - cover_file_id
+        - status
+        - sort_order
+        - is_deleted
+        - created_at
+        - updated_at
+        - version
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: e8b5f7d2-3c4a-4e6f-9a1b-7c8d9e0f1a2b
+        title:
+          type: string
+          example: Launch new project
+        description:
+          type: string
+          description: Goal description. Empty string if no description
+          example: Ship the MVP mobile app by end of Q2 2026
+        cover_file_id:
+          type: string
+          description: File ID on Google Drive. Empty string if no cover
+          example: 1AbCdEfGhIjKlMnOpQrStUvWxYz
+        status:
+          type: string
+          enum: [not_started, in_progress, paused, completed, cancelled]
+          example: in_progress
+        sort_order:
+          type: integer
+          example: 1000
+        is_deleted:
+          type: boolean
+          example: false
+        created_at:
+          type: string
+          format: date-time
+          example: "2026-02-01T12:00:00.000Z"
+        updated_at:
+          type: string
+          format: date-time
+          example: "2026-03-02T16:30:00.000Z"
+        version:
+          type: integer
+          minimum: 1
+          example: 5
+
+    Context:
+      type: object
+      required: [id, name, sort_order, is_deleted, created_at, updated_at, version]
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: 9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d
+        name:
+          type: string
+          description: Context name (e.g. @Home, @Office)
+          example: "@Home"
+        sort_order:
+          type: integer
+          example: 1000
+        is_deleted:
+          type: boolean
+          example: false
+        created_at:
+          type: string
+          format: date-time
+          example: "2026-02-01T10:00:00.000Z"
+        updated_at:
+          type: string
+          format: date-time
+          example: "2026-02-01T10:00:00.000Z"
+        version:
+          type: integer
+          minimum: 1
+          example: 1
+
+    Category:
+      type: object
+      required: [id, name, sort_order, is_deleted, created_at, updated_at, version]
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: b3c4d5e6-f7a8-4b9c-0d1e-2f3a4b5c6d7e
+        name:
+          type: string
+          description: Category name (e.g. Work, Family)
+          example: Work
+        sort_order:
+          type: integer
+          example: 1000
+        is_deleted:
+          type: boolean
+          example: false
+        created_at:
+          type: string
+          format: date-time
+          example: "2026-02-01T10:00:00.000Z"
+        updated_at:
+          type: string
+          format: date-time
+          example: "2026-02-01T10:00:00.000Z"
+        version:
+          type: integer
+          minimum: 1
+          example: 1
+
+    ChecklistItem:
+      type: object
+      required: [id, task_id, title, is_completed, sort_order, is_deleted, created_at, updated_at, version]
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: 11111111-aaaa-4bbb-cccc-dddddddddddd
+        task_id:
+          type: string
+          format: uuid
+          description: UUID of the parent task
+          example: f47ac10b-58cc-4372-a567-0e02b2c3d479
+        title:
+          type: string
+          example: Buy whole milk
+        is_completed:
+          type: boolean
+          example: false
+        sort_order:
+          type: integer
+          example: 1000
+        is_deleted:
+          type: boolean
+          example: false
+        created_at:
+          type: string
+          format: date-time
+          example: "2026-03-04T08:30:00.000Z"
+        updated_at:
+          type: string
+          format: date-time
+          example: "2026-03-04T08:30:00.000Z"
+        version:
+          type: integer
+          minimum: 1
+          example: 1
+
+    Setting:
+      type: object
+      required: [key, value, updated_at]
+      properties:
+        key:
+          type: string
+          description: |
+            Setting key:
+            - `default_box` — default box for new tasks (`inbox`, `today`, `week`, `later`)
+            - `accent_color` — UI accent color (`green`, `orange`, `purple`, `yellow`, `crimson`, `#RRGGBB`)
+            - `creation_fields` (v1.1) — JSON array of fields shown in the task creation form
+            - `quick_property` (v1.1) — quick-access property (`goal`, `context`, `category`)
+            - `menu_always_visible` (v1.1) — `true`/`false`
+            - `menu_items` (v1.1) — JSON array of visible sidebar items
+            - `inbox_fields` (v1.1) — JSON array of fields shown during inbox processing
+            - `focus_entity` (v1.1) — `goal:{uuid}`, `context:{uuid}`, or `""` (disabled)
+          example: default_box
+        value:
+          type: string
+          description: Value (always a string, even for booleans and arrays)
+          example: inbox
+        updated_at:
+          type: string
+          format: date-time
+          example: "2026-03-04T10:00:00.000Z"
+
+    VersionMap:
+      type: object
+      required: [tasks, goals, contexts, categories, checklist_items]
+      description: Maximum known version per entity type. 0 = initial pull
+      properties:
+        tasks:
+          type: integer
+          minimum: 0
+          example: 42
+        goals:
+          type: integer
+          minimum: 0
+          example: 10
+        contexts:
+          type: integer
+          minimum: 0
+          example: 5
+        categories:
+          type: integer
+          minimum: 0
+          example: 3
+        checklist_items:
+          type: integer
+          minimum: 0
+          example: 20
+
+    PushItemResult:
+      type: object
+      required: [id, status]
+      properties:
+        id:
+          type: string
+          description: Record UUID or setting key
+          example: f47ac10b-58cc-4372-a567-0e02b2c3d479
+        status:
+          type: string
+          enum: [created, accepted, conflict]
+          description: |
+            - `created` — new record was inserted on the server
+            - `accepted` — change was applied, `version` was incremented
+            - `conflict` — server record is newer; see `server_record`
+          example: accepted
+        version:
+          type: integer
+          description: Current version on the server (for created and accepted)
+          example: 3
+        server_record:
+          description: Current server record on conflict. Client must overwrite its local copy
+          oneOf:
+            - $ref: '#/components/schemas/Task'
+            - $ref: '#/components/schemas/Goal'
+            - $ref: '#/components/schemas/Context'
+            - $ref: '#/components/schemas/Category'
+            - $ref: '#/components/schemas/ChecklistItem'
+
+    PushChanges:
+      type: object
+      description: Arrays of changed records. Each record is a full snapshot, not a diff
+      properties:
+        tasks:
+          type: array
+          items:
+            $ref: '#/components/schemas/Task'
+          default: []
+        goals:
+          type: array
+          items:
+            $ref: '#/components/schemas/Goal'
+          default: []
+        contexts:
+          type: array
+          items:
+            $ref: '#/components/schemas/Context'
+          default: []
+        categories:
+          type: array
+          items:
+            $ref: '#/components/schemas/Category'
+          default: []
+        checklist_items:
+          type: array
+          items:
+            $ref: '#/components/schemas/ChecklistItem'
+          default: []
+        settings:
+          type: array
+          items:
+            $ref: '#/components/schemas/Setting'
+          default: []
+
+    PushResults:
+      type: object
+      properties:
+        tasks:
+          type: array
+          items:
+            $ref: '#/components/schemas/PushItemResult'
+        goals:
+          type: array
+          items:
+            $ref: '#/components/schemas/PushItemResult'
+        contexts:
+          type: array
+          items:
+            $ref: '#/components/schemas/PushItemResult'
+        categories:
+          type: array
+          items:
+            $ref: '#/components/schemas/PushItemResult'
+        checklist_items:
+          type: array
+          items:
+            $ref: '#/components/schemas/PushItemResult'
+        settings:
+          type: array
+          items:
+            $ref: '#/components/schemas/PushItemResult'
+
+    PullData:
+      type: object
+      properties:
+        tasks:
+          type: array
+          items:
+            $ref: '#/components/schemas/Task'
+        goals:
+          type: array
+          items:
+            $ref: '#/components/schemas/Goal'
+        contexts:
+          type: array
+          items:
+            $ref: '#/components/schemas/Context'
+        categories:
+          type: array
+          items:
+            $ref: '#/components/schemas/Category'
+        checklist_items:
+          type: array
+          items:
+            $ref: '#/components/schemas/ChecklistItem'
+
+    # ─── Requests ─────────────────────────────────────────────────────────────
+
+    InitRequest:
+      type: object
+      required: [action]
+      properties:
+        action:
+          type: string
+          enum: [init]
+
+    PullRequest:
+      type: object
+      required: [action, versions]
+      properties:
+        action:
+          type: string
+          enum: [pull]
+        versions:
+          $ref: '#/components/schemas/VersionMap'
+
+    PushRequest:
+      type: object
+      required: [action, changes]
+      properties:
+        action:
+          type: string
+          enum: [push]
+        changes:
+          $ref: '#/components/schemas/PushChanges'
+
+    UploadCoverRequest:
+      type: object
+      required: [action, goal_id, filename, mime_type, data]
+      properties:
+        action:
+          type: string
+          enum: [upload_cover]
+        goal_id:
+          type: string
+          format: uuid
+          description: UUID of the goal to attach the cover to
+          example: aabbccdd-eeff-4112-2334-556677889900
+        filename:
+          type: string
+          description: File name with extension
+          example: cover.jpg
+        mime_type:
+          type: string
+          enum: [image/jpeg, image/png, image/webp]
+          example: image/jpeg
+        data:
+          type: string
+          format: byte
+          description: Image in base64 without the `data:...` prefix. Max 2 MB after decoding
+          example: /9j/4AAQSkZJRgABAQEASABIAAD...
+
+    DeleteCoverRequest:
+      type: object
+      required: [action, file_id]
+      properties:
+        action:
+          type: string
+          enum: [delete_cover]
+        file_id:
+          type: string
+          description: File ID on Google Drive
+          example: 1MnOpQrStUvWxYzAbCdEfGhIjKlMnOp
+
+    PurgeRequest:
+      type: object
+      required: [action, confirm]
+      properties:
+        action:
+          type: string
+          enum: [purge]
+        confirm:
+          type: boolean
+          enum: [true]
+          description: Must be true — guard against accidental invocation
+
+    # ─── Responses ────────────────────────────────────────────────────────────
+
+    PingResponse:
+      type: object
+      required: [ok, app, version, initialized]
+      properties:
+        ok:
+          type: boolean
+          example: true
+        app:
+          type: string
+          enum: [clear_progress]
+        version:
+          type: string
+          example: "1.0"
+        initialized:
+          type: boolean
+          description: Whether the data structure has been created. If false — call init
+          example: true
+
+    InitResponse:
+      type: object
+      required: [ok, created, spreadsheet_id, folder_id]
+      properties:
+        ok:
+          type: boolean
+          example: true
+        created:
+          type: boolean
+          description: true on first call, false on repeated calls
+          example: true
+        spreadsheet_id:
+          type: string
+          description: Google Sheets file ID
+          example: 1BxOa7m2kQ3r5TvZ9pLnYjW8dCfEgHiKlMnOpQrStUv
+        folder_id:
+          type: string
+          description: ID of the "Clear Progress" folder on Google Drive
+          example: 0B7x_K2mN3pQ4rS5tU6vW7xY8zA
+
+    PullResponse:
+      type: object
+      required: [ok, data, settings, server_time]
+      properties:
+        ok:
+          type: boolean
+          example: true
+        data:
+          $ref: '#/components/schemas/PullData'
+        settings:
+          type: array
+          description: All settings returned in full (no delta)
+          items:
+            $ref: '#/components/schemas/Setting'
+        server_time:
+          type: string
+          format: date-time
+          description: Server time for clock skew correction
+          example: "2026-03-04T11:05:00.000Z"
+
+    PushResponse:
+      type: object
+      required: [ok, results, server_time]
+      properties:
+        ok:
+          type: boolean
+          example: true
+        results:
+          $ref: '#/components/schemas/PushResults'
+        server_time:
+          type: string
+          format: date-time
+          example: "2026-03-04T13:00:02.000Z"
+
+    UploadCoverResponse:
+      type: object
+      required: [ok, file_id, thumbnail_url, reused]
+      properties:
+        ok:
+          type: boolean
+          example: true
+        file_id:
+          type: string
+          description: File ID on Google Drive
+          example: 1XyZ_aBcDeFgHiJkLmNoPqRsTuVwXyZ
+        thumbnail_url:
+          type: string
+          format: uri
+          description: Thumbnail URL for display in the app (400px wide)
+          example: https://drive.google.com/thumbnail?id=1XyZ_aBcDeFgHiJkLmNoPqRsTuVwXyZ&sz=w400
+        reused:
+          type: boolean
+          description: true if a file with the same SHA-256 already existed — no duplicate created
+          example: false
+
+    DeleteCoverResponse:
+      type: object
+      required: [ok, deleted, ref_count]
+      properties:
+        ok:
+          type: boolean
+          example: true
+        deleted:
+          type: boolean
+          description: true if the file was physically deleted from Google Drive
+          example: true
+        ref_count:
+          type: integer
+          description: Number of goals referencing the file (including soft-deleted goals)
+          example: 0
+
+    PurgeResponse:
+      type: object
+      required: [ok, purged]
+      properties:
+        ok:
+          type: boolean
+          example: true
+        purged:
+          type: object
+          required: [tasks, goals, contexts, categories, checklist_items, cover_files]
+          description: Count of physically deleted records per entity
+          properties:
+            tasks:
+              type: integer
+              example: 5
+            goals:
+              type: integer
+              example: 1
+            contexts:
+              type: integer
+              example: 2
+            categories:
+              type: integer
+              example: 0
+            checklist_items:
+              type: integer
+              example: 12
+            cover_files:
+              type: integer
+              description: Cover image files deleted from Google Drive
+              example: 1
