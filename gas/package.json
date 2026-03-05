@@ -1,0 +1,7 @@
+{
+  "name": "clear-progress-gas",
+  "private": true,
+  "devDependencies": {
+    "@types/google-apps-script": "^1.0.0"
+  }
+}

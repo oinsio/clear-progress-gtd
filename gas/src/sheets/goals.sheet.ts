@@ -1,5 +1,5 @@
 import { getSheet } from './client';
-import type { Goal } from '../types/index';
+import type { Goal } from '../types';
 
 const SHEET = 'Goals';
 
@@ -29,7 +29,7 @@ function goalToRow(goal: Goal): unknown[] {
 export function getAll(): Goal[] {
   const sheet = getSheet(SHEET);
   const data = sheet.getDataRange().getValues();
-  return data.slice(1).filter(row => row[0]).map(rowToGoal);
+  return data.slice(1).filter((row: any[]) => row[0]).map(rowToGoal);
 }
 
 export function getByVersion(minVersion: number): Goal[] {

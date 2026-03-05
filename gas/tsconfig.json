@@ -9,7 +9,8 @@
     "rootDir": "src",
     "strict": true,
     "noImplicitAny": true,
-    "strictNullChecks": true
+    "strictNullChecks": true,
+    "types": ["google-apps-script"]
   },
   "include": ["src/**/*.ts"],
   "exclude": ["node_modules"]

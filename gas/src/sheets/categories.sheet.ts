@@ -1,5 +1,5 @@
 import { getSheet } from './client';
-import type { Category } from '../types/index';
+import type { Category } from '../types';
 
 const SHEET = 'Categories';
 
@@ -15,29 +15,29 @@ function rowToCategory(row: unknown[]): Category {
   };
 }
 
-function categoryToRow(cat: Category): unknown[] {
-  return [cat.id, cat.name, cat.sort_order, cat.is_deleted, cat.created_at, cat.updated_at, cat.version];
+function categoryToRow(category: Category): unknown[] {
+  return [category.id, category.name, category.sort_order, category.is_deleted, category.created_at, category.updated_at, category.version];
 }
 
 export function getAll(): Category[] {
   const sheet = getSheet(SHEET);
-  return sheet.getDataRange().getValues().slice(1).filter(row => row[0]).map(rowToCategory);
+  return sheet.getDataRange().getValues().slice(1).filter((row: any[]) => row[0]).map(rowToCategory);
 }
 
 export function getByVersion(minVersion: number): Category[] {
   return getAll().filter(c => c.version > minVersion);
 }
 
-export function upsert(cat: Category): void {
+export function upsert(category: Category): void {
   const sheet = getSheet(SHEET);
   const data = sheet.getDataRange().getValues();
   for (let i = 1; i < data.length; i++) {
-    if (data[i][0] === cat.id) {
-      sheet.getRange(i + 1, 1, 1, 7).setValues([categoryToRow(cat)]);
+    if (data[i][0] === category.id) {
+      sheet.getRange(i + 1, 1, 1, 7).setValues([categoryToRow(category)]);
       return;
     }
   }
-  sheet.appendRow(categoryToRow(cat));
+  sheet.appendRow(categoryToRow(category));
 }
 
 export function bulkUpsert(categories: Category[]): void {

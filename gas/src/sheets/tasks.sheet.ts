@@ -1,5 +1,5 @@
 import { getSheet } from './client';
-import type { Task } from '../types/index';
+import type { Task } from '../types';
 
 const SHEET = 'Tasks';
 const COLUMNS = [
@@ -40,8 +40,8 @@ function taskToRow(task: Task): unknown[] {
 
 export function getAll(): Task[] {
   const sheet = getSheet(SHEET);
-  const data = sheet.getDataRange().getValues();
-  return data.slice(1).filter(row => row[0]).map(rowToTask);
+  const data: unknown[][] = sheet.getDataRange().getValues();
+  return data.slice(1).filter((row: unknown[]) => row[0]).map(rowToTask);
 }
 
 export function getByVersion(minVersion: number): Task[] {

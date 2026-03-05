@@ -5,7 +5,7 @@ import * as contexts from '../sheets/contexts.sheet';
 import * as categories from '../sheets/categories.sheet';
 import * as checklists from '../sheets/checklists.sheet';
 import * as settings from '../sheets/settings.sheet';
-import type { VersionMap } from '../types/index';
+import type { VersionMap } from '../types';
 
 export function pull(versions: VersionMap): GoogleAppsScript.Content.TextOutput {
   try {

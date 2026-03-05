@@ -6,7 +6,7 @@ import * as contextsSheet from '../sheets/contexts.sheet';
 import * as categoriesSheet from '../sheets/categories.sheet';
 import * as checklistsSheet from '../sheets/checklists.sheet';
 import * as settingsSheet from '../sheets/settings.sheet';
-import type { Task, Goal, Context, Category, ChecklistItem, Setting, PushItemResult } from '../types/index';
+import type { Task, Goal, Context, Category, ChecklistItem, Setting, PushItemResult } from '../types';
 
 type AnyEntity = Task | Goal | Context | Category | ChecklistItem;
 

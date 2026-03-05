@@ -1,5 +1,5 @@
 import { getSheet } from './client';
-import type { Context } from '../types/index';
+import type { Context } from '../types';
 
 const SHEET = 'Contexts';
 
@@ -21,7 +21,7 @@ function contextToRow(ctx: Context): unknown[] {
 
 export function getAll(): Context[] {
   const sheet = getSheet(SHEET);
-  return sheet.getDataRange().getValues().slice(1).filter(row => row[0]).map(rowToContext);
+  return sheet.getDataRange().getValues().slice(1).filter((row: any[]) => row[0]).map(rowToContext);
 }
 
 export function getByVersion(minVersion: number): Context[] {

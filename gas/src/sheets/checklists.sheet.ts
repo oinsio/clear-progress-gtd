@@ -1,5 +1,5 @@
 import { getSheet } from './client';
-import type { ChecklistItem } from '../types/index';
+import type { ChecklistItem } from '../types';
 
 const SHEET = 'Checklist_Items';
 
@@ -26,7 +26,7 @@ function itemToRow(item: ChecklistItem): unknown[] {
 
 export function getAll(): ChecklistItem[] {
   const sheet = getSheet(SHEET);
-  return sheet.getDataRange().getValues().slice(1).filter(row => row[0]).map(rowToItem);
+  return sheet.getDataRange().getValues().slice(1).filter((row: any[]) => row[0]).map(rowToItem);
 }
 
 export function getByVersion(minVersion: number): ChecklistItem[] {

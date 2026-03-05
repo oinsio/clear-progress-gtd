@@ -1,5 +1,5 @@
 import { getSheet } from './client';
-import type { Setting } from '../types/index';
+import type { Setting } from '../types';
 
 const SHEET = 'Settings';
 
@@ -11,7 +11,7 @@ const DEFAULTS: Setting[] = [
 export function getAll(): Setting[] {
   const sheet = getSheet(SHEET);
   const data = sheet.getDataRange().getValues();
-  return data.slice(1).filter(row => row[0]).map(row => ({
+  return data.slice(1).filter((row: any[]) => row[0]).map((row: any[]) => ({
     key: String(row[0]),
     value: String(row[1] ?? ''),
     updated_at: String(row[2] ?? ''),
