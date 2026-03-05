@@ -1,0 +1,76 @@
+# Clear Progress — Project Context
+
+## Что это
+Персональное GTD-приложение (Getting Things Done) для управления задачами и целями.
+Тип: PWA. Архитектура: React frontend + Google Apps Script backend + Google Sheets хранилище.
+
+## Архитектура и стек
+
+**Frontend:** React 18+ / TypeScript 5+ / Vite 5+ / Tailwind CSS 3.4+ / shadcn/ui / React Router 6+ / Dexie.js 3+ (IndexedDB) / vite-plugin-pwa (Workbox)
+**Backend:** Google Apps Script (TypeScript через clasp), деплой как Web App
+**Хранилище:** Google Sheets (6 листов) + IndexedDB (офлайн-кэш)
+**Хостинг frontend:** Cloudflare Pages
+**OAuth scopes:** drive.file + spreadsheets (минимальные)
+
+## Ключевые сущности и структура данных
+
+**Tasks** — основная сущность. Поля: id (UUID v4), title, notes, box (inbox|today|week|later), goal_id?, context_id?, category_id?, is_completed, completed_at?, repeat_rule? (v1.1), sort_order, is_deleted, created_at, updated_at, version.
+
+**Goals** — цели. Поля: id, title, description?, cover_file_id? (Google Drive), status (not_started|in_progress|paused|completed|cancelled), sort_order, is_deleted, created_at, updated_at, version.
+
+**Contexts** — GTD-контексты (@Дом, @Офис...). Поля: id, name, sort_order, is_deleted, created_at, updated_at, version.
+
+**Categories** — сферы жизни (Работа, Семья...). Структура аналогична Contexts.
+
+**Checklist_Items** (v1.1) — подзадачи. Поля: id, task_id, title, is_completed, sort_order, is_deleted, created_at, updated_at, version.
+
+**Settings** — ключ-значение. Ключи MVP: default_box, accent_color. Ключи v1.1: creation_fields, quick_property, menu_always_visible, menu_items, inbox_fields, focus_entity.
+
+## Связи
+- Tasks.goal_id → Goals.id (0..1 : N)
+- Tasks.context_id → Contexts.id (0..1 : N)
+- Tasks.category_id → Categories.id (0..1 : N)
+- Checklist_Items.task_id → Tasks.id (1 : N)
+
+## Принципы данных
+- UUID v4 генерируется на клиенте (crypto.randomUUID())
+- Soft delete (is_deleted=true), строка остаётся
+- Версионирование: поле version (+1 при каждом изменении) для синхронизации
+- Даты: ISO 8601 UTC
+- Пустые необязательные поля = "" (не null)
+
+## Backend API (Google Apps Script)
+
+Единый URL: `https://script.google.com/macros/s/{DEPLOY_ID}/exec`
+Роутинг через поле `action`. Формат: JSON.
+
+| Action | Метод | Назначение |
+|--------|-------|------------|
+| ping | GET | Проверка доступности, поле initialized |
+| init | POST | Создание папки/Sheets/структуры (идемпотентен) |
+| pull | POST | Получение изменений (клиент шлёт max versions по сущностям) |
+| push | POST | Отправка изменений (last-write-wins по updated_at) |
+| upload_cover | POST | Загрузка обложки (base64, ≤2МБ, SHA-256 дедупликация) |
+| delete_cover | POST | Удаление обложки (с проверкой ref_count) |
+| purge | POST | (v2.0) Жёсткое удаление soft-deleted записей |
+
+**Push-статусы:** created, accepted, conflict (с server_record для перезаписи).
+
+**Синхронизация:** pull при открытии → push после изменений (debounce 5-10с) → периодический pull каждые 5 мин. Офлайн: накопление в IndexedDB → push+pull при восстановлении сети.
+
+## Функциональность по этапам
+
+**MVP:** Коробки задач (today/week/later/inbox), CRUD задач, завершение (свайп вправо), перемещение между коробками, цели со статусами и обложками, контексты, категории, боковое меню, экран цели, поиск, свайп-действия, коробка по умолчанию, акцентный цвет (green/orange/purple/yellow/crimson), синхронизация, подключение бэкенда.
+
+**v1.1:** Чеклисты, повторяющиеся задачи, режим «Фокус», панель быстрых свойств, обработка входящих, копирование задачи, настройка полей создания, быстрое свойство, настройка меню.
+
+**v2.0:** Статистика, шаринг, purge.
+
+## Google Drive структура
+- Clear Progress/ (корневая папка)
+  - Clear Progress Data.gsheet (6 листов)
+  - Covers/ (обложки целей)
+
+## Правила работы с документацией
+- Документация в Markdown по умолчанию
+- Перед генерацией файлов — запросить подтверждение
