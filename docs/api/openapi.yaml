@@ -19,7 +19,7 @@ info:
     - Conflicts are resolved using **last-write-wins** strategy (`updated_at`)
 
 servers:
-  - url: https://script.google.com/macros/s/{deployId}/exec
+  - url: https://script.google.com/macros/s/{deployId}
     description: Google Apps Script Web App
     variables:
       deployId:
@@ -39,7 +39,7 @@ tags:
     description: Maintenance operations (purge)
 
 paths:
-  /?action=ping:
+  /exec:
     get:
       operationId: ping
       tags: [Health]
@@ -80,7 +80,7 @@ paths:
   # All POST operations go to the same URL, routed by the action field.
   # Each action is documented as a separate path for readability.
 
-  /#init:
+  /exec#init:
     post:
       operationId: init
       tags: [Setup]
@@ -120,7 +120,7 @@ paths:
                     spreadsheet_id: 1BxOa7m2kQ3r5TvZ9pLnYjW8dCfEgHiKlMnOpQrStUv
                     folder_id: 0B7x_K2mN3pQ4rS5tU6vW7xY8zA
 
-  /#pull:
+  /exec#pull:
     post:
       operationId: pull
       tags: [Sync]
@@ -192,7 +192,7 @@ paths:
                     error: NOT_INITIALIZED
                     message: "Call init before using the API"
 
-  /#push:
+  /exec#push:
     post:
       operationId: push
       tags: [Sync]
@@ -321,7 +321,7 @@ paths:
                       settings: []
                     server_time: "2026-03-04T14:35:00.000Z"
 
-  /#upload_cover:
+  /exec#upload_cover:
     post:
       operationId: uploadCover
       tags: [Covers]
@@ -377,7 +377,7 @@ paths:
                     error: FILE_TOO_LARGE
                     message: Cover image must be 2 MB or less
 
-  /#delete_cover:
+  /exec#delete_cover:
     post:
       operationId: deleteCover
       tags: [Covers]
@@ -424,7 +424,7 @@ paths:
                     error: FILE_NOT_FOUND
                     message: "File not found: 1NONEXISTENT"
 
-  /#purge:
+  /exec#purge:
     post:
       operationId: purge
       tags: [Maintenance]
