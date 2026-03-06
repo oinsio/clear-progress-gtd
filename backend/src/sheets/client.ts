@@ -5,7 +5,7 @@ let _spreadsheet: GoogleAppsScript.Spreadsheet.Spreadsheet | null = null;
 function getSpreadsheet(): GoogleAppsScript.Spreadsheet.Spreadsheet {
   if (_spreadsheet) return _spreadsheet;
 
-  const spreadsheetId = PropertiesService.getScriptProperties().getProperty('SPREADSHEET_ID');
+  const spreadsheetId = PropertiesService.getScriptProperties().getProperty(PROPERTY_KEYS.SPREADSHEET_ID);
   if (!spreadsheetId) {
     throw new Error(ERR_NOT_INITIALIZED);
   }

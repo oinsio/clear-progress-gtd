@@ -13,7 +13,7 @@ const SHEET_HEADERS: Record<string, string[]> = {
 
 function init(): GoogleAppsScript.Content.TextOutput {
   const props = PropertiesService.getScriptProperties();
-  const existingSpreadsheetId = props.getProperty('SPREADSHEET_ID');
+  const existingSpreadsheetId = props.getProperty(PROPERTY_KEYS.SPREADSHEET_ID);
 
   if (existingSpreadsheetId) {
     if (driveFileExists(existingSpreadsheetId)) {
@@ -58,9 +58,9 @@ function init(): GoogleAppsScript.Content.TextOutput {
 
   // Save IDs
   props.setProperties({
-    SPREADSHEET_ID: spreadsheet.getId(),
-    FOLDER_ID: rootFolderId,
-    COVERS_FOLDER_ID: coversFolderId,
+    [PROPERTY_KEYS.SPREADSHEET_ID]: spreadsheet.getId(),
+    [PROPERTY_KEYS.FOLDER_ID]: rootFolderId,
+    [PROPERTY_KEYS.COVERS_FOLDER_ID]: coversFolderId,
   });
 
   // Write default settings

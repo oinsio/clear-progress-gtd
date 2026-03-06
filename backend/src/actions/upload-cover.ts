@@ -17,7 +17,7 @@ function uploadCover(payload: {
     .map(b => (b < 0 ? b + 256 : b).toString(16).padStart(2, '0'))
     .join('');
 
-  const coversFolderId = PropertiesService.getScriptProperties().getProperty('COVERS_FOLDER_ID');
+  const coversFolderId = PropertiesService.getScriptProperties().getProperty(PROPERTY_KEYS.COVERS_FOLDER_ID);
   if (!coversFolderId) {
     return jsonNotInitialized();
   }
