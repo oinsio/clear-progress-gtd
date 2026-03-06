@@ -16,7 +16,10 @@ function init(): GoogleAppsScript.Content.TextOutput {
   const existingSpreadsheetId = props.getProperty('SPREADSHEET_ID');
 
   if (existingSpreadsheetId) {
-    return jsonOk({ created: false, spreadsheet_id: existingSpreadsheetId });
+    if (driveFileExists(existingSpreadsheetId)) {
+      return jsonOk({ created: false, spreadsheet_id: existingSpreadsheetId });
+    }
+    props.deleteAllProperties();
   }
 
   // Create folder structure
