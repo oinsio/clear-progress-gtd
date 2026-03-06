@@ -31,7 +31,7 @@ function uploadCover(payload: {
     if (f.description === hash) {
       return jsonOk({
         file_id: f.id,
-        thumbnail_url: `https://drive.google.com/thumbnail?id=${f.id}&sz=w400`,
+        thumbnail_url: thumbnailUrl(f.id!),
         reused: true,
       });
     }
@@ -39,7 +39,7 @@ function uploadCover(payload: {
 
   // Create new file
   const ext = filename.split('.').pop() ?? 'jpg';
-  const newFilename = `${hash.substring(0, 12)}.${ext}`;
+  const newFilename = `${hash.substring(0, COVER_HASH_PREFIX_LENGTH)}.${ext}`;
   const blob = Utilities.newBlob(decoded, mime_type, newFilename);
   const newFile = Drive.Files.create(
     { name: newFilename, description: hash, parents: [coversFolderId] },
@@ -49,7 +49,7 @@ function uploadCover(payload: {
 
   return jsonOk({
     file_id: newFile.id,
-    thumbnail_url: `https://drive.google.com/thumbnail?id=${newFile.id}&sz=w400`,
+    thumbnail_url: thumbnailUrl(newFile.id!),
     reused: false,
   });
 }
