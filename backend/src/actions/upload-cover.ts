@@ -10,7 +10,7 @@ function uploadCover(payload: {
 
   const decoded = Utilities.base64Decode(data);
   if (decoded.length > MAX_SIZE_BYTES) {
-    return jsonError('FILE_TOO_LARGE', 'Cover image must be 2 MB or less');
+    return jsonError(ERROR_CODES.FILE_TOO_LARGE, 'Cover image must be 2 MB or less');
   }
 
   const hash = Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, decoded)
@@ -45,7 +45,7 @@ function uploadCover(payload: {
     { name: newFilename, description: hash, parents: [coversFolderId] },
     blob,
   );
-  Drive.Permissions.create({ role: 'reader', type: 'anyone' }, newFile.id!);
+  Drive.Permissions.create({ role: DRIVE_PERMISSIONS.ROLE_READER, type: DRIVE_PERMISSIONS.TYPE_ANYONE }, newFile.id!);
 
   return jsonOk({
     file_id: newFile.id,

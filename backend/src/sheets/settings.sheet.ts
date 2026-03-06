@@ -1,8 +1,8 @@
 const SET_COLS = colMap(SHEET_NAMES.SETTINGS);
 
 const DEFAULTS: Setting[] = [
-  { key: 'default_box', value: 'inbox', updated_at: new Date().toISOString() },
-  { key: 'accent_color', value: 'green', updated_at: new Date().toISOString() },
+  { ...DEFAULT_SETTINGS.DEFAULT_BOX, updated_at: new Date().toISOString() },
+  { ...DEFAULT_SETTINGS.ACCENT_COLOR, updated_at: new Date().toISOString() },
 ];
 
 function settingToRow(setting: Setting): unknown[] {

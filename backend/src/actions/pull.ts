@@ -13,9 +13,9 @@ function pull(versions: VersionMap): GoogleAppsScript.Content.TextOutput {
     });
   } catch (e) {
     const err = e as Error;
-    if (err.message === ERR_NOT_INITIALIZED) {
+    if (err.message === ERROR_CODES.NOT_INITIALIZED) {
       return jsonNotInitialized();
     }
-    return jsonError('INTERNAL_ERROR', err.message);
+    return jsonError(ERROR_CODES.INTERNAL_ERROR, err.message);
   }
 }

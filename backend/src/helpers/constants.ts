@@ -40,6 +40,25 @@ function colMap(sheetName: string): Record<string, number> {
   return Object.fromEntries(SHEET_HEADERS[sheetName].map((col, i) => [col, i]));
 }
 
+const ACTIONS = {
+  PING: 'ping',
+  INIT: 'init',
+  PULL: 'pull',
+  PUSH: 'push',
+  UPLOAD_COVER: 'upload_cover',
+  DELETE_COVER: 'delete_cover',
+} as const;
+
+const DRIVE_PERMISSIONS = {
+  ROLE_READER: 'reader',
+  TYPE_ANYONE: 'anyone',
+} as const;
+
+const DEFAULT_SETTINGS = {
+  DEFAULT_BOX: { key: 'default_box', value: 'inbox' },
+  ACCENT_COLOR: { key: 'accent_color', value: 'green' },
+} as const;
+
 const COVER_HASH_PREFIX_LENGTH = 12;
 
 function thumbnailUrl(fileId: string): string {
