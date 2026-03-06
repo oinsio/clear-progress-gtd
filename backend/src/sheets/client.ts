@@ -7,7 +7,7 @@ function getSpreadsheet(): GoogleAppsScript.Spreadsheet.Spreadsheet {
 
   const spreadsheetId = PropertiesService.getScriptProperties().getProperty('SPREADSHEET_ID');
   if (!spreadsheetId) {
-    throw new Error('NOT_INITIALIZED');
+    throw new Error(ERR_NOT_INITIALIZED);
   }
 
   _spreadsheet = SpreadsheetApp.openById(spreadsheetId);

@@ -58,8 +58,8 @@ function push(changes: {
     return jsonOk({ results, server_time: new Date().toISOString() });
   } catch (e) {
     const err = e as Error;
-    if (err.message === 'NOT_INITIALIZED') {
-      return jsonError('NOT_INITIALIZED', 'Call init before using the API');
+    if (err.message === ERR_NOT_INITIALIZED) {
+      return jsonNotInitialized();
     }
     return jsonError('INTERNAL_ERROR', err.message);
   }

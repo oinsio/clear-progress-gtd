@@ -19,7 +19,7 @@ function uploadCover(payload: {
 
   const coversFolderId = PropertiesService.getScriptProperties().getProperty('COVERS_FOLDER_ID');
   if (!coversFolderId) {
-    return jsonError('NOT_INITIALIZED', 'Call init before using the API');
+    return jsonNotInitialized();
   }
 
   // Check for deduplication

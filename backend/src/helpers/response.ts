@@ -14,3 +14,9 @@ function jsonError(
     ContentService.MimeType.JSON
   );
 }
+
+const ERR_NOT_INITIALIZED = 'NOT_INITIALIZED';
+
+function jsonNotInitialized(): GoogleAppsScript.Content.TextOutput {
+  return jsonError(ERR_NOT_INITIALIZED, 'Call init before using the API');
+}
