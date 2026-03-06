@@ -6,5 +6,5 @@ function resolveConflict(
   clientUpdatedAt: string,
   serverUpdatedAt: string
 ): ConflictResult {
-  return clientUpdatedAt >= serverUpdatedAt ? 'accept' : 'conflict';
+  return clientUpdatedAt >= serverUpdatedAt ? CONFLICT_RESOLUTION.ACCEPT : CONFLICT_RESOLUTION.CONFLICT;
 }

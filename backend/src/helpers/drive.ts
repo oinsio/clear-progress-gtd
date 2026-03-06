@@ -5,7 +5,7 @@
  */
 function driveFileExists(fileId: string): boolean {
   try {
-    const file = Drive.Files.get(fileId, { fields: 'id,trashed' });
+    const file = Drive.Files.get(fileId, { fields: DRIVE_QUERY_FIELDS.FILE_EXISTS });
     return !file.trashed;
   } catch {
     return false;

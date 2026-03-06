@@ -1,24 +1,21 @@
-const VALID_BOXES = ['inbox', 'today', 'week', 'later'];
-const VALID_GOAL_STATUSES = ['not_started', 'in_progress', 'paused', 'completed', 'cancelled'];
-
 function validateTask(task: Partial<Task>): string[] {
   const errors: string[] = [];
-  if (!task.id) errors.push('id is required');
-  if (!task.title) errors.push('title is required');
+  if (!task.id) errors.push(VALIDATION_MESSAGES.ID_REQUIRED);
+  if (!task.title) errors.push(VALIDATION_MESSAGES.TITLE_REQUIRED);
   if (task.box && !VALID_BOXES.includes(task.box)) errors.push(`invalid box: ${task.box}`);
-  if (!task.updated_at) errors.push('updated_at is required');
-  if (typeof task.version !== 'number') errors.push('version must be a number');
+  if (!task.updated_at) errors.push(VALIDATION_MESSAGES.UPDATED_AT_REQUIRED);
+  if (typeof task.version !== 'number') errors.push(VALIDATION_MESSAGES.VERSION_NOT_NUMBER);
   return errors;
 }
 
 function validateGoal(goal: Partial<Goal>): string[] {
   const errors: string[] = [];
-  if (!goal.id) errors.push('id is required');
-  if (!goal.title) errors.push('title is required');
+  if (!goal.id) errors.push(VALIDATION_MESSAGES.ID_REQUIRED);
+  if (!goal.title) errors.push(VALIDATION_MESSAGES.TITLE_REQUIRED);
   if (goal.status && !VALID_GOAL_STATUSES.includes(goal.status)) {
     errors.push(`invalid status: ${goal.status}`);
   }
-  if (!goal.updated_at) errors.push('updated_at is required');
-  if (typeof goal.version !== 'number') errors.push('version must be a number');
+  if (!goal.updated_at) errors.push(VALIDATION_MESSAGES.UPDATED_AT_REQUIRED);
+  if (typeof goal.version !== 'number') errors.push(VALIDATION_MESSAGES.VERSION_NOT_NUMBER);
   return errors;
 }

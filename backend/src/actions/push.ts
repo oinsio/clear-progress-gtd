@@ -10,17 +10,17 @@ function processRecords<T extends AnyEntity>(
 
     if (!serverRecord) {
       upsertFn({ ...record, version: record.version });
-      return { id: record.id, status: 'created', version: record.version };
+      return { id: record.id, status: PUSH_STATUSES.CREATED, version: record.version };
     }
 
     const resolution = resolveConflict(record.updated_at, serverRecord.updated_at);
-    if (resolution === 'accept') {
+    if (resolution === CONFLICT_RESOLUTION.ACCEPT) {
       const updated = { ...record, version: serverRecord.version + 1 };
       upsertFn(updated);
-      return { id: record.id, status: 'accepted', version: updated.version };
+      return { id: record.id, status: PUSH_STATUSES.ACCEPTED, version: updated.version };
     }
 
-    return { id: record.id, status: 'conflict', server_record: serverRecord };
+    return { id: record.id, status: PUSH_STATUSES.CONFLICT, server_record: serverRecord };
   });
 }
 
@@ -52,7 +52,7 @@ function push(changes: {
     }
     if (changes.settings?.length) {
       changes.settings.forEach(s => upsertSetting(s));
-      results.settings = changes.settings.map(s => ({ id: s.key, status: 'accepted' }));
+      results.settings = changes.settings.map(s => ({ id: s.key, status: PUSH_STATUSES.ACCEPTED }));
     }
 
     return jsonOk({ results, server_time: new Date().toISOString() });

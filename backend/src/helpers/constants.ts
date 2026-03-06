@@ -59,6 +59,32 @@ const DEFAULT_SETTINGS = {
   ACCENT_COLOR: { key: 'accent_color', value: 'green' },
 } as const;
 
+const VALID_BOXES = ['inbox', 'today', 'week', 'later'];
+const VALID_GOAL_STATUSES = ['not_started', 'in_progress', 'paused', 'completed', 'cancelled'];
+
+const VALIDATION_MESSAGES = {
+  ID_REQUIRED: 'id is required',
+  TITLE_REQUIRED: 'title is required',
+  UPDATED_AT_REQUIRED: 'updated_at is required',
+  VERSION_NOT_NUMBER: 'version must be a number',
+} as const;
+
+const CONFLICT_RESOLUTION = {
+  ACCEPT: 'accept',
+  CONFLICT: 'conflict',
+} as const;
+
+const PUSH_STATUSES = {
+  CREATED: 'created',
+  ACCEPTED: 'accepted',
+  CONFLICT: 'conflict',
+} as const;
+
+const DRIVE_QUERY_FIELDS = {
+  COVER_FILES: 'files(id,description)',
+  FILE_EXISTS: 'id,trashed',
+} as const;
+
 const COVER_HASH_PREFIX_LENGTH = 12;
 
 function thumbnailUrl(fileId: string): string {

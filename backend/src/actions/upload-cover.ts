@@ -25,7 +25,7 @@ function uploadCover(payload: {
   // Check for deduplication
   const fileList = Drive.Files.list({
     q: `'${coversFolderId}' in parents and trashed = false`,
-    fields: 'files(id,description)',
+    fields: DRIVE_QUERY_FIELDS.COVER_FILES,
   });
   for (const f of (fileList.files ?? [])) {
     if (f.description === hash) {
