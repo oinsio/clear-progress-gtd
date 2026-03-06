@@ -1,22 +1,24 @@
+const CTX_COLS = colMap(SHEET_NAMES.CONTEXTS);
+
 function rowToContext(row: unknown[]): Context {
   return {
-    id: String(row[0] ?? ''),
-    name: String(row[1] ?? ''),
-    sort_order: Number(row[2] ?? 0),
-    is_deleted: row[3] === true || row[3] === 'TRUE',
-    created_at: String(row[4] ?? ''),
-    updated_at: String(row[5] ?? ''),
-    version: Number(row[6] ?? 1),
+    id: String(row[CTX_COLS.id] ?? ''),
+    name: String(row[CTX_COLS.name] ?? ''),
+    sort_order: Number(row[CTX_COLS.sort_order] ?? 0),
+    is_deleted: row[CTX_COLS.is_deleted] === true || row[CTX_COLS.is_deleted] === 'TRUE',
+    created_at: String(row[CTX_COLS.created_at] ?? ''),
+    updated_at: String(row[CTX_COLS.updated_at] ?? ''),
+    version: Number(row[CTX_COLS.version] ?? 1),
   };
 }
 
 function contextToRow(ctx: Context): unknown[] {
-  return [ctx.id, ctx.name, ctx.sort_order, ctx.is_deleted, ctx.created_at, ctx.updated_at, ctx.version];
+  return SHEET_HEADERS[SHEET_NAMES.CONTEXTS].map(col => (ctx as unknown as Record<string, unknown>)[col]);
 }
 
 function getAllContexts(): Context[] {
   const sheet = getSheet(SHEET_NAMES.CONTEXTS);
-  return sheet.getDataRange().getValues().slice(1).filter((row: any[]) => row[0]).map(rowToContext);
+  return sheet.getDataRange().getValues().slice(1).filter((row: unknown[]) => row[0]).map(rowToContext);
 }
 
 function getContextsByVersion(minVersion: number): Context[] {
@@ -28,7 +30,7 @@ function upsertContext(ctx: Context): void {
   const data = sheet.getDataRange().getValues();
   for (let i = 1; i < data.length; i++) {
     if (data[i][0] === ctx.id) {
-      sheet.getRange(i + 1, 1, 1, 7).setValues([contextToRow(ctx)]);
+      sheet.getRange(i + 1, 1, 1, SHEET_HEADERS[SHEET_NAMES.CONTEXTS].length).setValues([contextToRow(ctx)]);
       return;
     }
   }

@@ -36,6 +36,10 @@ const SHEET_HEADERS: Record<string, string[]> = {
   [SHEET_NAMES.SETTINGS]: ['key', 'value', 'updated_at'],
 };
 
+function colMap(sheetName: string): Record<string, number> {
+  return Object.fromEntries(SHEET_HEADERS[sheetName].map((col, i) => [col, i]));
+}
+
 const COVER_HASH_PREFIX_LENGTH = 12;
 
 function thumbnailUrl(fileId: string): string {
