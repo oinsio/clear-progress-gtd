@@ -1,8 +1,8 @@
 import { jsonOk } from '../helpers/response';
 import { initDefaults } from '../sheets/settings.sheet';
 
-const FOLDER_NAME = 'Clear Progress';
-const FILE_NAME = 'Clear Progress Data';
+const FOLDER_NAME = 'Clear_Progress';
+const FILE_NAME = 'Clear_Progress_Data';
 const COVERS_FOLDER_NAME = 'Covers';
 
 const SHEET_HEADERS: Record<string, string[]> = {
