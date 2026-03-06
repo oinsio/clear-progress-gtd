@@ -1,7 +1,4 @@
-import { getSheet } from './client';
-import type { Category } from '../types';
-
-const SHEET = 'Categories';
+const CATEGORIES_SHEET = 'Categories';
 
 function rowToCategory(row: unknown[]): Category {
   return {
@@ -19,17 +16,17 @@ function categoryToRow(category: Category): unknown[] {
   return [category.id, category.name, category.sort_order, category.is_deleted, category.created_at, category.updated_at, category.version];
 }
 
-export function getAll(): Category[] {
-  const sheet = getSheet(SHEET);
+function getAllCategories(): Category[] {
+  const sheet = getSheet(CATEGORIES_SHEET);
   return sheet.getDataRange().getValues().slice(1).filter((row: any[]) => row[0]).map(rowToCategory);
 }
 
-export function getByVersion(minVersion: number): Category[] {
-  return getAll().filter(c => c.version > minVersion);
+function getCategoriesByVersion(minVersion: number): Category[] {
+  return getAllCategories().filter(c => c.version > minVersion);
 }
 
-export function upsert(category: Category): void {
-  const sheet = getSheet(SHEET);
+function upsertCategory(category: Category): void {
+  const sheet = getSheet(CATEGORIES_SHEET);
   const data = sheet.getDataRange().getValues();
   for (let i = 1; i < data.length; i++) {
     if (data[i][0] === category.id) {
@@ -38,8 +35,4 @@ export function upsert(category: Category): void {
     }
   }
   sheet.appendRow(categoryToRow(category));
-}
-
-export function bulkUpsert(categories: Category[]): void {
-  categories.forEach(upsert);
 }

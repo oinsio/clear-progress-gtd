@@ -1,7 +1,4 @@
-import { getSheet } from './client';
-import type { Context } from '../types';
-
-const SHEET = 'Contexts';
+const CONTEXTS_SHEET = 'Contexts';
 
 function rowToContext(row: unknown[]): Context {
   return {
@@ -19,17 +16,17 @@ function contextToRow(ctx: Context): unknown[] {
   return [ctx.id, ctx.name, ctx.sort_order, ctx.is_deleted, ctx.created_at, ctx.updated_at, ctx.version];
 }
 
-export function getAll(): Context[] {
-  const sheet = getSheet(SHEET);
+function getAllContexts(): Context[] {
+  const sheet = getSheet(CONTEXTS_SHEET);
   return sheet.getDataRange().getValues().slice(1).filter((row: any[]) => row[0]).map(rowToContext);
 }
 
-export function getByVersion(minVersion: number): Context[] {
-  return getAll().filter(c => c.version > minVersion);
+function getContextsByVersion(minVersion: number): Context[] {
+  return getAllContexts().filter(c => c.version > minVersion);
 }
 
-export function upsert(ctx: Context): void {
-  const sheet = getSheet(SHEET);
+function upsertContext(ctx: Context): void {
+  const sheet = getSheet(CONTEXTS_SHEET);
   const data = sheet.getDataRange().getValues();
   for (let i = 1; i < data.length; i++) {
     if (data[i][0] === ctx.id) {
@@ -38,8 +35,4 @@ export function upsert(ctx: Context): void {
     }
   }
   sheet.appendRow(contextToRow(ctx));
-}
-
-export function bulkUpsert(contexts: Context[]): void {
-  contexts.forEach(upsert);
 }

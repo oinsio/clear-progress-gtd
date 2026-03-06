@@ -1,15 +1,12 @@
-import { getSheet } from './client';
-import type { Setting } from '../types';
-
-const SHEET = 'Settings';
+const SETTINGS_SHEET = 'Settings';
 
 const DEFAULTS: Setting[] = [
   { key: 'default_box', value: 'inbox', updated_at: new Date().toISOString() },
   { key: 'accent_color', value: 'green', updated_at: new Date().toISOString() },
 ];
 
-export function getAll(): Setting[] {
-  const sheet = getSheet(SHEET);
+function getAllSettings(): Setting[] {
+  const sheet = getSheet(SETTINGS_SHEET);
   const data = sheet.getDataRange().getValues();
   return data.slice(1).filter((row: any[]) => row[0]).map((row: any[]) => ({
     key: String(row[0]),
@@ -18,8 +15,8 @@ export function getAll(): Setting[] {
   }));
 }
 
-export function upsert(setting: Setting): void {
-  const sheet = getSheet(SHEET);
+function upsertSetting(setting: Setting): void {
+  const sheet = getSheet(SETTINGS_SHEET);
   const data = sheet.getDataRange().getValues();
   for (let i = 1; i < data.length; i++) {
     if (data[i][0] === setting.key) {
@@ -30,9 +27,9 @@ export function upsert(setting: Setting): void {
   sheet.appendRow([setting.key, setting.value, setting.updated_at]);
 }
 
-export function initDefaults(): void {
-  const existing = getAll().map(s => s.key);
+function initDefaults(): void {
+  const existing = getAllSettings().map(s => s.key);
   DEFAULTS.forEach(def => {
-    if (!existing.includes(def.key)) upsert(def);
+    if (!existing.includes(def.key)) upsertSetting(def);
   });
 }

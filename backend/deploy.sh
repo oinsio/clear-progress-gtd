@@ -10,12 +10,12 @@ ENV_FILE="$SCRIPT_DIR/.env"
 CLASP_FILE="$SCRIPT_DIR/.clasp.json"
 
 # ─── Colors ──────────────────────────────────────────────────────────────────
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-BLUE='\033[0;34m'
-CYAN='\033[0;36m'
-NC='\033[0m' # No Color
+RED=$'\033[0;31m'
+GREEN=$'\033[0;32m'
+YELLOW=$'\033[1;33m'
+BLUE=$'\033[0;34m'
+CYAN=$'\033[0;36m'
+NC=$'\033[0m' # No Color
 
 # ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -74,7 +74,17 @@ get_deploy_url() {
 
 # ─── Commands ────────────────────────────────────────────────────────────────
 
+cmd_build() {
+  info "Compiling TypeScript..."
+  cd "$SCRIPT_DIR"
+  npm install --silent
+  npx tsc
+  cp appsscript.json dist/
+  success "Build complete."
+}
+
 cmd_push() {
+  cmd_build
   info "Pushing code to Apps Script..."
   cd "$SCRIPT_DIR"
   clasp push
@@ -100,6 +110,7 @@ cmd_deploy() {
   local description
   description="$env — $(date +%Y-%m-%d\ %H:%M:%S)"
 
+  cmd_build
   info "Pushing code..."
   cd "$SCRIPT_DIR"
   clasp push
@@ -126,6 +137,7 @@ cmd_deploy_new() {
   local description
   description="$env — $(date +%Y-%m-%d\ %H:%M:%S) [initial]"
 
+  cmd_build
   info "Pushing code..."
   cd "$SCRIPT_DIR"
   clasp push

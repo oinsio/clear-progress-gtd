@@ -1,9 +1,7 @@
-import type { Task, Goal } from '../types';
-
 const VALID_BOXES = ['inbox', 'today', 'week', 'later'];
 const VALID_GOAL_STATUSES = ['not_started', 'in_progress', 'paused', 'completed', 'cancelled'];
 
-export function validateTask(task: Partial<Task>): string[] {
+function validateTask(task: Partial<Task>): string[] {
   const errors: string[] = [];
   if (!task.id) errors.push('id is required');
   if (!task.title) errors.push('title is required');
@@ -13,7 +11,7 @@ export function validateTask(task: Partial<Task>): string[] {
   return errors;
 }
 
-export function validateGoal(goal: Partial<Goal>): string[] {
+function validateGoal(goal: Partial<Goal>): string[] {
   const errors: string[] = [];
   if (!goal.id) errors.push('id is required');
   if (!goal.title) errors.push('title is required');

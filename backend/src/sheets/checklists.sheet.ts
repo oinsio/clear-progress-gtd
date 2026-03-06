@@ -1,7 +1,4 @@
-import { getSheet } from './client';
-import type { ChecklistItem } from '../types';
-
-const SHEET = 'Checklist_Items';
+const CHECKLISTS_SHEET = 'Checklist_Items';
 
 function rowToItem(row: unknown[]): ChecklistItem {
   return {
@@ -24,17 +21,17 @@ function itemToRow(item: ChecklistItem): unknown[] {
   ];
 }
 
-export function getAll(): ChecklistItem[] {
-  const sheet = getSheet(SHEET);
+function getAllChecklistItems(): ChecklistItem[] {
+  const sheet = getSheet(CHECKLISTS_SHEET);
   return sheet.getDataRange().getValues().slice(1).filter((row: any[]) => row[0]).map(rowToItem);
 }
 
-export function getByVersion(minVersion: number): ChecklistItem[] {
-  return getAll().filter(i => i.version > minVersion);
+function getChecklistItemsByVersion(minVersion: number): ChecklistItem[] {
+  return getAllChecklistItems().filter(i => i.version > minVersion);
 }
 
-export function upsert(item: ChecklistItem): void {
-  const sheet = getSheet(SHEET);
+function upsertChecklistItem(item: ChecklistItem): void {
+  const sheet = getSheet(CHECKLISTS_SHEET);
   const data = sheet.getDataRange().getValues();
   for (let i = 1; i < data.length; i++) {
     if (data[i][0] === item.id) {
@@ -43,8 +40,4 @@ export function upsert(item: ChecklistItem): void {
     }
   }
   sheet.appendRow(itemToRow(item));
-}
-
-export function bulkUpsert(items: ChecklistItem[]): void {
-  items.forEach(upsert);
 }

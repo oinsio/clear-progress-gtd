@@ -1,9 +1,9 @@
 // Shared types for GAS backend
 
-export type Box = 'inbox' | 'today' | 'week' | 'later';
-export type GoalStatus = 'not_started' | 'in_progress' | 'paused' | 'completed' | 'cancelled';
+type Box = 'inbox' | 'today' | 'week' | 'later';
+type GoalStatus = 'not_started' | 'in_progress' | 'paused' | 'completed' | 'cancelled';
 
-export interface Task {
+interface Task {
   id: string;
   title: string;
   notes: string;
@@ -21,7 +21,7 @@ export interface Task {
   version: number;
 }
 
-export interface Goal {
+interface Goal {
   id: string;
   title: string;
   description: string;
@@ -34,7 +34,7 @@ export interface Goal {
   version: number;
 }
 
-export interface Context {
+interface Context {
   id: string;
   name: string;
   sort_order: number;
@@ -44,7 +44,7 @@ export interface Context {
   version: number;
 }
 
-export interface Category {
+interface Category {
   id: string;
   name: string;
   sort_order: number;
@@ -54,7 +54,7 @@ export interface Category {
   version: number;
 }
 
-export interface ChecklistItem {
+interface ChecklistItem {
   id: string;
   task_id: string;
   title: string;
@@ -66,15 +66,15 @@ export interface ChecklistItem {
   version: number;
 }
 
-export interface Setting {
+interface Setting {
   key: string;
   value: string;
   updated_at: string;
 }
 
-export type EntityName = 'tasks' | 'goals' | 'contexts' | 'categories' | 'checklist_items';
+type EntityName = 'tasks' | 'goals' | 'contexts' | 'categories' | 'checklist_items';
 
-export interface VersionMap {
+interface VersionMap {
   tasks: number;
   goals: number;
   contexts: number;
@@ -82,14 +82,14 @@ export interface VersionMap {
   checklist_items: number;
 }
 
-export interface PushItemResult {
+interface PushItemResult {
   id: string;
   status: 'created' | 'accepted' | 'conflict';
   version?: number;
   server_record?: Task | Goal | Context | Category | ChecklistItem;
 }
 
-export interface ApiResponse {
+interface ApiResponse {
   ok: boolean;
   error?: string;
   message?: string;

@@ -1,13 +1,3 @@
-import { jsonOk, jsonError } from '../helpers/response';
-import { resolveConflict } from '../helpers/conflict';
-import * as tasksSheet from '../sheets/tasks.sheet';
-import * as goalsSheet from '../sheets/goals.sheet';
-import * as contextsSheet from '../sheets/contexts.sheet';
-import * as categoriesSheet from '../sheets/categories.sheet';
-import * as checklistsSheet from '../sheets/checklists.sheet';
-import * as settingsSheet from '../sheets/settings.sheet';
-import type { Task, Goal, Context, Category, ChecklistItem, Setting, PushItemResult } from '../types';
-
 type AnyEntity = Task | Goal | Context | Category | ChecklistItem;
 
 function processRecords<T extends AnyEntity>(
@@ -34,7 +24,7 @@ function processRecords<T extends AnyEntity>(
   });
 }
 
-export function push(changes: {
+function push(changes: {
   tasks?: Task[];
   goals?: Goal[];
   contexts?: Context[];
@@ -46,22 +36,22 @@ export function push(changes: {
     const results: Record<string, PushItemResult[]> = {};
 
     if (changes.tasks?.length) {
-      results.tasks = processRecords(changes.tasks, tasksSheet.getAll(), tasksSheet.upsert);
+      results.tasks = processRecords(changes.tasks, getAllTasks(), upsertTask);
     }
     if (changes.goals?.length) {
-      results.goals = processRecords(changes.goals, goalsSheet.getAll(), goalsSheet.upsert);
+      results.goals = processRecords(changes.goals, getAllGoals(), upsertGoal);
     }
     if (changes.contexts?.length) {
-      results.contexts = processRecords(changes.contexts, contextsSheet.getAll(), contextsSheet.upsert);
+      results.contexts = processRecords(changes.contexts, getAllContexts(), upsertContext);
     }
     if (changes.categories?.length) {
-      results.categories = processRecords(changes.categories, categoriesSheet.getAll(), categoriesSheet.upsert);
+      results.categories = processRecords(changes.categories, getAllCategories(), upsertCategory);
     }
     if (changes.checklist_items?.length) {
-      results.checklist_items = processRecords(changes.checklist_items, checklistsSheet.getAll(), checklistsSheet.upsert);
+      results.checklist_items = processRecords(changes.checklist_items, getAllChecklistItems(), upsertChecklistItem);
     }
     if (changes.settings?.length) {
-      changes.settings.forEach(s => settingsSheet.upsert(s));
+      changes.settings.forEach(s => upsertSetting(s));
       results.settings = changes.settings.map(s => ({ id: s.key, status: 'accepted' }));
     }
 

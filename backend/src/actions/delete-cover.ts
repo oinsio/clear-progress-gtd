@@ -1,7 +1,4 @@
-import { jsonOk, jsonError } from '../helpers/response';
-import { getCoverFileIds } from '../sheets/goals.sheet';
-
-export function deleteCover(payload: { file_id: string }): GoogleAppsScript.Content.TextOutput {
+function deleteCover(payload: { file_id: string }): GoogleAppsScript.Content.TextOutput {
   const { file_id } = payload;
 
   if (!file_id) {

@@ -616,7 +616,7 @@ GAS не имеет встроенного тест-фреймворка. Вар
 **Вариант A — HTTP-тесты к тестовому деплою.** Отдельный деплой GAS, привязанный к тестовой Google-таблице. Тесты (Vitest или любой HTTP-клиент) отправляют запросы и проверяют ответы.
 
 ```ts
-// gas-tests/api.test.ts
+// backend-tests/api.test.ts
 const GAS_TEST_URL = process.env.GAS_TEST_DEPLOY_URL;
 
 describe('GAS API', () => {

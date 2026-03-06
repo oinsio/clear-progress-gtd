@@ -1,8 +1,6 @@
-import { jsonOk, jsonError } from '../helpers/response';
-
 const MAX_SIZE_BYTES = 2 * 1024 * 1024; // 2 MB
 
-export function uploadCover(payload: {
+function uploadCover(payload: {
   goal_id: string;
   filename: string;
   mime_type: string;

@@ -1,11 +1,3 @@
-import { ping } from './actions/ping';
-import { init } from './actions/init';
-import { pull } from './actions/pull';
-import { push } from './actions/push';
-import { uploadCover } from './actions/upload-cover';
-import { deleteCover } from './actions/delete-cover';
-import { jsonError } from './helpers/response';
-
 // GAS entry points — must be global functions
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function doGet(e: GoogleAppsScript.Events.DoGet): GoogleAppsScript.Content.TextOutput {

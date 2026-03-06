@@ -1,7 +1,4 @@
-import { getSheet } from './client';
-import type { Goal } from '../types';
-
-const SHEET = 'Goals';
+const GOALS_SHEET = 'Goals';
 
 function rowToGoal(row: unknown[]): Goal {
   return {
@@ -26,18 +23,18 @@ function goalToRow(goal: Goal): unknown[] {
   ];
 }
 
-export function getAll(): Goal[] {
-  const sheet = getSheet(SHEET);
+function getAllGoals(): Goal[] {
+  const sheet = getSheet(GOALS_SHEET);
   const data = sheet.getDataRange().getValues();
   return data.slice(1).filter((row: any[]) => row[0]).map(rowToGoal);
 }
 
-export function getByVersion(minVersion: number): Goal[] {
-  return getAll().filter(g => g.version > minVersion);
+function getGoalsByVersion(minVersion: number): Goal[] {
+  return getAllGoals().filter(g => g.version > minVersion);
 }
 
-export function upsert(goal: Goal): void {
-  const sheet = getSheet(SHEET);
+function upsertGoal(goal: Goal): void {
+  const sheet = getSheet(GOALS_SHEET);
   const data = sheet.getDataRange().getValues();
 
   for (let i = 1; i < data.length; i++) {
@@ -50,10 +47,6 @@ export function upsert(goal: Goal): void {
   sheet.appendRow(goalToRow(goal));
 }
 
-export function bulkUpsert(goals: Goal[]): void {
-  goals.forEach(upsert);
-}
-
-export function getCoverFileIds(): string[] {
-  return getAll().map(g => g.cover_file_id).filter(Boolean);
+function getCoverFileIds(): string[] {
+  return getAllGoals().map(g => g.cover_file_id).filter(Boolean);
 }

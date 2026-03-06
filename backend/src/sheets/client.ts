@@ -2,7 +2,7 @@
 
 let _spreadsheet: GoogleAppsScript.Spreadsheet.Spreadsheet | null = null;
 
-export function getSpreadsheet(): GoogleAppsScript.Spreadsheet.Spreadsheet {
+function getSpreadsheet(): GoogleAppsScript.Spreadsheet.Spreadsheet {
   if (_spreadsheet) return _spreadsheet;
 
   const spreadsheetId = PropertiesService.getScriptProperties().getProperty('SPREADSHEET_ID');
@@ -14,7 +14,7 @@ export function getSpreadsheet(): GoogleAppsScript.Spreadsheet.Spreadsheet {
   return _spreadsheet;
 }
 
-export function getSheet(name: string): GoogleAppsScript.Spreadsheet.Sheet {
+function getSheet(name: string): GoogleAppsScript.Spreadsheet.Sheet {
   const sheet = getSpreadsheet().getSheetByName(name);
   if (!sheet) {
     throw new Error(`Sheet not found: ${name}`);

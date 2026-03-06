@@ -1,6 +1,3 @@
-import { jsonOk } from '../helpers/response';
-import { initDefaults } from '../sheets/settings.sheet';
-
 const FOLDER_NAME = 'Clear_Progress';
 const FILE_NAME = 'Clear_Progress_Data';
 const COVERS_FOLDER_NAME = 'Covers';
@@ -14,7 +11,7 @@ const SHEET_HEADERS: Record<string, string[]> = {
   Settings: ['key', 'value', 'updated_at'],
 };
 
-export function init(): GoogleAppsScript.Content.TextOutput {
+function init(): GoogleAppsScript.Content.TextOutput {
   const props = PropertiesService.getScriptProperties();
   const existingSpreadsheetId = props.getProperty('SPREADSHEET_ID');
 

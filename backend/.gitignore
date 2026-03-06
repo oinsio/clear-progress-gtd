@@ -3,3 +3,6 @@
 
 # clasp config (contains script ID)
 .clasp.json
+
+dist/
+node_modules/

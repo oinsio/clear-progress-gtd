@@ -1,8 +1,8 @@
 // Last-write-wins conflict resolution by updated_at
 
-export type ConflictResult = 'accept' | 'conflict';
+type ConflictResult = 'accept' | 'conflict';
 
-export function resolveConflict(
+function resolveConflict(
   clientUpdatedAt: string,
   serverUpdatedAt: string
 ): ConflictResult {
