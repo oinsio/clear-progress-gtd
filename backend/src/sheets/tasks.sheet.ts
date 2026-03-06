@@ -1,4 +1,3 @@
-const TASKS_SHEET = 'Tasks';
 const COLUMNS = [
   'id', 'title', 'notes', 'box', 'goal_id', 'context_id', 'category_id',
   'is_completed', 'completed_at', 'repeat_rule', 'sort_order',
@@ -36,7 +35,7 @@ function taskToRow(task: Task): unknown[] {
 }
 
 function getAllTasks(): Task[] {
-  const sheet = getSheet(TASKS_SHEET);
+  const sheet = getSheet(SHEET_NAMES.TASKS);
   const data: unknown[][] = sheet.getDataRange().getValues();
   return data.slice(1).filter((row: unknown[]) => row[0]).map(rowToTask);
 }
@@ -46,7 +45,7 @@ function getTasksByVersion(minVersion: number): Task[] {
 }
 
 function upsertTask(task: Task): void {
-  const sheet = getSheet(TASKS_SHEET);
+  const sheet = getSheet(SHEET_NAMES.TASKS);
   const data = sheet.getDataRange().getValues();
 
   for (let i = 1; i < data.length; i++) {

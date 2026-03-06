@@ -1,5 +1,3 @@
-const GOALS_SHEET = 'Goals';
-
 function rowToGoal(row: unknown[]): Goal {
   return {
     id: String(row[0] ?? ''),
@@ -24,7 +22,7 @@ function goalToRow(goal: Goal): unknown[] {
 }
 
 function getAllGoals(): Goal[] {
-  const sheet = getSheet(GOALS_SHEET);
+  const sheet = getSheet(SHEET_NAMES.GOALS);
   const data = sheet.getDataRange().getValues();
   return data.slice(1).filter((row: any[]) => row[0]).map(rowToGoal);
 }
@@ -34,7 +32,7 @@ function getGoalsByVersion(minVersion: number): Goal[] {
 }
 
 function upsertGoal(goal: Goal): void {
-  const sheet = getSheet(GOALS_SHEET);
+  const sheet = getSheet(SHEET_NAMES.GOALS);
   const data = sheet.getDataRange().getValues();
 
   for (let i = 1; i < data.length; i++) {

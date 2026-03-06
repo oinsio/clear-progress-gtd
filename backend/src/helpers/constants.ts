@@ -1,3 +1,15 @@
+const APP_NAME = 'clear_progress';
+const API_VERSION = '1.0';
+
+const SHEET_NAMES = {
+  TASKS: 'Tasks',
+  GOALS: 'Goals',
+  CONTEXTS: 'Contexts',
+  CATEGORIES: 'Categories',
+  CHECKLIST_ITEMS: 'Checklist_Items',
+  SETTINGS: 'Settings',
+} as const;
+
 const PROPERTY_KEYS = {
   SPREADSHEET_ID: 'SPREADSHEET_ID',
   FOLDER_ID: 'FOLDER_ID',

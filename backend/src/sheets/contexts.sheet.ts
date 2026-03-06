@@ -1,5 +1,3 @@
-const CONTEXTS_SHEET = 'Contexts';
-
 function rowToContext(row: unknown[]): Context {
   return {
     id: String(row[0] ?? ''),
@@ -17,7 +15,7 @@ function contextToRow(ctx: Context): unknown[] {
 }
 
 function getAllContexts(): Context[] {
-  const sheet = getSheet(CONTEXTS_SHEET);
+  const sheet = getSheet(SHEET_NAMES.CONTEXTS);
   return sheet.getDataRange().getValues().slice(1).filter((row: any[]) => row[0]).map(rowToContext);
 }
 
@@ -26,7 +24,7 @@ function getContextsByVersion(minVersion: number): Context[] {
 }
 
 function upsertContext(ctx: Context): void {
-  const sheet = getSheet(CONTEXTS_SHEET);
+  const sheet = getSheet(SHEET_NAMES.CONTEXTS);
   const data = sheet.getDataRange().getValues();
   for (let i = 1; i < data.length; i++) {
     if (data[i][0] === ctx.id) {

@@ -1,5 +1,3 @@
-const CHECKLISTS_SHEET = 'Checklist_Items';
-
 function rowToItem(row: unknown[]): ChecklistItem {
   return {
     id: String(row[0] ?? ''),
@@ -22,7 +20,7 @@ function itemToRow(item: ChecklistItem): unknown[] {
 }
 
 function getAllChecklistItems(): ChecklistItem[] {
-  const sheet = getSheet(CHECKLISTS_SHEET);
+  const sheet = getSheet(SHEET_NAMES.CHECKLIST_ITEMS);
   return sheet.getDataRange().getValues().slice(1).filter((row: any[]) => row[0]).map(rowToItem);
 }
 
@@ -31,7 +29,7 @@ function getChecklistItemsByVersion(minVersion: number): ChecklistItem[] {
 }
 
 function upsertChecklistItem(item: ChecklistItem): void {
-  const sheet = getSheet(CHECKLISTS_SHEET);
+  const sheet = getSheet(SHEET_NAMES.CHECKLIST_ITEMS);
   const data = sheet.getDataRange().getValues();
   for (let i = 1; i < data.length; i++) {
     if (data[i][0] === item.id) {

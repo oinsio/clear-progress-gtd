@@ -1,5 +1,3 @@
-const CATEGORIES_SHEET = 'Categories';
-
 function rowToCategory(row: unknown[]): Category {
   return {
     id: String(row[0] ?? ''),
@@ -17,7 +15,7 @@ function categoryToRow(category: Category): unknown[] {
 }
 
 function getAllCategories(): Category[] {
-  const sheet = getSheet(CATEGORIES_SHEET);
+  const sheet = getSheet(SHEET_NAMES.CATEGORIES);
   return sheet.getDataRange().getValues().slice(1).filter((row: any[]) => row[0]).map(rowToCategory);
 }
 
@@ -26,7 +24,7 @@ function getCategoriesByVersion(minVersion: number): Category[] {
 }
 
 function upsertCategory(category: Category): void {
-  const sheet = getSheet(CATEGORIES_SHEET);
+  const sheet = getSheet(SHEET_NAMES.CATEGORIES);
   const data = sheet.getDataRange().getValues();
   for (let i = 1; i < data.length; i++) {
     if (data[i][0] === category.id) {
