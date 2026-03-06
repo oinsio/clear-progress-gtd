@@ -8,6 +8,12 @@ http:
   url: "{{coverUrl}}"
   auth: inherit
 
+runtime:
+  assertions:
+    - expression: Number(res.headers['content-length'])
+      operator: gt
+      value: "0"
+
 settings:
   encodeUrl: true
   timeout: 0

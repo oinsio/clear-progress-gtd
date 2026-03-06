@@ -51,6 +51,9 @@ runtime:
         console.log("The image selected from", selectedVarName);
         const base64Data = bru.getCollectionVar(selectedVarName);
         bru.setVar("coverBase64Data", base64Data);
+  assertions:
+    - expression: res.body.ok
+      operator: isTruthy
   actions:
     - type: set-variable
       phase: after-response

@@ -19,6 +19,11 @@ http:
       }
   auth: inherit
 
+runtime:
+  assertions:
+    - expression: res.body.ok
+      operator: isTruthy
+
 settings:
   encodeUrl: false
   timeout: 0

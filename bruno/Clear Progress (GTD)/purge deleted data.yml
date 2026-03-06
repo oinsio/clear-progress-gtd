@@ -27,6 +27,12 @@ runtime:
     - name: confirm
       value: "false"
       disabled: true
+  assertions:
+    - expression: res.body.ok
+      operator: isFalsy
+    - expression: res.body.message
+      operator: eq
+      value: "Unknown action: purge"
 
 settings:
   encodeUrl: false
