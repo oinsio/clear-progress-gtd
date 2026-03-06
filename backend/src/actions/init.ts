@@ -1,12 +1,3 @@
-const SHEET_HEADERS: Record<string, string[]> = {
-  Tasks: ['id', 'title', 'notes', 'box', 'goal_id', 'context_id', 'category_id', 'is_completed', 'completed_at', 'repeat_rule', 'sort_order', 'is_deleted', 'created_at', 'updated_at', 'version'],
-  Goals: ['id', 'title', 'description', 'cover_file_id', 'status', 'sort_order', 'is_deleted', 'created_at', 'updated_at', 'version'],
-  Contexts: ['id', 'name', 'sort_order', 'is_deleted', 'created_at', 'updated_at', 'version'],
-  Categories: ['id', 'name', 'sort_order', 'is_deleted', 'created_at', 'updated_at', 'version'],
-  Checklist_Items: ['id', 'task_id', 'title', 'is_completed', 'sort_order', 'is_deleted', 'created_at', 'updated_at', 'version'],
-  Settings: ['key', 'value', 'updated_at'],
-};
-
 function init(): GoogleAppsScript.Content.TextOutput {
   const props = PropertiesService.getScriptProperties();
   const existingSpreadsheetId = props.getProperty(PROPERTY_KEYS.SPREADSHEET_ID);
