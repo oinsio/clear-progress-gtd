@@ -22,16 +22,16 @@ function uploadCover(payload: {
     return jsonError('NOT_INITIALIZED', 'Call init before using the API');
   }
 
-  const coversFolder = DriveApp.getFolderById(coversFolderId);
-
   // Check for deduplication
-  const files = coversFolder.getFiles();
-  while (files.hasNext()) {
-    const file = files.next();
-    if (file.getDescription() === hash) {
+  const fileList = Drive.Files.list({
+    q: `'${coversFolderId}' in parents and trashed = false`,
+    fields: 'files(id,description)',
+  });
+  for (const f of (fileList.files ?? [])) {
+    if (f.description === hash) {
       return jsonOk({
-        file_id: file.getId(),
-        thumbnail_url: `https://drive.google.com/thumbnail?id=${file.getId()}&sz=w400`,
+        file_id: f.id,
+        thumbnail_url: `https://drive.google.com/thumbnail?id=${f.id}&sz=w400`,
         reused: true,
       });
     }
@@ -41,13 +41,15 @@ function uploadCover(payload: {
   const ext = filename.split('.').pop() ?? 'jpg';
   const newFilename = `${hash.substring(0, 12)}.${ext}`;
   const blob = Utilities.newBlob(decoded, mime_type, newFilename);
-  const file = coversFolder.createFile(blob);
-  file.setDescription(hash);
-  file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+  const newFile = Drive.Files.create(
+    { name: newFilename, description: hash, parents: [coversFolderId] },
+    blob,
+  );
+  Drive.Permissions.create({ role: 'reader', type: 'anyone' }, newFile.id!);
 
   return jsonOk({
-    file_id: file.getId(),
-    thumbnail_url: `https://drive.google.com/thumbnail?id=${file.getId()}&sz=w400`,
+    file_id: newFile.id,
+    thumbnail_url: `https://drive.google.com/thumbnail?id=${newFile.id}&sz=w400`,
     reused: false,
   });
 }

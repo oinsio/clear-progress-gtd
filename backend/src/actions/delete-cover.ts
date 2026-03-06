@@ -13,7 +13,7 @@ function deleteCover(payload: { file_id: string }): GoogleAppsScript.Content.Tex
   }
 
   try {
-    DriveApp.getFileById(file_id).setTrashed(true);
+    Drive.Files.update({ trashed: true }, file_id);
     return jsonOk({ deleted: true, ref_count: 0 });
   } catch {
     return jsonError('FILE_NOT_FOUND', `File not found: ${file_id}`);

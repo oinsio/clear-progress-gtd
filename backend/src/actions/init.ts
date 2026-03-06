@@ -20,12 +20,23 @@ function init(): GoogleAppsScript.Content.TextOutput {
   }
 
   // Create folder structure
-  const rootFolder = DriveApp.createFolder(FOLDER_NAME);
-  const coversFolder = rootFolder.createFolder(COVERS_FOLDER_NAME);
+  const rootFolderFile = Drive.Files.create({ name: FOLDER_NAME, mimeType: 'application/vnd.google-apps.folder' });
+  const rootFolderId = rootFolderFile.id!;
+
+  const coversFolderFile = Drive.Files.create({
+    name: COVERS_FOLDER_NAME,
+    mimeType: 'application/vnd.google-apps.folder',
+    parents: [rootFolderId],
+  });
+  const coversFolderId = coversFolderFile.id!;
 
   // Create spreadsheet
-  const spreadsheet = SpreadsheetApp.create(FILE_NAME);
-  DriveApp.getFileById(spreadsheet.getId()).moveTo(rootFolder);
+  const spreadsheetFile = Drive.Files.create({
+    name: FILE_NAME,
+    mimeType: 'application/vnd.google-apps.spreadsheet',
+    parents: [rootFolderId],
+  });
+  const spreadsheet = SpreadsheetApp.openById(spreadsheetFile.id!);
 
   // Create sheets with headers
   const defaultSheet = spreadsheet.getSheets()[0];
@@ -45,12 +56,12 @@ function init(): GoogleAppsScript.Content.TextOutput {
   // Save IDs
   props.setProperties({
     SPREADSHEET_ID: spreadsheet.getId(),
-    FOLDER_ID: rootFolder.getId(),
-    COVERS_FOLDER_ID: coversFolder.getId(),
+    FOLDER_ID: rootFolderId,
+    COVERS_FOLDER_ID: coversFolderId,
   });
 
   // Write default settings
   initDefaults();
 
-  return jsonOk({ created: true, spreadsheet_id: spreadsheet.getId(), folder_id: rootFolder.getId() });
+  return jsonOk({ created: true, spreadsheet_id: spreadsheet.getId(), folder_id: rootFolderId });
 }
