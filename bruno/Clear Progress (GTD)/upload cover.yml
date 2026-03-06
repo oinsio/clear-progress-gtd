@@ -1,0 +1,76 @@
+info:
+  name: upload cover
+  type: http
+  seq: 8
+
+http:
+  method: post
+  url: https://script.google.com/macros/s/{{deploymentId}}/exec#upload_cover
+  headers:
+    - name: accept
+      value: application/json
+    - name: Content-Type
+      value: application/json
+  body:
+    type: json
+    data: |-
+      {
+        "action": "upload_cover",
+        "goal_id": "{{$randomUUID}}",
+        "filename": "{{$randomCatchPhraseAdjective}}-{{$randomCatchPhraseNoun}}.jpg",
+        "mime_type": "image/jpeg",
+        "data": "{{coverBase64Data}}"
+      }
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: before-request
+      code: |-
+        // 1. List of options and weights
+        const options = [
+          { varName: "cover_1", weight: 40 },
+          { varName: "cover_2", weight: 10 },
+          { varName: "cover_3", weight: 50 }
+        ];
+
+        // 2. Select based on weights
+        const totalWeight = options.reduce((sum, opt) => sum + opt.weight, 0);
+        let randomNum = Math.random() * totalWeight;
+
+        let selectedVarName;
+        for (const option of options) {
+          if (randomNum < option.weight) {
+            selectedVarName = option.varName;
+            break;
+          }
+          randomNum -= option.weight;
+        }
+
+        // 3. Set result to variable
+        console.log("The image selected from", selectedVarName);
+        const base64Data = bru.getCollectionVar(selectedVarName);
+        bru.setVar("coverBase64Data", base64Data);
+  actions:
+    - type: set-variable
+      phase: after-response
+      selector:
+        expression: res.body.thumbnail_url
+        method: jsonq
+      variable:
+        name: coverUrl
+        scope: runtime
+    - type: set-variable
+      phase: after-response
+      selector:
+        expression: res.body.file_id
+        method: jsonq
+      variable:
+        name: fileId
+        scope: runtime
+
+settings:
+  encodeUrl: false
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

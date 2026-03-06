@@ -1,0 +1,33 @@
+info:
+  name: incremental pull
+  type: http
+  seq: 4
+
+http:
+  method: post
+  url: https://script.google.com/macros/s/{{deploymentId}}/exec#pull
+  headers:
+    - name: accept
+      value: application/json
+    - name: Content-Type
+      value: application/json
+  body:
+    type: json
+    data: |-
+      {
+        "action": "pull",
+        "versions": {
+          "tasks": 38,
+          "goals": 5,
+          "contexts": 1,
+          "categories": 1,
+          "checklist_items": 2
+        }
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: false
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

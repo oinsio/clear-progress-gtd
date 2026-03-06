@@ -1,0 +1,26 @@
+info:
+  name: init
+  type: http
+  seq: 2
+
+http:
+  method: post
+  url: https://script.google.com/macros/s/{{deploymentId}}/exec#init
+  headers:
+    - name: accept
+      value: application/json
+    - name: Content-Type
+      value: application/json
+  body:
+    type: json
+    data: |-
+      {
+        "action": "init"
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: false
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

@@ -1,0 +1,35 @@
+info:
+  name: purge deleted data
+  type: http
+  seq: 11
+
+http:
+  method: post
+  url: https://script.google.com/macros/s/{{deploymentId}}/exec#purge
+  headers:
+    - name: accept
+      value: application/json
+    - name: Content-Type
+      value: application/json
+  body:
+    type: json
+    data: |-
+      {
+        "action": "purge",
+        "confirm": {{confirm}}
+      }
+  auth: inherit
+
+runtime:
+  variables:
+    - name: confirm
+      value: "true"
+    - name: confirm
+      value: "false"
+      disabled: true
+
+settings:
+  encodeUrl: false
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

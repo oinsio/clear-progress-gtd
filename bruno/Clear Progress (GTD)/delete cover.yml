@@ -1,0 +1,27 @@
+info:
+  name: delete cover
+  type: http
+  seq: 10
+
+http:
+  method: post
+  url: https://script.google.com/macros/s/{{deploymentId}}/exec#delete_cover
+  headers:
+    - name: accept
+      value: application/json
+    - name: Content-Type
+      value: application/json
+  body:
+    type: json
+    data: |-
+      {
+        "action": "delete_cover",
+        "file_id": "{{fileId}}"
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: false
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

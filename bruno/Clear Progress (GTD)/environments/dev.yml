@@ -1,0 +1,4 @@
+name: dev
+variables:
+  - name: ENVIRONMENT_PREFIX
+    value: DEV_

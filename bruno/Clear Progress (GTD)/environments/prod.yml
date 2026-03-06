@@ -1,0 +1,4 @@
+name: prod
+variables:
+  - name: ENVIRONMENT_PREFIX
+    value: PROD_

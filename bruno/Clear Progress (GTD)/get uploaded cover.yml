@@ -1,0 +1,15 @@
+info:
+  name: get uploaded cover
+  type: http
+  seq: 9
+
+http:
+  method: GET
+  url: "{{coverUrl}}"
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

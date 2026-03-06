@@ -1,0 +1,4 @@
+name: qa
+variables:
+  - name: ENVIRONMENT_PREFIX
+    value: QA_

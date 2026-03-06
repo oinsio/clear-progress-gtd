@@ -1,0 +1,52 @@
+info:
+  name: soft-delete a task
+  type: http
+  seq: 7
+
+http:
+  method: post
+  url: https://script.google.com/macros/s/{{deploymentId}}/exec#push
+  headers:
+    - name: accept
+      value: application/json
+    - name: Content-Type
+      value: application/json
+  body:
+    type: json
+    data: |-
+      {
+        "action": "push",
+        "changes": {
+          "tasks": [
+            {
+              "id": "{{$randomUUID}}",
+              "title": "Call the dentist",
+              "notes": "",
+              "box": "today",
+              "goal_id": "",
+              "context_id": "",
+              "category_id": "",
+              "is_completed": false,
+              "completed_at": "",
+              "repeat_rule": "",
+              "sort_order": 3000,
+              "is_deleted": true,
+              "created_at": "{{$isoTimestamp}}",
+              "updated_at": "{{$isoTimestamp}}",
+              "version": 4
+            }
+          ],
+          "goals": [],
+          "contexts": [],
+          "categories": [],
+          "checklist_items": [],
+          "settings": []
+        }
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: false
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

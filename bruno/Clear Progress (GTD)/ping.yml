@@ -1,0 +1,19 @@
+info:
+  name: ping
+  type: http
+  seq: 1
+
+http:
+  method: get
+  url: https://script.google.com/macros/s/{{deploymentId}}/exec?action=ping
+  params:
+    - name: action
+      value: ping
+      type: query
+  auth: inherit
+
+settings:
+  encodeUrl: false
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

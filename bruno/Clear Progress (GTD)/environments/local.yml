@@ -1,0 +1,4 @@
+name: local
+variables:
+  - name: ENVIRONMENT_PREFIX
+    value: LOCAL_
