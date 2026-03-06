@@ -10,6 +10,17 @@ const SHEET_NAMES = {
   SETTINGS: 'Settings',
 } as const;
 
+const DRIVE_FOLDER_NAMES = {
+  ROOT: 'Clear_Progress',
+  DATA_FILE: 'Clear_Progress_Data',
+  COVERS: 'Covers',
+} as const;
+
+const DRIVE_MIME_TYPES = {
+  FOLDER: 'application/vnd.google-apps.folder',
+  SPREADSHEET: 'application/vnd.google-apps.spreadsheet',
+} as const;
+
 const PROPERTY_KEYS = {
   SPREADSHEET_ID: 'SPREADSHEET_ID',
   FOLDER_ID: 'FOLDER_ID',

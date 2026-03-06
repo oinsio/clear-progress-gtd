@@ -1,7 +1,3 @@
-const FOLDER_NAME = 'Clear_Progress';
-const FILE_NAME = 'Clear_Progress_Data';
-const COVERS_FOLDER_NAME = 'Covers';
-
 const SHEET_HEADERS: Record<string, string[]> = {
   Tasks: ['id', 'title', 'notes', 'box', 'goal_id', 'context_id', 'category_id', 'is_completed', 'completed_at', 'repeat_rule', 'sort_order', 'is_deleted', 'created_at', 'updated_at', 'version'],
   Goals: ['id', 'title', 'description', 'cover_file_id', 'status', 'sort_order', 'is_deleted', 'created_at', 'updated_at', 'version'],
@@ -23,20 +19,20 @@ function init(): GoogleAppsScript.Content.TextOutput {
   }
 
   // Create folder structure
-  const rootFolderFile = Drive.Files.create({ name: FOLDER_NAME, mimeType: 'application/vnd.google-apps.folder' });
+  const rootFolderFile = Drive.Files.create({ name: DRIVE_FOLDER_NAMES.ROOT, mimeType: DRIVE_MIME_TYPES.FOLDER });
   const rootFolderId = rootFolderFile.id!;
 
   const coversFolderFile = Drive.Files.create({
-    name: COVERS_FOLDER_NAME,
-    mimeType: 'application/vnd.google-apps.folder',
+    name: DRIVE_FOLDER_NAMES.COVERS,
+    mimeType: DRIVE_MIME_TYPES.FOLDER,
     parents: [rootFolderId],
   });
   const coversFolderId = coversFolderFile.id!;
 
   // Create spreadsheet
   const spreadsheetFile = Drive.Files.create({
-    name: FILE_NAME,
-    mimeType: 'application/vnd.google-apps.spreadsheet',
+    name: DRIVE_FOLDER_NAMES.DATA_FILE,
+    mimeType: DRIVE_MIME_TYPES.SPREADSHEET,
     parents: [rootFolderId],
   });
   const spreadsheet = SpreadsheetApp.openById(spreadsheetFile.id!);
