@@ -1,4 +1,7 @@
-function validateTask(task: Partial<Task>): string[] {
+import { VALIDATION_MESSAGES, VALID_BOXES, VALID_GOAL_STATUSES } from './constants';
+import type { Task, Goal } from '../types';
+
+export function validateTask(task: Partial<Task>): string[] {
   const errors: string[] = [];
   if (!task.id) errors.push(VALIDATION_MESSAGES.ID_REQUIRED);
   if (!task.title) errors.push(VALIDATION_MESSAGES.TITLE_REQUIRED);
@@ -8,7 +11,7 @@ function validateTask(task: Partial<Task>): string[] {
   return errors;
 }
 
-function validateGoal(goal: Partial<Goal>): string[] {
+export function validateGoal(goal: Partial<Goal>): string[] {
   const errors: string[] = [];
   if (!goal.id) errors.push(VALIDATION_MESSAGES.ID_REQUIRED);
   if (!goal.title) errors.push(VALIDATION_MESSAGES.TITLE_REQUIRED);

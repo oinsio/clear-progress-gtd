@@ -1,3 +1,7 @@
+import { SHEET_NAMES, SHEET_HEADERS, colMap, coerceSheetBool, coerceSheetBox } from '../helpers/constants';
+import { getSheet } from './client';
+import type { Task } from '../types';
+
 const COLS = colMap(SHEET_NAMES.TASKS);
 
 function rowToTask(row: unknown[]): Task {
@@ -24,17 +28,17 @@ function taskToRow(task: Task): unknown[] {
   return SHEET_HEADERS[SHEET_NAMES.TASKS].map(col => (task as unknown as Record<string, unknown>)[col]);
 }
 
-function getAllTasks(): Task[] {
+export function getAllTasks(): Task[] {
   const sheet = getSheet(SHEET_NAMES.TASKS);
   const data: unknown[][] = sheet.getDataRange().getValues();
   return data.slice(1).filter((row: unknown[]) => row[0]).map(rowToTask);
 }
 
-function getTasksByVersion(minVersion: number): Task[] {
+export function getTasksByVersion(minVersion: number): Task[] {
   return getAllTasks().filter(t => t.version > minVersion);
 }
 
-function upsertTask(task: Task): void {
+export function upsertTask(task: Task): void {
   const sheet = getSheet(SHEET_NAMES.TASKS);
   const data = sheet.getDataRange().getValues();
 
@@ -47,4 +51,20 @@ function upsertTask(task: Task): void {
   }
 
   sheet.appendRow(taskToRow(task));
+}
+
+export function deleteTasksByIds(ids: string[]): number {
+  const sheet = getSheet(SHEET_NAMES.TASKS);
+  const data = sheet.getDataRange().getValues();
+  const idSet = new Set(ids);
+
+  const rowsToDelete: number[] = [];
+  for (let i = data.length - 1; i >= 1; i--) {
+    if (idSet.has(String(data[i][0]))) {
+      rowsToDelete.push(i + 1);
+    }
+  }
+
+  rowsToDelete.forEach(rowIndex => sheet.deleteRow(rowIndex));
+  return rowsToDelete.length;
 }

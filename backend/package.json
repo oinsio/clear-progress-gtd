@@ -1,8 +1,17 @@
 {
   "name": "clear-progress-gas",
   "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "node esbuild.config.mjs && cp appsscript.json dist/",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
   "devDependencies": {
     "@types/google-apps-script": "^1.0.0",
-    "typescript": "^5.0.0"
+    "esbuild": "^0.27.3",
+    "typescript": "^5.0.0",
+    "vitest": "^4.0.18"
   }
 }

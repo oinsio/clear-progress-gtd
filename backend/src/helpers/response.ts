@@ -1,11 +1,13 @@
-function jsonOk(data: object): GoogleAppsScript.Content.TextOutput {
+import { ERROR_MESSAGES } from './constants';
+
+export function jsonOk(data: object): GoogleAppsScript.Content.TextOutput {
   const payload = JSON.stringify({ ok: true, ...data });
   return ContentService.createTextOutput(payload).setMimeType(
     ContentService.MimeType.JSON
   );
 }
 
-function jsonError(
+export function jsonError(
   error: string,
   message: string
 ): GoogleAppsScript.Content.TextOutput {
@@ -15,7 +17,7 @@ function jsonError(
   );
 }
 
-const ERROR_CODES = {
+export const ERROR_CODES = {
   INVALID_ACTION: 'INVALID_ACTION',
   INVALID_PAYLOAD: 'INVALID_PAYLOAD',
   NOT_INITIALIZED: 'NOT_INITIALIZED',
@@ -24,6 +26,6 @@ const ERROR_CODES = {
   FILE_NOT_FOUND: 'FILE_NOT_FOUND',
 } as const;
 
-function jsonNotInitialized(): GoogleAppsScript.Content.TextOutput {
+export function jsonNotInitialized(): GoogleAppsScript.Content.TextOutput {
   return jsonError(ERROR_CODES.NOT_INITIALIZED, ERROR_MESSAGES.INIT_REQUIRED);
 }

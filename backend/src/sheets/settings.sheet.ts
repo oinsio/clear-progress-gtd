@@ -1,3 +1,7 @@
+import { SHEET_NAMES, SHEET_HEADERS, colMap, DEFAULT_SETTINGS } from '../helpers/constants';
+import { getSheet } from './client';
+import type { Setting } from '../types';
+
 const SET_COLS = colMap(SHEET_NAMES.SETTINGS);
 
 const DEFAULTS: Setting[] = [
@@ -9,7 +13,7 @@ function settingToRow(setting: Setting): unknown[] {
   return SHEET_HEADERS[SHEET_NAMES.SETTINGS].map(col => (setting as unknown as Record<string, unknown>)[col]);
 }
 
-function getAllSettings(): Setting[] {
+export function getAllSettings(): Setting[] {
   const sheet = getSheet(SHEET_NAMES.SETTINGS);
   const data = sheet.getDataRange().getValues();
   return data.slice(1).filter((row: unknown[]) => row[0]).map((row: unknown[]) => ({
@@ -19,7 +23,7 @@ function getAllSettings(): Setting[] {
   }));
 }
 
-function upsertSetting(setting: Setting): void {
+export function upsertSetting(setting: Setting): void {
   const sheet = getSheet(SHEET_NAMES.SETTINGS);
   const data = sheet.getDataRange().getValues();
   for (let i = 1; i < data.length; i++) {
@@ -31,9 +35,9 @@ function upsertSetting(setting: Setting): void {
   sheet.appendRow(settingToRow(setting));
 }
 
-function initDefaults(): void {
-  const existing = getAllSettings().map(s => s.key);
+export function initDefaults(): void {
+  const existingKeys = getAllSettings().map(s => s.key);
   DEFAULTS.forEach(def => {
-    if (!existing.includes(def.key)) upsertSetting(def);
+    if (!existingKeys.includes(def.key)) upsertSetting(def);
   });
 }

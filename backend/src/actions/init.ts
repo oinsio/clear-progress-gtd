@@ -1,4 +1,9 @@
-function init(): GoogleAppsScript.Content.TextOutput {
+import { PROPERTY_KEYS, DRIVE_FOLDER_NAMES, DRIVE_MIME_TYPES, SHEET_HEADERS } from '../helpers/constants';
+import { jsonOk } from '../helpers/response';
+import { driveFileExists } from '../helpers/drive';
+import { initDefaults } from '../sheets/settings.sheet';
+
+export function init(): GoogleAppsScript.Content.TextOutput {
   const props = PropertiesService.getScriptProperties();
   const existingSpreadsheetId = props.getProperty(PROPERTY_KEYS.SPREADSHEET_ID);
 

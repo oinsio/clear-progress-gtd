@@ -1,3 +1,7 @@
+import { SHEET_NAMES, SHEET_HEADERS, colMap, coerceSheetBool } from '../helpers/constants';
+import { getSheet } from './client';
+import type { Category } from '../types';
+
 const CAT_COLS = colMap(SHEET_NAMES.CATEGORIES);
 
 function rowToCategory(row: unknown[]): Category {
@@ -16,16 +20,16 @@ function categoryToRow(category: Category): unknown[] {
   return SHEET_HEADERS[SHEET_NAMES.CATEGORIES].map(col => (category as unknown as Record<string, unknown>)[col]);
 }
 
-function getAllCategories(): Category[] {
+export function getAllCategories(): Category[] {
   const sheet = getSheet(SHEET_NAMES.CATEGORIES);
   return sheet.getDataRange().getValues().slice(1).filter((row: unknown[]) => row[0]).map(rowToCategory);
 }
 
-function getCategoriesByVersion(minVersion: number): Category[] {
+export function getCategoriesByVersion(minVersion: number): Category[] {
   return getAllCategories().filter(c => c.version > minVersion);
 }
 
-function upsertCategory(category: Category): void {
+export function upsertCategory(category: Category): void {
   const sheet = getSheet(SHEET_NAMES.CATEGORIES);
   const data = sheet.getDataRange().getValues();
   for (let i = 1; i < data.length; i++) {
@@ -35,4 +39,20 @@ function upsertCategory(category: Category): void {
     }
   }
   sheet.appendRow(categoryToRow(category));
+}
+
+export function deleteCategoriesByIds(ids: string[]): number {
+  const sheet = getSheet(SHEET_NAMES.CATEGORIES);
+  const data = sheet.getDataRange().getValues();
+  const idSet = new Set(ids);
+
+  const rowsToDelete: number[] = [];
+  for (let i = data.length - 1; i >= 1; i--) {
+    if (idSet.has(String(data[i][0]))) {
+      rowsToDelete.push(i + 1);
+    }
+  }
+
+  rowsToDelete.forEach(rowIndex => sheet.deleteRow(rowIndex));
+  return rowsToDelete.length;
 }

@@ -1,4 +1,17 @@
-function uploadCover(payload: {
+import {
+  MAX_COVER_SIZE_BYTES,
+  COVER_HASH_PREFIX_LENGTH,
+  DEFAULT_COVER_EXTENSION,
+  PROPERTY_KEYS,
+  DRIVE_QUERY_FIELDS,
+  DRIVE_PERMISSIONS,
+  ERROR_MESSAGES,
+  buildFolderQuery,
+  thumbnailUrl,
+} from '../helpers/constants';
+import { jsonOk, jsonError, jsonNotInitialized, ERROR_CODES } from '../helpers/response';
+
+export function uploadCover(payload: {
   goal_id: string;
   filename: string;
   mime_type: string;

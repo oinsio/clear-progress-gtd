@@ -1,3 +1,7 @@
+import { SHEET_NAMES, SHEET_HEADERS, colMap, coerceSheetBool, coerceSheetGoalStatus } from '../helpers/constants';
+import { getSheet } from './client';
+import type { Goal } from '../types';
+
 const GOAL_COLS = colMap(SHEET_NAMES.GOALS);
 
 function rowToGoal(row: unknown[]): Goal {
@@ -19,17 +23,17 @@ function goalToRow(goal: Goal): unknown[] {
   return SHEET_HEADERS[SHEET_NAMES.GOALS].map(col => (goal as unknown as Record<string, unknown>)[col]);
 }
 
-function getAllGoals(): Goal[] {
+export function getAllGoals(): Goal[] {
   const sheet = getSheet(SHEET_NAMES.GOALS);
   const data = sheet.getDataRange().getValues();
   return data.slice(1).filter((row: unknown[]) => row[0]).map(rowToGoal);
 }
 
-function getGoalsByVersion(minVersion: number): Goal[] {
+export function getGoalsByVersion(minVersion: number): Goal[] {
   return getAllGoals().filter(g => g.version > minVersion);
 }
 
-function upsertGoal(goal: Goal): void {
+export function upsertGoal(goal: Goal): void {
   const sheet = getSheet(SHEET_NAMES.GOALS);
   const data = sheet.getDataRange().getValues();
 
@@ -43,6 +47,22 @@ function upsertGoal(goal: Goal): void {
   sheet.appendRow(goalToRow(goal));
 }
 
-function getCoverFileIds(): string[] {
+export function getCoverFileIds(): string[] {
   return getAllGoals().map(g => g.cover_file_id).filter(Boolean);
+}
+
+export function deleteGoalsByIds(ids: string[]): number {
+  const sheet = getSheet(SHEET_NAMES.GOALS);
+  const data = sheet.getDataRange().getValues();
+  const idSet = new Set(ids);
+
+  const rowsToDelete: number[] = [];
+  for (let i = data.length - 1; i >= 1; i--) {
+    if (idSet.has(String(data[i][0]))) {
+      rowsToDelete.push(i + 1);
+    }
+  }
+
+  rowsToDelete.forEach(rowIndex => sheet.deleteRow(rowIndex));
+  return rowsToDelete.length;
 }

@@ -1,3 +1,7 @@
+import { SHEET_NAMES, SHEET_HEADERS, colMap, coerceSheetBool } from '../helpers/constants';
+import { getSheet } from './client';
+import type { ChecklistItem } from '../types';
+
 const ITEM_COLS = colMap(SHEET_NAMES.CHECKLIST_ITEMS);
 
 function rowToItem(row: unknown[]): ChecklistItem {
@@ -18,16 +22,16 @@ function itemToRow(item: ChecklistItem): unknown[] {
   return SHEET_HEADERS[SHEET_NAMES.CHECKLIST_ITEMS].map(col => (item as unknown as Record<string, unknown>)[col]);
 }
 
-function getAllChecklistItems(): ChecklistItem[] {
+export function getAllChecklistItems(): ChecklistItem[] {
   const sheet = getSheet(SHEET_NAMES.CHECKLIST_ITEMS);
   return sheet.getDataRange().getValues().slice(1).filter((row: unknown[]) => row[0]).map(rowToItem);
 }
 
-function getChecklistItemsByVersion(minVersion: number): ChecklistItem[] {
+export function getChecklistItemsByVersion(minVersion: number): ChecklistItem[] {
   return getAllChecklistItems().filter(i => i.version > minVersion);
 }
 
-function upsertChecklistItem(item: ChecklistItem): void {
+export function upsertChecklistItem(item: ChecklistItem): void {
   const sheet = getSheet(SHEET_NAMES.CHECKLIST_ITEMS);
   const data = sheet.getDataRange().getValues();
   for (let i = 1; i < data.length; i++) {
@@ -37,4 +41,20 @@ function upsertChecklistItem(item: ChecklistItem): void {
     }
   }
   sheet.appendRow(itemToRow(item));
+}
+
+export function deleteChecklistItemsByIds(ids: string[]): number {
+  const sheet = getSheet(SHEET_NAMES.CHECKLIST_ITEMS);
+  const data = sheet.getDataRange().getValues();
+  const idSet = new Set(ids);
+
+  const rowsToDelete: number[] = [];
+  for (let i = data.length - 1; i >= 1; i--) {
+    if (idSet.has(String(data[i][0]))) {
+      rowsToDelete.push(i + 1);
+    }
+  }
+
+  rowsToDelete.forEach(rowIndex => sheet.deleteRow(rowIndex));
+  return rowsToDelete.length;
 }

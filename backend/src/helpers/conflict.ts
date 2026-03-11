@@ -1,8 +1,10 @@
+import { CONFLICT_RESOLUTION } from './constants';
+
 // Last-write-wins conflict resolution by updated_at
 
-type ConflictResult = 'accept' | 'conflict';
+export type ConflictResult = 'accept' | 'conflict';
 
-function resolveConflict(
+export function resolveConflict(
   clientUpdatedAt: string,
   serverUpdatedAt: string
 ): ConflictResult {

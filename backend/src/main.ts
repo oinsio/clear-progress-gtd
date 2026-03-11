@@ -1,12 +1,19 @@
+import { ACTIONS, ERROR_MESSAGES } from './helpers/constants';
+import { jsonError, ERROR_CODES } from './helpers/response';
+import { ping } from './actions/ping';
+import { init } from './actions/init';
+import { pull } from './actions/pull';
+import { push } from './actions/push';
+import { uploadCover } from './actions/upload-cover';
+import { deleteCover } from './actions/delete-cover';
+
 // GAS entry points — must be global functions
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function doGet(e: GoogleAppsScript.Events.DoGet): GoogleAppsScript.Content.TextOutput {
   const action = e.parameter?.action;
   if (action === ACTIONS.PING) return ping();
   return jsonError(ERROR_CODES.INVALID_ACTION, `${ERROR_MESSAGES.UNKNOWN_ACTION}: ${action}`);
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function doPost(e: GoogleAppsScript.Events.DoPost): GoogleAppsScript.Content.TextOutput {
   let body: { action?: string; [key: string]: unknown };
 
@@ -33,3 +40,7 @@ function doPost(e: GoogleAppsScript.Events.DoPost): GoogleAppsScript.Content.Tex
       return jsonError(ERROR_CODES.INVALID_ACTION, `${ERROR_MESSAGES.UNKNOWN_ACTION}: ${action}`);
   }
 }
+
+// Expose GAS entry points to global scope (required when bundled with esbuild IIFE format)
+(globalThis as Record<string, unknown>)['doGet'] = doGet;
+(globalThis as Record<string, unknown>)['doPost'] = doPost;

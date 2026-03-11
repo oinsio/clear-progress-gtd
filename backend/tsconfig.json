@@ -3,14 +3,14 @@
     "lib": ["ESNext"],
     "experimentalDecorators": true,
     "target": "ES2019",
-    "module": "none",
-    "outDir": "dist",
-    "rootDir": "src",
+    "module": "CommonJS",
+    "moduleResolution": "node",
+    "noEmit": true,
     "strict": true,
     "noImplicitAny": true,
     "strictNullChecks": true,
     "types": ["google-apps-script"]
   },
   "include": ["src/**/*.ts"],
-  "exclude": ["node_modules"]
+  "exclude": ["node_modules", "tests"]
 }

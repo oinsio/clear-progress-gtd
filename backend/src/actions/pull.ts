@@ -1,4 +1,13 @@
-function pull(versions: VersionMap): GoogleAppsScript.Content.TextOutput {
+import { jsonOk, jsonError, jsonNotInitialized, ERROR_CODES } from '../helpers/response';
+import { getTasksByVersion } from '../sheets/tasks.sheet';
+import { getGoalsByVersion } from '../sheets/goals.sheet';
+import { getContextsByVersion } from '../sheets/contexts.sheet';
+import { getCategoriesByVersion } from '../sheets/categories.sheet';
+import { getChecklistItemsByVersion } from '../sheets/checklists.sheet';
+import { getAllSettings } from '../sheets/settings.sheet';
+import type { VersionMap } from '../types';
+
+export function pull(versions: VersionMap): GoogleAppsScript.Content.TextOutput {
   try {
     return jsonOk({
       data: {

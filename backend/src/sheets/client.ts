@@ -1,8 +1,11 @@
+import { PROPERTY_KEYS, ERROR_MESSAGES } from '../helpers/constants';
+import { ERROR_CODES } from '../helpers/response';
+
 // Cached spreadsheet accessor within a single GAS execution
 
 let _spreadsheet: GoogleAppsScript.Spreadsheet.Spreadsheet | null = null;
 
-function getSpreadsheet(): GoogleAppsScript.Spreadsheet.Spreadsheet {
+export function getSpreadsheet(): GoogleAppsScript.Spreadsheet.Spreadsheet {
   if (_spreadsheet) return _spreadsheet;
 
   const spreadsheetId = PropertiesService.getScriptProperties().getProperty(PROPERTY_KEYS.SPREADSHEET_ID);
@@ -14,7 +17,7 @@ function getSpreadsheet(): GoogleAppsScript.Spreadsheet.Spreadsheet {
   return _spreadsheet;
 }
 
-function getSheet(name: string): GoogleAppsScript.Spreadsheet.Sheet {
+export function getSheet(name: string): GoogleAppsScript.Spreadsheet.Sheet {
   const sheet = getSpreadsheet().getSheetByName(name);
   if (!sheet) {
     throw new Error(`${ERROR_MESSAGES.SHEET_NOT_FOUND}: ${name}`);

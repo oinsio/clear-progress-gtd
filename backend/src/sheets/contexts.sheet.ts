@@ -1,3 +1,7 @@
+import { SHEET_NAMES, SHEET_HEADERS, colMap, coerceSheetBool } from '../helpers/constants';
+import { getSheet } from './client';
+import type { Context } from '../types';
+
 const CTX_COLS = colMap(SHEET_NAMES.CONTEXTS);
 
 function rowToContext(row: unknown[]): Context {
@@ -16,16 +20,16 @@ function contextToRow(ctx: Context): unknown[] {
   return SHEET_HEADERS[SHEET_NAMES.CONTEXTS].map(col => (ctx as unknown as Record<string, unknown>)[col]);
 }
 
-function getAllContexts(): Context[] {
+export function getAllContexts(): Context[] {
   const sheet = getSheet(SHEET_NAMES.CONTEXTS);
   return sheet.getDataRange().getValues().slice(1).filter((row: unknown[]) => row[0]).map(rowToContext);
 }
 
-function getContextsByVersion(minVersion: number): Context[] {
+export function getContextsByVersion(minVersion: number): Context[] {
   return getAllContexts().filter(c => c.version > minVersion);
 }
 
-function upsertContext(ctx: Context): void {
+export function upsertContext(ctx: Context): void {
   const sheet = getSheet(SHEET_NAMES.CONTEXTS);
   const data = sheet.getDataRange().getValues();
   for (let i = 1; i < data.length; i++) {
@@ -35,4 +39,20 @@ function upsertContext(ctx: Context): void {
     }
   }
   sheet.appendRow(contextToRow(ctx));
+}
+
+export function deleteContextsByIds(ids: string[]): number {
+  const sheet = getSheet(SHEET_NAMES.CONTEXTS);
+  const data = sheet.getDataRange().getValues();
+  const idSet = new Set(ids);
+
+  const rowsToDelete: number[] = [];
+  for (let i = data.length - 1; i >= 1; i--) {
+    if (idSet.has(String(data[i][0]))) {
+      rowsToDelete.push(i + 1);
+    }
+  }
+
+  rowsToDelete.forEach(rowIndex => sheet.deleteRow(rowIndex));
+  return rowsToDelete.length;
 }
