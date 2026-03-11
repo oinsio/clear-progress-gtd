@@ -29,44 +29,39 @@ import { getAllContexts, deleteContextsByIds } from '../sheets/contexts.sheet';
 import { getAllCategories, deleteCategoriesByIds } from '../sheets/categories.sheet';
 import { getAllChecklistItems, deleteChecklistItemsByIds } from '../sheets/checklists.sheet';
 
-function parseResponse(output: GoogleAppsScript.Content.TextOutput): Record<string, unknown> {
+function parseResponse(): Record<string, unknown> {
   const calls = (ContentService.createTextOutput as ReturnType<typeof vi.fn>).mock.calls;
   const lastCall = calls[calls.length - 1];
   return JSON.parse(lastCall[0]);
 }
 
+const getAllMocks = [getAllTasks, getAllGoals, getAllContexts, getAllCategories, getAllChecklistItems];
+const deleteMocks = [deleteTasksByIds, deleteGoalsByIds, deleteContextsByIds, deleteCategoriesByIds, deleteChecklistItemsByIds];
+
 describe('purge', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.mocked(getAllTasks).mockReturnValue([]);
-    vi.mocked(getAllGoals).mockReturnValue([]);
-    vi.mocked(getAllContexts).mockReturnValue([]);
-    vi.mocked(getAllCategories).mockReturnValue([]);
-    vi.mocked(getAllChecklistItems).mockReturnValue([]);
-    vi.mocked(deleteTasksByIds).mockReturnValue(0);
-    vi.mocked(deleteGoalsByIds).mockReturnValue(0);
-    vi.mocked(deleteContextsByIds).mockReturnValue(0);
-    vi.mocked(deleteCategoriesByIds).mockReturnValue(0);
-    vi.mocked(deleteChecklistItemsByIds).mockReturnValue(0);
+    getAllMocks.forEach(mock => vi.mocked(mock).mockReturnValue([]));
+    deleteMocks.forEach(mock => vi.mocked(mock).mockReturnValue(0));
   });
 
   it('should return error when confirm is missing', () => {
     purge({});
-    const response = parseResponse(null!);
+    const response = parseResponse();
     expect(response.ok).toBe(false);
     expect(response.error).toBe(ERROR_CODES.INVALID_PAYLOAD);
   });
 
   it('should return error when confirm is false', () => {
     purge({ confirm: false });
-    const response = parseResponse(null!);
+    const response = parseResponse();
     expect(response.ok).toBe(false);
     expect(response.error).toBe(ERROR_CODES.INVALID_PAYLOAD);
   });
 
   it('should return zeros when no soft-deleted records exist', () => {
     purge({ confirm: true });
-    const response = parseResponse(null!);
+    const response = parseResponse();
     expect(response.ok).toBe(true);
     expect(response.purged).toEqual({ tasks: 0, goals: 0, contexts: 0, categories: 0, checklist_items: 0 });
   });
@@ -79,7 +74,7 @@ describe('purge', () => {
     vi.mocked(deleteTasksByIds).mockReturnValue(1);
 
     purge({ confirm: true });
-    const response = parseResponse(null!);
+    const response = parseResponse();
 
     expect(deleteTasksByIds).toHaveBeenCalledWith(['task-1']);
     expect(response.purged).toMatchObject({ tasks: 1 });
@@ -109,7 +104,7 @@ describe('purge', () => {
     vi.mocked(deleteChecklistItemsByIds).mockReturnValue(1);
 
     purge({ confirm: true });
-    const response = parseResponse(null!);
+    const response = parseResponse();
 
     expect(deleteGoalsByIds).toHaveBeenCalledWith(['goal1']);
     expect(deleteContextsByIds).toHaveBeenCalledWith(['context1']);
