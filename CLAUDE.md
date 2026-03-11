@@ -313,3 +313,4 @@ OAuth scopes: `drive.file` + `spreadsheets` (minimal).
 - URLs, API endpoints, Google Sheets sheet names, IndexedDB keys → constants in `src/constants/`
 - Tailwind classes in JSX are an exception — they are NOT hardcoded values
 - Detailed rules and examples: `.claude/rules/code-style.md`
+- Variable and function naming rules: `.claude/rules/naming.md`
