@@ -1,0 +1,59 @@
+info:
+  name: soft-delete a category
+  type: http
+  seq: 18
+
+http:
+  method: post
+  url: https://script.google.com/macros/s/{{deploymentId}}/exec#push
+  headers:
+    - name: accept
+      value: application/json
+    - name: Content-Type
+      value: application/json
+  body:
+    type: json
+    data: |-
+      {
+        "action": "push",
+        "changes": {
+          "tasks": [],
+          "goals": [],
+          "contexts": [],
+          "categories": [
+            {
+              "id": "{{$randomUUID}}",
+              "name": "Removed Category",
+              "sort_order": 2000,
+              "is_deleted": true,
+              "created_at": "{{$isoTimestamp}}",
+              "updated_at": "{{$isoTimestamp}}",
+              "version": 2
+            }
+          ],
+          "checklist_items": [],
+          "settings": []
+        }
+      }
+  auth: inherit
+
+runtime:
+  assertions:
+    - expression: res.status
+      operator: eq
+      value: "200"
+    - expression: res.body.ok
+      operator: isTruthy
+    - expression: res.body.results.categories[0].id
+      operator: isDefined
+    - expression: res.body.results.categories[0].status
+      operator: eq
+      value: created
+    - expression: res.body.server_time
+      operator: isDefined
+
+settings:
+  encodeUrl: false
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
