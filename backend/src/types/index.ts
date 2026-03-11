@@ -72,8 +72,6 @@ export interface Setting {
   updated_at: string;
 }
 
-export type EntityName = 'tasks' | 'goals' | 'contexts' | 'categories' | 'checklist_items';
-
 export interface VersionMap {
   tasks: number;
   goals: number;
@@ -87,10 +85,4 @@ export interface PushItemResult {
   status: 'created' | 'accepted' | 'conflict';
   version?: number;
   server_record?: Task | Goal | Context | Category | ChecklistItem;
-}
-
-export interface ApiResponse {
-  ok: boolean;
-  error?: string;
-  message?: string;
 }
