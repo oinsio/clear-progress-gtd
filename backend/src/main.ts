@@ -4,6 +4,7 @@ import { ping } from './actions/ping';
 import { init } from './actions/init';
 import { pull } from './actions/pull';
 import { push } from './actions/push';
+import { purge } from './actions/purge';
 import { uploadCover } from './actions/upload-cover';
 import { deleteCover } from './actions/delete-cover';
 
@@ -36,6 +37,8 @@ function doPost(e: GoogleAppsScript.Events.DoPost): GoogleAppsScript.Content.Tex
       return uploadCover(payload as Parameters<typeof uploadCover>[0]);
     case ACTIONS.DELETE_COVER:
       return deleteCover(payload as Parameters<typeof deleteCover>[0]);
+    case ACTIONS.PURGE:
+      return purge(payload as Parameters<typeof purge>[0]);
     default:
       return jsonError(ERROR_CODES.INVALID_ACTION, `${ERROR_MESSAGES.UNKNOWN_ACTION}: ${action}`);
   }

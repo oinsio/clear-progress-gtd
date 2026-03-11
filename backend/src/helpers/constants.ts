@@ -123,6 +123,7 @@ export const ERROR_MESSAGES = {
   FILE_NOT_FOUND: 'File not found',
   SHEET_NOT_FOUND: 'Sheet not found',
   INIT_REQUIRED: 'Call init before using the API',
+  PURGE_CONFIRM_REQUIRED: 'confirm must be true to purge deleted records',
 } as const;
 
 export function thumbnailUrl(fileId: string): string {

@@ -78,8 +78,8 @@ cmd_build() {
   info "Compiling TypeScript..."
   cd "$SCRIPT_DIR"
   npm install --silent
-  npx tsc
-  cp appsscript.json dist/
+  rm -rf dist/
+  npm run build
   success "Build complete."
 }
 

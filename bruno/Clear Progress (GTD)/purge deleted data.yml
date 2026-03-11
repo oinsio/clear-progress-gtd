@@ -29,10 +29,9 @@ runtime:
       disabled: true
   assertions:
     - expression: res.body.ok
-      operator: isFalsy
-    - expression: res.body.message
-      operator: eq
-      value: "Unknown action: purge"
+      operator: isTruthy
+    - expression: res.body.purged
+      operator: isDefined
 
 settings:
   encodeUrl: false
