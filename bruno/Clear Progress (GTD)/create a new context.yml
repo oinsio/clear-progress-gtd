@@ -1,7 +1,7 @@
 info:
-  name: create a new task
+  name: create a new context
   type: http
-  seq: 8
+  seq: 6
 
 http:
   method: post
@@ -17,27 +17,19 @@ http:
       {
         "action": "push",
         "changes": {
-          "tasks": [
+          "tasks": [],
+          "goals": [],
+          "contexts": [
             {
               "id": "{{$randomUUID}}",
-              "title": "Schedule a doctor's appointment {{$randomCity}}",
-              "notes": "Annual check-up with the GP",
-              "box": "week",
-              "goal_id": "",
-              "context_id": "",
-              "category_id": "",
-              "is_completed": false,
-              "completed_at": "",
-              "repeat_rule": "",
-              "sort_order": 4000,
+              "name": "@{{$randomCity}}",
+              "sort_order": 1000,
               "is_deleted": false,
               "created_at": "{{$isoTimestamp}}",
               "updated_at": "{{$isoTimestamp}}",
               "version": 1
             }
           ],
-          "goals": [],
-          "contexts": [],
           "categories": [],
           "checklist_items": [],
           "settings": []
@@ -46,9 +38,6 @@ http:
   auth: inherit
 
 runtime:
-  scripts:
-    - type: after-response
-      code: bru.setEnvVar("taskId", res.body.results.tasks[0].id);
   assertions:
     - expression: res.status
       operator: eq
@@ -57,12 +46,12 @@ runtime:
       operator: isTruthy
     - expression: res.body.results
       operator: isDefined
-    - expression: res.body.results.tasks[0].id
+    - expression: res.body.results.contexts[0].id
       operator: isDefined
-    - expression: res.body.results.tasks[0].status
+    - expression: res.body.results.contexts[0].status
       operator: eq
       value: created
-    - expression: res.body.results.tasks[0].version
+    - expression: res.body.results.contexts[0].version
       operator: isDefined
     - expression: res.body.server_time
       operator: isDefined
