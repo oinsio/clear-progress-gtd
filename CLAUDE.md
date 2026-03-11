@@ -3,6 +3,8 @@
 Personal GTD (Getting Things Done) app for task and goal management.  
 Type: PWA. Architecture: React frontend + Google Apps Script backend + Google Sheets storage.
 
+IMPORTANT: Read existing code, tests, and patterns before generating new code.
+
 ## Quick Commands
 
 ```bash
@@ -292,6 +294,10 @@ OAuth scopes: `drive.file` + `spreadsheets` (minimal).
 - Test critical paths: onboarding, task CRUD, sync, offline→online
 - Use data-testid attributes for selectors, not CSS classes
 
+### TDD Workflow
+
+- Strict Red-Green-Refactor cycle for all changes: @.claude/docs/tdd-workflow.md
+
 ## Important Reminders
 
 - This is a mobile-first PWA — always consider touch interactions and small screens
@@ -299,3 +305,11 @@ OAuth scopes: `drive.file` + `spreadsheets` (minimal).
 - The app should feel native: smooth animations, instant feedback, no loading spinners for local data
 - Accessibility: semantic HTML, ARIA labels, keyboard navigation support
 - i18n is not in scope for MVP, but avoid hardcoding user-facing strings where easy to avoid
+
+## Code style: no hardcoded values
+
+- NEVER use magic numbers or string literals in logic — extract them into named constants
+- Statuses, types, roles, states → always use `enum` (TypeScript enum or `as const` object)
+- URLs, API endpoints, Google Sheets sheet names, IndexedDB keys → constants in `src/constants/`
+- Tailwind classes in JSX are an exception — they are NOT hardcoded values
+- Detailed rules and examples: `.claude/rules/code-style.md`
