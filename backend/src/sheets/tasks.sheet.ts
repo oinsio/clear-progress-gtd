@@ -1,5 +1,5 @@
-import { SHEET_NAMES, SHEET_HEADERS, colMap, coerceSheetBool, coerceSheetBox } from '../helpers/constants';
-import { getSheet } from './client';
+import { SHEET_NAMES, coerceSheetBool, coerceSheetBox, colMap } from '../helpers/constants';
+import { getAllRecords, upsertRecord, deleteRecordsByIds } from './base';
 import type { Task } from '../types';
 
 const COLS = colMap(SHEET_NAMES.TASKS);
@@ -24,47 +24,7 @@ function rowToTask(row: unknown[]): Task {
   };
 }
 
-function taskToRow(task: Task): unknown[] {
-  return SHEET_HEADERS[SHEET_NAMES.TASKS].map(col => (task as unknown as Record<string, unknown>)[col]);
-}
-
-export function getAllTasks(): Task[] {
-  const sheet = getSheet(SHEET_NAMES.TASKS);
-  const data: unknown[][] = sheet.getDataRange().getValues();
-  return data.slice(1).filter((row: unknown[]) => row[0]).map(rowToTask);
-}
-
-export function getTasksByVersion(minVersion: number): Task[] {
-  return getAllTasks().filter(t => t.version > minVersion);
-}
-
-export function upsertTask(task: Task): void {
-  const sheet = getSheet(SHEET_NAMES.TASKS);
-  const data = sheet.getDataRange().getValues();
-
-  for (let i = 1; i < data.length; i++) {
-    if (data[i][0] === task.id) {
-      const row = i + 1;
-      sheet.getRange(row, 1, 1, SHEET_HEADERS[SHEET_NAMES.TASKS].length).setValues([taskToRow(task)]);
-      return;
-    }
-  }
-
-  sheet.appendRow(taskToRow(task));
-}
-
-export function deleteTasksByIds(ids: string[]): number {
-  const sheet = getSheet(SHEET_NAMES.TASKS);
-  const data = sheet.getDataRange().getValues();
-  const idSet = new Set(ids);
-
-  const rowsToDelete: number[] = [];
-  for (let i = data.length - 1; i >= 1; i--) {
-    if (idSet.has(String(data[i][0]))) {
-      rowsToDelete.push(i + 1);
-    }
-  }
-
-  rowsToDelete.forEach(rowIndex => sheet.deleteRow(rowIndex));
-  return rowsToDelete.length;
-}
+export const getAllTasks = (): Task[] => getAllRecords(SHEET_NAMES.TASKS, rowToTask);
+export const getTasksByVersion = (minVersion: number): Task[] => getAllTasks().filter(task => task.version > minVersion);
+export const upsertTask = (task: Task): void => upsertRecord(SHEET_NAMES.TASKS, task);
+export const deleteTasksByIds = (ids: string[]): number => deleteRecordsByIds(SHEET_NAMES.TASKS, ids);
