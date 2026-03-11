@@ -1,3 +1,4 @@
+/// <reference lib="esnext" />
 import { vi } from 'vitest';
 
 // --- ContentService mock ---
