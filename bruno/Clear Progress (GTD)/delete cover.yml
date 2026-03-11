@@ -22,8 +22,15 @@ http:
 
 runtime:
   assertions:
+    - expression: res.status
+      operator: eq
+      value: "200"
     - expression: res.body.ok
       operator: isTruthy
+    - expression: res.body.deleted
+      operator: isDefined
+    - expression: res.body.ref_count
+      operator: isDefined
 
 settings:
   encodeUrl: false

@@ -52,8 +52,17 @@ runtime:
         const base64Data = bru.getCollectionVar(selectedVarName);
         bru.setVar("coverBase64Data", base64Data);
   assertions:
+    - expression: res.status
+      operator: eq
+      value: "200"
     - expression: res.body.ok
       operator: isTruthy
+    - expression: res.body.file_id
+      operator: isDefined
+    - expression: res.body.thumbnail_url
+      operator: isDefined
+    - expression: res.body.reused
+      operator: isDefined
   actions:
     - type: set-variable
       phase: after-response

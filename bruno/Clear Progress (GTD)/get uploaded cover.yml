@@ -10,9 +10,15 @@ http:
 
 runtime:
   assertions:
+    - expression: res.status
+      operator: eq
+      value: "200"
     - expression: Number(res.headers['content-length'])
       operator: gt
       value: "0"
+    - expression: res.headers['content-type']
+      operator: contains
+      value: image
 
 settings:
   encodeUrl: true

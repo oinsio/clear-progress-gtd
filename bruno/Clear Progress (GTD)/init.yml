@@ -21,8 +21,15 @@ http:
 
 runtime:
   assertions:
+    - expression: res.status
+      operator: eq
+      value: "200"
     - expression: res.body.ok
       operator: isTruthy
+    - expression: res.body.created
+      operator: isDefined
+    - expression: res.body.spreadsheet_id
+      operator: isDefined
 
 settings:
   encodeUrl: false

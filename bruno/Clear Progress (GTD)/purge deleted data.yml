@@ -28,9 +28,22 @@ runtime:
       value: "false"
       disabled: true
   assertions:
+    - expression: res.status
+      operator: eq
+      value: "200"
     - expression: res.body.ok
       operator: isTruthy
     - expression: res.body.purged
+      operator: isDefined
+    - expression: res.body.purged.tasks
+      operator: isDefined
+    - expression: res.body.purged.goals
+      operator: isDefined
+    - expression: res.body.purged.contexts
+      operator: isDefined
+    - expression: res.body.purged.categories
+      operator: isDefined
+    - expression: res.body.purged.checklist_items
       operator: isDefined
 
 settings:

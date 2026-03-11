@@ -47,8 +47,18 @@ http:
 
 runtime:
   assertions:
+    - expression: res.status
+      operator: eq
+      value: "200"
     - expression: res.body.ok
       operator: isTruthy
+    - expression: res.body.results.tasks[0].id
+      operator: isDefined
+    - expression: res.body.results.tasks[0].status
+      operator: eq
+      value: created
+    - expression: res.body.server_time
+      operator: isDefined
 
 settings:
   encodeUrl: false

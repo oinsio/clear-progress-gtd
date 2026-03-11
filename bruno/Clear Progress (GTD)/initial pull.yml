@@ -28,8 +28,27 @@ http:
 
 runtime:
   assertions:
+    - expression: res.status
+      operator: eq
+      value: "200"
     - expression: res.body.ok
       operator: isTruthy
+    - expression: res.body.data
+      operator: isDefined
+    - expression: res.body.data.tasks
+      operator: isDefined
+    - expression: res.body.data.goals
+      operator: isDefined
+    - expression: res.body.data.contexts
+      operator: isDefined
+    - expression: res.body.data.categories
+      operator: isDefined
+    - expression: res.body.data.checklist_items
+      operator: isDefined
+    - expression: res.body.settings
+      operator: isDefined
+    - expression: res.body.server_time
+      operator: isDefined
 
 settings:
   encodeUrl: false
