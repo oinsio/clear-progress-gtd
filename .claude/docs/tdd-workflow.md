@@ -1,6 +1,19 @@
 # TDD Workflow — Red-Green-Refactor
 
-Every feature, bug fix, or code change follows this cycle. No exceptions.
+This workflow applies to **application and business logic code** (services, hooks, utils, components).
+
+## When NOT to apply TDD
+
+Do NOT apply the Red-Green-Refactor cycle for:
+- Installing and configuring tools, frameworks, and dependencies
+- Project setup, scaffolding, and boilerplate
+- Config files (vite.config.ts, tsconfig.json, tailwind.config.js, etc.)
+- CI/CD, linting, formatting setup
+- Documentation and README changes
+- Refactoring that doesn't change behavior (moving files, renaming)
+- Pure type definitions (types.ts, interfaces)
+
+When asked to set up or install something — just do it directly.
 
 ## Step 1 — Plan (SPEC)
 
