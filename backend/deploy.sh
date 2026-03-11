@@ -75,9 +75,11 @@ get_deploy_url() {
 # ─── Commands ────────────────────────────────────────────────────────────────
 
 cmd_build() {
-  info "Compiling TypeScript..."
+  info "Running tests..."
   cd "$SCRIPT_DIR"
   npm install --silent
+  npm run test
+  info "Compiling TypeScript..."
   rm -rf dist/
   npm run build
   success "Build complete."
