@@ -5,7 +5,7 @@ function rowToContext(row: unknown[]): Context {
     id: String(row[CTX_COLS.id] ?? ''),
     name: String(row[CTX_COLS.name] ?? ''),
     sort_order: Number(row[CTX_COLS.sort_order] ?? 0),
-    is_deleted: row[CTX_COLS.is_deleted] === true || row[CTX_COLS.is_deleted] === 'TRUE',
+    is_deleted: coerceSheetBool(row[CTX_COLS.is_deleted]),
     created_at: String(row[CTX_COLS.created_at] ?? ''),
     updated_at: String(row[CTX_COLS.updated_at] ?? ''),
     version: Number(row[CTX_COLS.version] ?? 1),

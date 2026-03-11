@@ -1,5 +1,3 @@
-const MAX_SIZE_BYTES = 2 * 1024 * 1024; // 2 MB
-
 function uploadCover(payload: {
   goal_id: string;
   filename: string;
@@ -9,12 +7,12 @@ function uploadCover(payload: {
   const { filename, mime_type, data } = payload;
 
   const decoded = Utilities.base64Decode(data);
-  if (decoded.length > MAX_SIZE_BYTES) {
-    return jsonError(ERROR_CODES.FILE_TOO_LARGE, 'Cover image must be 2 MB or less');
+  if (decoded.length > MAX_COVER_SIZE_BYTES) {
+    return jsonError(ERROR_CODES.FILE_TOO_LARGE, ERROR_MESSAGES.COVER_TOO_LARGE);
   }
 
   const hash = Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, decoded)
-    .map(b => (b < 0 ? b + 256 : b).toString(16).padStart(2, '0'))
+    .map(byte => (byte < 0 ? byte + 256 : byte).toString(16).padStart(2, '0'))
     .join('');
 
   const coversFolderId = PropertiesService.getScriptProperties().getProperty(PROPERTY_KEYS.COVERS_FOLDER_ID);
@@ -24,21 +22,21 @@ function uploadCover(payload: {
 
   // Check for deduplication
   const fileList = Drive.Files.list({
-    q: `'${coversFolderId}' in parents and trashed = false`,
+    q: buildFolderQuery(coversFolderId),
     fields: DRIVE_QUERY_FIELDS.COVER_FILES,
   });
-  for (const f of (fileList.files ?? [])) {
-    if (f.description === hash) {
+  for (const file of (fileList.files ?? [])) {
+    if (file.description === hash) {
       return jsonOk({
-        file_id: f.id,
-        thumbnail_url: thumbnailUrl(f.id!),
+        file_id: file.id,
+        thumbnail_url: thumbnailUrl(file.id!),
         reused: true,
       });
     }
   }
 
   // Create new file
-  const ext = filename.split('.').pop() ?? 'jpg';
+  const ext = filename.split('.').pop() ?? DEFAULT_COVER_EXTENSION;
   const newFilename = `${hash.substring(0, COVER_HASH_PREFIX_LENGTH)}.${ext}`;
   const blob = Utilities.newBlob(decoded, mime_type, newFilename);
   const newFile = Drive.Files.create(

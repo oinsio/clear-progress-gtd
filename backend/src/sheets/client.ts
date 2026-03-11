@@ -17,7 +17,7 @@ function getSpreadsheet(): GoogleAppsScript.Spreadsheet.Spreadsheet {
 function getSheet(name: string): GoogleAppsScript.Spreadsheet.Sheet {
   const sheet = getSpreadsheet().getSheetByName(name);
   if (!sheet) {
-    throw new Error(`Sheet not found: ${name}`);
+    throw new Error(`${ERROR_MESSAGES.SHEET_NOT_FOUND}: ${name}`);
   }
   return sheet;
 }

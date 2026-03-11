@@ -86,6 +86,41 @@ const DRIVE_QUERY_FIELDS = {
 } as const;
 
 const COVER_HASH_PREFIX_LENGTH = 12;
+const MAX_COVER_SIZE_BYTES = 2 * 1024 * 1024; // 2 MB
+const DEFAULT_COVER_EXTENSION = 'jpg';
+
+const DEFAULT_TASK_BOX = 'inbox';
+const DEFAULT_GOAL_STATUS = 'not_started';
+
+const SHEET_BOOL_TRUE = 'TRUE';
+
+function coerceSheetBool(value: unknown): boolean {
+  return value === true || value === SHEET_BOOL_TRUE;
+}
+
+function coerceSheetBox(value: unknown): Box {
+  const str = String(value ?? DEFAULT_TASK_BOX);
+  return VALID_BOXES.includes(str) ? (str as Box) : (DEFAULT_TASK_BOX as Box);
+}
+
+function coerceSheetGoalStatus(value: unknown): GoalStatus {
+  const str = String(value ?? DEFAULT_GOAL_STATUS);
+  return VALID_GOAL_STATUSES.includes(str) ? (str as GoalStatus) : (DEFAULT_GOAL_STATUS as GoalStatus);
+}
+
+function buildFolderQuery(folderId: string): string {
+  return `'${folderId}' in parents and trashed = false`;
+}
+
+const ERROR_MESSAGES = {
+  UNKNOWN_ACTION: 'Unknown action',
+  INVALID_JSON: 'Request body must be valid JSON',
+  COVER_TOO_LARGE: 'Cover image must be 2 MB or less',
+  FILE_ID_REQUIRED: 'file_id is required',
+  FILE_NOT_FOUND: 'File not found',
+  SHEET_NOT_FOUND: 'Sheet not found',
+  INIT_REQUIRED: 'Call init before using the API',
+} as const;
 
 function thumbnailUrl(fileId: string): string {
   return `https://drive.google.com/thumbnail?id=${fileId}&sz=w400`;

@@ -2,7 +2,7 @@ function deleteCover(payload: { file_id: string }): GoogleAppsScript.Content.Tex
   const { file_id } = payload;
 
   if (!file_id) {
-    return jsonError(ERROR_CODES.INVALID_PAYLOAD, 'file_id is required');
+    return jsonError(ERROR_CODES.INVALID_PAYLOAD, ERROR_MESSAGES.FILE_ID_REQUIRED);
   }
 
   const allFileIds = getCoverFileIds();
@@ -16,6 +16,6 @@ function deleteCover(payload: { file_id: string }): GoogleAppsScript.Content.Tex
     Drive.Files.update({ trashed: true }, file_id);
     return jsonOk({ deleted: true, ref_count: 0 });
   } catch {
-    return jsonError(ERROR_CODES.FILE_NOT_FOUND, `File not found: ${file_id}`);
+    return jsonError(ERROR_CODES.FILE_NOT_FOUND, `${ERROR_MESSAGES.FILE_NOT_FOUND}: ${file_id}`);
   }
 }

@@ -25,5 +25,5 @@ const ERROR_CODES = {
 } as const;
 
 function jsonNotInitialized(): GoogleAppsScript.Content.TextOutput {
-  return jsonError(ERROR_CODES.NOT_INITIALIZED, 'Call init before using the API');
+  return jsonError(ERROR_CODES.NOT_INITIALIZED, ERROR_MESSAGES.INIT_REQUIRED);
 }

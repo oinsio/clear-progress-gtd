@@ -5,7 +5,7 @@ function rowToCategory(row: unknown[]): Category {
     id: String(row[CAT_COLS.id] ?? ''),
     name: String(row[CAT_COLS.name] ?? ''),
     sort_order: Number(row[CAT_COLS.sort_order] ?? 0),
-    is_deleted: row[CAT_COLS.is_deleted] === true || row[CAT_COLS.is_deleted] === 'TRUE',
+    is_deleted: coerceSheetBool(row[CAT_COLS.is_deleted]),
     created_at: String(row[CAT_COLS.created_at] ?? ''),
     updated_at: String(row[CAT_COLS.updated_at] ?? ''),
     version: Number(row[CAT_COLS.version] ?? 1),
