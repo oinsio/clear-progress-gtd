@@ -25,6 +25,25 @@ function makeSheetMock(rows: unknown[][] = []) {
   };
 }
 
+function makeTaskRow(id: string, overrides: Record<string, unknown> = {}): unknown[] {
+  const row = Array(NUM_TASK_COLS).fill('');
+  row[TASK_COL.id] = id;
+  for (const [key, value] of Object.entries(overrides)) {
+    row[TASK_COL[key]] = value;
+  }
+  return row;
+}
+
+function setupSheet(rows: unknown[][] = []) {
+  const sheetMock = makeSheetMock(rows);
+  vi.mocked(getSheet).mockReturnValue(sheetMock as never);
+  return sheetMock;
+}
+
+function setupSheetWithTasks(...ids: string[]) {
+  return setupSheet([TASK_HEADERS, ...ids.map(id => makeTaskRow(id))]);
+}
+
 // --- recordToRow ---
 
 describe('recordToRow', () => {
@@ -57,31 +76,27 @@ describe('getAllRecords', () => {
   });
 
   it('should return empty array when sheet has only a header row', () => {
-    const sheetMock = makeSheetMock([TASK_HEADERS]);
-    vi.mocked(getSheet).mockReturnValue(sheetMock as never);
+    setupSheet([TASK_HEADERS]);
 
     expect(getAllRecords(SHEET_NAMES.TASKS, row => row)).toEqual([]);
   });
 
   it('should return empty array when sheet has no rows at all', () => {
-    const sheetMock = makeSheetMock([]);
-    vi.mocked(getSheet).mockReturnValue(sheetMock as never);
+    setupSheet([]);
 
     expect(getAllRecords(SHEET_NAMES.TASKS, row => row)).toEqual([]);
   });
 
   it('should skip rows where first column is empty', () => {
     const emptyRow = TASK_HEADERS.map(() => '');
-    const sheetMock = makeSheetMock([TASK_HEADERS, emptyRow]);
-    vi.mocked(getSheet).mockReturnValue(sheetMock as never);
+    setupSheet([TASK_HEADERS, emptyRow]);
 
     expect(getAllRecords(SHEET_NAMES.TASKS, row => row)).toHaveLength(0);
   });
 
   it('should call rowMapper for each non-empty data row', () => {
-    const dataRow = ['task-1', ...Array(NUM_TASK_COLS - 1).fill('')];
-    const sheetMock = makeSheetMock([TASK_HEADERS, dataRow]);
-    vi.mocked(getSheet).mockReturnValue(sheetMock as never);
+    const dataRow = makeTaskRow('task-1');
+    setupSheet([TASK_HEADERS, dataRow]);
     const rowMapper = vi.fn().mockReturnValue({ id: 'task-1' });
 
     getAllRecords(SHEET_NAMES.TASKS, rowMapper);
@@ -91,9 +106,7 @@ describe('getAllRecords', () => {
   });
 
   it('should return mapped values from rowMapper', () => {
-    const dataRow = ['task-1', ...Array(NUM_TASK_COLS - 1).fill('')];
-    const sheetMock = makeSheetMock([TASK_HEADERS, dataRow]);
-    vi.mocked(getSheet).mockReturnValue(sheetMock as never);
+    setupSheet([TASK_HEADERS, makeTaskRow('task-1')]);
     const mappedRecord = { id: 'task-1', title: 'mapped' };
     const rowMapper = vi.fn().mockReturnValue(mappedRecord);
 
@@ -103,8 +116,7 @@ describe('getAllRecords', () => {
   });
 
   it('should call getSheet with the given sheet name', () => {
-    const sheetMock = makeSheetMock([]);
-    vi.mocked(getSheet).mockReturnValue(sheetMock as never);
+    setupSheet([]);
 
     getAllRecords(SHEET_NAMES.TASKS, row => row);
 
@@ -120,8 +132,7 @@ describe('upsertRecord', () => {
   });
 
   it('should call appendRow when id is not found in sheet', () => {
-    const sheetMock = makeSheetMock([TASK_HEADERS]);
-    vi.mocked(getSheet).mockReturnValue(sheetMock as never);
+    const sheetMock = setupSheet([TASK_HEADERS]);
 
     upsertRecord(SHEET_NAMES.TASKS, { id: 'new-id' });
 
@@ -129,8 +140,7 @@ describe('upsertRecord', () => {
   });
 
   it('should not call getRange when inserting a new record', () => {
-    const sheetMock = makeSheetMock([TASK_HEADERS]);
-    vi.mocked(getSheet).mockReturnValue(sheetMock as never);
+    const sheetMock = setupSheet([TASK_HEADERS]);
 
     upsertRecord(SHEET_NAMES.TASKS, { id: 'new-id' });
 
@@ -138,8 +148,7 @@ describe('upsertRecord', () => {
   });
 
   it('should append row with record data in correct column order', () => {
-    const sheetMock = makeSheetMock([TASK_HEADERS]);
-    vi.mocked(getSheet).mockReturnValue(sheetMock as never);
+    const sheetMock = setupSheet([TASK_HEADERS]);
 
     upsertRecord(SHEET_NAMES.TASKS, { id: 'new-id', title: 'My task', version: 3 });
 
@@ -150,9 +159,7 @@ describe('upsertRecord', () => {
   });
 
   it('should call getRange and setValues when id already exists', () => {
-    const existingRow = ['task-1', ...Array(NUM_TASK_COLS - 1).fill('')];
-    const sheetMock = makeSheetMock([TASK_HEADERS, existingRow]);
-    vi.mocked(getSheet).mockReturnValue(sheetMock as never);
+    const sheetMock = setupSheetWithTasks('task-1');
 
     upsertRecord(SHEET_NAMES.TASKS, { id: 'task-1', title: 'Updated' });
 
@@ -161,9 +168,7 @@ describe('upsertRecord', () => {
   });
 
   it('should not call appendRow when updating an existing record', () => {
-    const existingRow = ['task-1', ...Array(NUM_TASK_COLS - 1).fill('')];
-    const sheetMock = makeSheetMock([TASK_HEADERS, existingRow]);
-    vi.mocked(getSheet).mockReturnValue(sheetMock as never);
+    const sheetMock = setupSheetWithTasks('task-1');
 
     upsertRecord(SHEET_NAMES.TASKS, { id: 'task-1' });
 
@@ -172,9 +177,7 @@ describe('upsertRecord', () => {
 
   it('should update the correct 1-based row index', () => {
     // Header at index 0, record at index 1 → sheet row 2
-    const existingRow = ['task-1', ...Array(NUM_TASK_COLS - 1).fill('')];
-    const sheetMock = makeSheetMock([TASK_HEADERS, existingRow]);
-    vi.mocked(getSheet).mockReturnValue(sheetMock as never);
+    const sheetMock = setupSheetWithTasks('task-1');
 
     upsertRecord(SHEET_NAMES.TASKS, { id: 'task-1' });
 
@@ -182,13 +185,7 @@ describe('upsertRecord', () => {
   });
 
   it('should update the correct row when target is the third data row', () => {
-    const sheetMock = makeSheetMock([
-      TASK_HEADERS,
-      ['task-1', ...Array(NUM_TASK_COLS - 1).fill('')],
-      ['task-2', ...Array(NUM_TASK_COLS - 1).fill('')],
-      ['task-3', ...Array(NUM_TASK_COLS - 1).fill('')],
-    ]);
-    vi.mocked(getSheet).mockReturnValue(sheetMock as never);
+    const sheetMock = setupSheetWithTasks('task-1', 'task-2', 'task-3');
 
     upsertRecord(SHEET_NAMES.TASKS, { id: 'task-3' });
 
@@ -196,9 +193,7 @@ describe('upsertRecord', () => {
   });
 
   it('should write updated record data when updating existing row', () => {
-    const existingRow = ['task-1', 'Old title', ...Array(NUM_TASK_COLS - 2).fill('')];
-    const sheetMock = makeSheetMock([TASK_HEADERS, existingRow]);
-    vi.mocked(getSheet).mockReturnValue(sheetMock as never);
+    const sheetMock = setupSheet([TASK_HEADERS, makeTaskRow('task-1', { title: 'Old title' })]);
 
     upsertRecord(SHEET_NAMES.TASKS, { id: 'task-1', title: 'New title' });
 
@@ -207,8 +202,7 @@ describe('upsertRecord', () => {
   });
 
   it('should call getSheet with the given sheet name', () => {
-    const sheetMock = makeSheetMock([TASK_HEADERS]);
-    vi.mocked(getSheet).mockReturnValue(sheetMock as never);
+    setupSheet([TASK_HEADERS]);
 
     upsertRecord(SHEET_NAMES.TASKS, { id: 'new-id' });
 
@@ -224,37 +218,25 @@ describe('deleteRecordsByIds', () => {
   });
 
   it('should return 0 when ids array is empty', () => {
-    const sheetMock = makeSheetMock([TASK_HEADERS, ['task-1', ...Array(NUM_TASK_COLS - 1).fill('')]]);
-    vi.mocked(getSheet).mockReturnValue(sheetMock as never);
+    setupSheetWithTasks('task-1');
 
     expect(deleteRecordsByIds(SHEET_NAMES.TASKS, [])).toBe(0);
   });
 
   it('should return 0 when no rows match the given ids', () => {
-    const sheetMock = makeSheetMock([TASK_HEADERS, ['task-1', ...Array(NUM_TASK_COLS - 1).fill('')]]);
-    vi.mocked(getSheet).mockReturnValue(sheetMock as never);
+    setupSheetWithTasks('task-1');
 
     expect(deleteRecordsByIds(SHEET_NAMES.TASKS, ['task-nonexistent'])).toBe(0);
   });
 
   it('should return count of deleted rows', () => {
-    const sheetMock = makeSheetMock([
-      TASK_HEADERS,
-      ['task-1', ...Array(NUM_TASK_COLS - 1).fill('')],
-      ['task-2', ...Array(NUM_TASK_COLS - 1).fill('')],
-    ]);
-    vi.mocked(getSheet).mockReturnValue(sheetMock as never);
+    setupSheetWithTasks('task-1', 'task-2');
 
     expect(deleteRecordsByIds(SHEET_NAMES.TASKS, ['task-1', 'task-2'])).toBe(2);
   });
 
   it('should call deleteRow for each matched id', () => {
-    const sheetMock = makeSheetMock([
-      TASK_HEADERS,
-      ['task-1', ...Array(NUM_TASK_COLS - 1).fill('')],
-      ['task-2', ...Array(NUM_TASK_COLS - 1).fill('')],
-    ]);
-    vi.mocked(getSheet).mockReturnValue(sheetMock as never);
+    const sheetMock = setupSheetWithTasks('task-1', 'task-2');
 
     deleteRecordsByIds(SHEET_NAMES.TASKS, ['task-1', 'task-2']);
 
@@ -262,12 +244,7 @@ describe('deleteRecordsByIds', () => {
   });
 
   it('should not call deleteRow for rows not in the ids list', () => {
-    const sheetMock = makeSheetMock([
-      TASK_HEADERS,
-      ['task-keep', ...Array(NUM_TASK_COLS - 1).fill('')],
-      ['task-delete', ...Array(NUM_TASK_COLS - 1).fill('')],
-    ]);
-    vi.mocked(getSheet).mockReturnValue(sheetMock as never);
+    const sheetMock = setupSheetWithTasks('task-keep', 'task-delete');
 
     deleteRecordsByIds(SHEET_NAMES.TASKS, ['task-delete']);
 
@@ -275,13 +252,7 @@ describe('deleteRecordsByIds', () => {
   });
 
   it('should delete rows in reverse order to preserve row indices', () => {
-    const sheetMock = makeSheetMock([
-      TASK_HEADERS,
-      ['task-1', ...Array(NUM_TASK_COLS - 1).fill('')], // row 2
-      ['task-2', ...Array(NUM_TASK_COLS - 1).fill('')], // row 3
-      ['task-3', ...Array(NUM_TASK_COLS - 1).fill('')], // row 4
-    ]);
-    vi.mocked(getSheet).mockReturnValue(sheetMock as never);
+    const sheetMock = setupSheetWithTasks('task-1', 'task-2', 'task-3'); // rows 2, 3, 4
 
     deleteRecordsByIds(SHEET_NAMES.TASKS, ['task-1', 'task-2', 'task-3']);
 
@@ -292,11 +263,7 @@ describe('deleteRecordsByIds', () => {
 
   it('should delete the correct 1-based row index', () => {
     // Header at index 0, record at index 1 → sheet row 2
-    const sheetMock = makeSheetMock([
-      TASK_HEADERS,
-      ['task-1', ...Array(NUM_TASK_COLS - 1).fill('')],
-    ]);
-    vi.mocked(getSheet).mockReturnValue(sheetMock as never);
+    const sheetMock = setupSheetWithTasks('task-1');
 
     deleteRecordsByIds(SHEET_NAMES.TASKS, ['task-1']);
 
@@ -304,8 +271,7 @@ describe('deleteRecordsByIds', () => {
   });
 
   it('should call getSheet with the given sheet name', () => {
-    const sheetMock = makeSheetMock([]);
-    vi.mocked(getSheet).mockReturnValue(sheetMock as never);
+    setupSheet([]);
 
     deleteRecordsByIds(SHEET_NAMES.TASKS, []);
 

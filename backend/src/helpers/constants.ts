@@ -65,13 +65,6 @@ export const DEFAULT_SETTINGS = {
 export const VALID_BOXES = ['inbox', 'today', 'week', 'later'];
 export const VALID_GOAL_STATUSES = ['not_started', 'in_progress', 'paused', 'completed', 'cancelled'];
 
-export const VALIDATION_MESSAGES = {
-  ID_REQUIRED: 'id is required',
-  TITLE_REQUIRED: 'title is required',
-  UPDATED_AT_REQUIRED: 'updated_at is required',
-  VERSION_NOT_NUMBER: 'version must be a number',
-} as const;
-
 export const CONFLICT_RESOLUTION = {
   ACCEPT: 'accept',
   CONFLICT: 'conflict',
