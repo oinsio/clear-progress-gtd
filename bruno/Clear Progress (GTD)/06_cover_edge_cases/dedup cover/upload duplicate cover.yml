@@ -1,0 +1,49 @@
+info:
+  name: upload duplicate cover
+  type: http
+  seq: 1
+
+http:
+  method: post
+  url: https://script.google.com/macros/s/{{deploymentId}}/exec#upload_cover
+  headers:
+    - name: accept
+      value: application/json
+    - name: Content-Type
+      value: application/json
+  body:
+    type: json
+    data: |-
+      {
+        "action": "upload_cover",
+        "goal_id": "{{$randomUUID}}",
+        "filename": "dedup-test.jpg",
+        "mime_type": "image/jpeg",
+        "data": "{{coverEdgeCaseData}}"
+      }
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: before-request
+      code: |-
+        // Same cover_for_edge_cases as previous request — SHA-256 must match → deduplication
+        const base64Data = bru.getCollectionVar("cover_for_edge_cases");
+        bru.setVar("coverEdgeCaseData", base64Data);
+  assertions:
+    - expression: res.status
+      operator: eq
+      value: "200"
+    - expression: res.body.ok
+      operator: isTruthy
+    - expression: res.body.reused
+      operator: isTruthy
+    - expression: res.body.file_id
+      operator: eq
+      value: "{{dedupFileId}}"
+
+settings:
+  encodeUrl: false
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

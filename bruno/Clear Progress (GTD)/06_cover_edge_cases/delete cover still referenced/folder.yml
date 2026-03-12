@@ -1,0 +1,7 @@
+info:
+  name: delete cover still referenced
+  type: folder
+  seq: 2
+
+request:
+  auth: inherit

@@ -1,7 +1,7 @@
 info:
-  name: upload duplicate cover
+  name: upload cover for ref test
   type: http
-  seq: 2
+  seq: 4
 
 http:
   method: post
@@ -17,7 +17,7 @@ http:
       {
         "action": "upload_cover",
         "goal_id": "{{$randomUUID}}",
-        "filename": "dedup-test.jpg",
+        "filename": "ref-test.jpg",
         "mime_type": "image/jpeg",
         "data": "{{coverEdgeCaseData}}"
       }
@@ -27,7 +27,6 @@ runtime:
   scripts:
     - type: before-request
       code: |-
-        // Same cover_for_edge_cases as previous request — SHA-256 must match → deduplication
         const base64Data = bru.getCollectionVar("cover_for_edge_cases");
         bru.setVar("coverEdgeCaseData", base64Data);
   assertions:
@@ -36,11 +35,17 @@ runtime:
       value: "200"
     - expression: res.body.ok
       operator: isTruthy
-    - expression: res.body.reused
-      operator: isTruthy
     - expression: res.body.file_id
-      operator: eq
-      value: "{{dedupFileId}}"
+      operator: isDefined
+  actions:
+    - type: set-variable
+      phase: after-response
+      selector:
+        expression: res.body.file_id
+        method: jsonq
+      variable:
+        name: refTestFileId
+        scope: runtime
 
 settings:
   encodeUrl: false

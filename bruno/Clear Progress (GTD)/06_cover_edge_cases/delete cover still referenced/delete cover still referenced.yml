@@ -1,0 +1,44 @@
+info:
+  name: delete cover still referenced
+  type: http
+  seq: 4
+
+http:
+  method: post
+  url: https://script.google.com/macros/s/{{deploymentId}}/exec#delete_cover
+  headers:
+    - name: accept
+      value: application/json
+    - name: Content-Type
+      value: application/json
+  body:
+    type: json
+    data: |-
+      {
+        "action": "delete_cover",
+        "file_id": "{{refTestFileId}}"
+      }
+  auth: inherit
+
+runtime:
+  assertions:
+    - expression: res.status
+      operator: eq
+      value: "200"
+    - expression: res.body.ok
+      operator: isTruthy
+    - expression: res.body.deleted
+      operator: isFalsy
+    - expression: Number(res.body.ref_count)
+      operator: gte
+      value: "1"
+
+settings:
+  encodeUrl: false
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |
+  delete_cover called for a file_id that is still referenced by an active goal.
+  Expected: server returns ok: true but deleted: false and ref_count >= 1 (file is preserved).
