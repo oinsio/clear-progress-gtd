@@ -1,7 +1,7 @@
 info:
-  name: soft-delete a category
+  name: conflict on push checklist item
   type: http
-  seq: 18
+  seq: 10
 
 http:
   method: post
@@ -20,18 +20,20 @@ http:
           "tasks": [],
           "goals": [],
           "contexts": [],
-          "categories": [
+          "categories": [],
+          "checklist_items": [
             {
-              "id": "{{$randomUUID}}",
-              "name": "Removed Category",
-              "sort_order": 2000,
-              "is_deleted": true,
-              "created_at": "{{$isoTimestamp}}",
-              "updated_at": "{{$isoTimestamp}}",
-              "version": 2
+              "id": "{{conflictChecklistItemId}}",
+              "task_id": "{{conflictChecklistTaskId}}",
+              "title": "Conflict test subtask",
+              "is_completed": false,
+              "sort_order": 9999,
+              "is_deleted": false,
+              "created_at": "{{pastIsoTimestamp}}",
+              "updated_at": "{{pastIsoTimestamp}}",
+              "version": 1
             }
           ],
-          "checklist_items": [],
           "settings": []
         }
       }
@@ -44,11 +46,13 @@ runtime:
       value: "200"
     - expression: res.body.ok
       operator: isTruthy
-    - expression: res.body.results.categories[0].id
+    - expression: res.body.results.checklist_items[0].id
       operator: isDefined
-    - expression: res.body.results.categories[0].status
+    - expression: res.body.results.checklist_items[0].status
       operator: eq
-      value: created
+      value: conflict
+    - expression: res.body.results.checklist_items[0].server_record
+      operator: isDefined
     - expression: res.body.server_time
       operator: isDefined
 

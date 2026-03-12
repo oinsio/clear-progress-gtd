@@ -1,0 +1,10 @@
+info:
+  name: conflict on push
+  type: folder
+  seq: 3
+
+request:
+  auth: inherit
+  variables:
+    - name: pastIsoTimestamp
+      value: 2000-01-01T00:00:00.000Z

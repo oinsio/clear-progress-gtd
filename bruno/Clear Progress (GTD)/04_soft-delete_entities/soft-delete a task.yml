@@ -1,7 +1,7 @@
 info:
   name: soft-delete a task
   type: http
-  seq: 10
+  seq: 4
 
 http:
   method: post

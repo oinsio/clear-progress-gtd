@@ -1,7 +1,7 @@
 info:
-  name: create a new category
+  name: soft-delete a checklist item
   type: http
-  seq: 7
+  seq: 8
 
 http:
   method: post
@@ -20,18 +20,20 @@ http:
           "tasks": [],
           "goals": [],
           "contexts": [],
-          "categories": [
+          "categories": [],
+          "checklist_items": [
             {
               "id": "{{$randomUUID}}",
-              "name": "{{$randomBsNoun}}",
-              "sort_order": 1000,
-              "is_deleted": false,
+              "task_id": "{{$randomUUID}}",
+              "title": "Removed subtask",
+              "is_completed": false,
+              "sort_order": 2000,
+              "is_deleted": true,
               "created_at": "{{$isoTimestamp}}",
               "updated_at": "{{$isoTimestamp}}",
-              "version": 1
+              "version": 2
             }
           ],
-          "checklist_items": [],
           "settings": []
         }
       }
@@ -44,15 +46,11 @@ runtime:
       value: "200"
     - expression: res.body.ok
       operator: isTruthy
-    - expression: res.body.results
+    - expression: res.body.results.checklist_items[0].id
       operator: isDefined
-    - expression: res.body.results.categories[0].id
-      operator: isDefined
-    - expression: res.body.results.categories[0].status
+    - expression: res.body.results.checklist_items[0].status
       operator: eq
       value: created
-    - expression: res.body.results.categories[0].version
-      operator: isDefined
     - expression: res.body.server_time
       operator: isDefined
 

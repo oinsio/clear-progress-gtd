@@ -1,0 +1,69 @@
+info:
+  name: create a new goal
+  type: http
+  seq: 1
+
+http:
+  method: post
+  url: https://script.google.com/macros/s/{{deploymentId}}/exec#push
+  headers:
+    - name: accept
+      value: application/json
+    - name: Content-Type
+      value: application/json
+  body:
+    type: json
+    data: |-
+      {
+        "action": "push",
+        "changes": {
+          "tasks": [],
+          "goals": [
+            {
+              "id": "{{$randomUUID}}",
+              "title": "Learn {{$randomAbbreviation}}",
+              "description": "Master the fundamentals and build a real project",
+              "cover_file_id": "",
+              "status": "in_progress",
+              "sort_order": 1000,
+              "is_deleted": false,
+              "created_at": "{{$isoTimestamp}}",
+              "updated_at": "{{$isoTimestamp}}",
+              "version": 1
+            }
+          ],
+          "contexts": [],
+          "categories": [],
+          "checklist_items": [],
+          "settings": []
+        }
+      }
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: after-response
+      code: bru.setEnvVar("goalId", res.body.results.goals[0].id);
+  assertions:
+    - expression: res.status
+      operator: eq
+      value: "200"
+    - expression: res.body.ok
+      operator: isTruthy
+    - expression: res.body.results
+      operator: isDefined
+    - expression: res.body.results.goals[0].id
+      operator: isDefined
+    - expression: res.body.results.goals[0].status
+      operator: eq
+      value: created
+    - expression: res.body.results.goals[0].version
+      operator: isDefined
+    - expression: res.body.server_time
+      operator: isDefined
+
+settings:
+  encodeUrl: false
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

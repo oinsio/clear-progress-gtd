@@ -1,0 +1,61 @@
+info:
+  name: conflict on push category
+  type: http
+  seq: 4
+
+http:
+  method: post
+  url: https://script.google.com/macros/s/{{deploymentId}}/exec#push
+  headers:
+    - name: accept
+      value: application/json
+    - name: Content-Type
+      value: application/json
+  body:
+    type: json
+    data: |-
+      {
+        "action": "push",
+        "changes": {
+          "tasks": [],
+          "goals": [],
+          "contexts": [],
+          "categories": [
+            {
+              "id": "{{conflictCategoryId}}",
+              "name": "Conflict Category",
+              "sort_order": 9999,
+              "is_deleted": false,
+              "created_at": "{{pastIsoTimestamp}}",
+              "updated_at": "{{pastIsoTimestamp}}",
+              "version": 1
+            }
+          ],
+          "checklist_items": [],
+          "settings": []
+        }
+      }
+  auth: inherit
+
+runtime:
+  assertions:
+    - expression: res.status
+      operator: eq
+      value: "200"
+    - expression: res.body.ok
+      operator: isTruthy
+    - expression: res.body.results.categories[0].id
+      operator: isDefined
+    - expression: res.body.results.categories[0].status
+      operator: eq
+      value: conflict
+    - expression: res.body.results.categories[0].server_record
+      operator: isDefined
+    - expression: res.body.server_time
+      operator: isDefined
+
+settings:
+  encodeUrl: false
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

@@ -1,7 +1,7 @@
 info:
-  name: create a new goal
+  name: conflict on push context
   type: http
-  seq: 5
+  seq: 6
 
 http:
   method: post
@@ -18,21 +18,18 @@ http:
         "action": "push",
         "changes": {
           "tasks": [],
-          "goals": [
+          "goals": [],
+          "contexts": [
             {
-              "id": "{{$randomUUID}}",
-              "title": "Learn {{$randomAbbreviation}}",
-              "description": "Master the fundamentals and build a real project",
-              "cover_file_id": "",
-              "status": "in_progress",
-              "sort_order": 1000,
+              "id": "{{conflictContextId}}",
+              "name": "@Conflict",
+              "sort_order": 9999,
               "is_deleted": false,
-              "created_at": "{{$isoTimestamp}}",
-              "updated_at": "{{$isoTimestamp}}",
+              "created_at": "{{pastIsoTimestamp}}",
+              "updated_at": "{{pastIsoTimestamp}}",
               "version": 1
             }
           ],
-          "contexts": [],
           "categories": [],
           "checklist_items": [],
           "settings": []
@@ -47,14 +44,12 @@ runtime:
       value: "200"
     - expression: res.body.ok
       operator: isTruthy
-    - expression: res.body.results
+    - expression: res.body.results.contexts[0].id
       operator: isDefined
-    - expression: res.body.results.goals[0].id
-      operator: isDefined
-    - expression: res.body.results.goals[0].status
+    - expression: res.body.results.contexts[0].status
       operator: eq
-      value: created
-    - expression: res.body.results.goals[0].version
+      value: conflict
+    - expression: res.body.results.contexts[0].server_record
       operator: isDefined
     - expression: res.body.server_time
       operator: isDefined
