@@ -1,0 +1,55 @@
+info:
+  name: upload cover too large
+  type: http
+  seq: 3
+
+http:
+  method: post
+  url: https://script.google.com/macros/s/{{deploymentId}}/exec#upload_cover
+  headers:
+    - name: accept
+      value: application/json
+    - name: Content-Type
+      value: application/json
+  body:
+    type: json
+    data: |-
+      {
+        "action": "upload_cover",
+        "goal_id": "{{$randomUUID}}",
+        "filename": "too-large.jpg",
+        "mime_type": "image/jpeg",
+        "data": "{{oversizedCoverData}}"
+      }
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: before-request
+      code: |-
+        // Generate base64 that decodes to 2,097,153 bytes (1 byte over the 2 MB limit).
+        // 'A'.repeat(2796204) → 2796204 / 4 * 3 = 2,097,153 decoded bytes.
+        const oversizedBase64 = 'A'.repeat(2796204);
+        bru.setVar("oversizedCoverData", oversizedBase64);
+  assertions:
+    - expression: res.status
+      operator: eq
+      value: "200"
+    - expression: res.body.ok
+      operator: isFalsy
+    - expression: res.body.error
+      operator: eq
+      value: FILE_TOO_LARGE
+    - expression: res.body.message
+      operator: eq
+      value: Cover image must be 2 MB or less
+
+settings:
+  encodeUrl: false
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |
+  upload_cover called with a payload that decodes to 2,097,153 bytes (1 byte over the 2 MB limit).
+  Expected: server rejects with ok: false, error: FILE_TOO_LARGE.
