@@ -39,6 +39,32 @@ describe('uploadCover', () => {
     vi.mocked(Drive.Files.create).mockReturnValue({ id: 'new-file-id' });
   });
 
+  describe('missing data field', () => {
+    it('should return ok: false when data field is missing', () => {
+      const payloadWithoutData = { goal_id: 'goal-1', filename: 'cover.jpg', mime_type: 'image/jpeg' };
+
+      uploadCover(payloadWithoutData as Parameters<typeof uploadCover>[0]);
+
+      expect(parseResponse().ok).toBe(false);
+    });
+
+    it('should return INVALID_PAYLOAD error code when data field is missing', () => {
+      const payloadWithoutData = { goal_id: 'goal-1', filename: 'cover.jpg', mime_type: 'image/jpeg' };
+
+      uploadCover(payloadWithoutData as Parameters<typeof uploadCover>[0]);
+
+      expect(parseResponse().error).toBe(ERROR_CODES.INVALID_PAYLOAD);
+    });
+
+    it('should not call base64Decode when data field is missing', () => {
+      const payloadWithoutData = { goal_id: 'goal-1', filename: 'cover.jpg', mime_type: 'image/jpeg' };
+
+      uploadCover(payloadWithoutData as Parameters<typeof uploadCover>[0]);
+
+      expect(Utilities.base64Decode).not.toHaveBeenCalled();
+    });
+  });
+
   describe('size validation', () => {
     it('should return FILE_TOO_LARGE error when decoded size exceeds limit', () => {
       vi.mocked(Utilities.base64Decode).mockReturnValue(new Array(MAX_COVER_SIZE_BYTES + 1).fill(0));

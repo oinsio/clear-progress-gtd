@@ -30,7 +30,11 @@ runtime:
     - expression: res.body.ok
       operator: isFalsy
     - expression: res.body.error
-      operator: isDefined
+      operator: eq
+      value: INVALID_PAYLOAD
+    - expression: res.body.message
+      operator: eq
+      value: data field is required
 
 settings:
   encodeUrl: false

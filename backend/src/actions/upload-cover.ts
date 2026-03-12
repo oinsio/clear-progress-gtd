@@ -19,6 +19,10 @@ export function uploadCover(payload: {
 }): GoogleAppsScript.Content.TextOutput {
   const { filename, mime_type, data } = payload;
 
+  if (!data) {
+    return jsonError(ERROR_CODES.INVALID_PAYLOAD, ERROR_MESSAGES.DATA_REQUIRED);
+  }
+
   const decoded = Utilities.base64Decode(data);
   if (decoded.length > MAX_COVER_SIZE_BYTES) {
     return jsonError(ERROR_CODES.FILE_TOO_LARGE, ERROR_MESSAGES.COVER_TOO_LARGE);

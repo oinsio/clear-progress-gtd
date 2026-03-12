@@ -501,6 +501,7 @@ paths:
       description: |
         Uploads a cover image for a goal to Google Drive in the Covers subfolder.
         The image is sent as base64 **without** the `data:image/...;base64,` prefix.
+        The `data` field is required — omitting it returns `INVALID_PAYLOAD`.
 
         **Deduplication:** the server computes a SHA-256 hash and checks whether
         an identical file already exists. If it does, the existing `file_id` is
@@ -548,6 +549,12 @@ paths:
                     ok: false
                     error: FILE_TOO_LARGE
                     message: Cover image must be 2 MB or less
+                missing_data:
+                  summary: Error — data field is missing
+                  value:
+                    ok: false
+                    error: INVALID_PAYLOAD
+                    message: data field is required
 
   /exec#delete_cover:
     post:
