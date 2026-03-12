@@ -1,0 +1,112 @@
+info:
+  name: verify updated entities via pull
+  type: http
+  seq: 6
+
+http:
+  method: post
+  url: https://script.google.com/macros/s/{{deploymentId}}/exec#pull
+  headers:
+    - name: accept
+      value: application/json
+    - name: Content-Type
+      value: application/json
+  body:
+    type: json
+    data: |-
+      {
+        "action": "pull",
+        "versions": {
+          "tasks": 0,
+          "goals": 0,
+          "contexts": 0,
+          "categories": 0,
+          "checklist_items": 0
+        }
+      }
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const data = res.body.data;
+
+        // Updated task
+        const foundTask = data.tasks.find(item => item.id === bru.getEnvVar("taskId"));
+
+        test("updated task should be present", function() {
+          expect(foundTask ? true : false).to.be.true;
+        });
+
+        test("updated task should have correct box", function() {
+          expect(foundTask && foundTask.box === "today" ? true : false).to.be.true;
+        });
+
+        test("updated task should have correct title", function() {
+          expect(foundTask && foundTask.title.startsWith("Updated:") ? true : false).to.be.true;
+        });
+
+        // Updated goal
+        const foundGoal = data.goals.find(item => item.id === bru.getEnvVar("goalId"));
+
+        test("updated goal should be present", function() {
+          expect(foundGoal ? true : false).to.be.true;
+        });
+
+        test("updated goal should have correct status", function() {
+          expect(foundGoal && foundGoal.status === "completed" ? true : false).to.be.true;
+        });
+
+        test("updated goal should have correct title", function() {
+          expect(foundGoal && foundGoal.title.startsWith("Updated:") ? true : false).to.be.true;
+        });
+
+        // Updated context
+        const foundContext = data.contexts.find(item => item.id === bru.getEnvVar("contextId"));
+
+        test("updated context should be present", function() {
+          expect(foundContext ? true : false).to.be.true;
+        });
+
+        test("updated context should have correct name", function() {
+          expect(foundContext && foundContext.name.startsWith("@Updated") ? true : false).to.be.true;
+        });
+
+        // Updated category
+        const foundCategory = data.categories.find(item => item.id === bru.getEnvVar("categoryId"));
+
+        test("updated category should be present", function() {
+          expect(foundCategory ? true : false).to.be.true;
+        });
+
+        test("updated category should have correct name", function() {
+          expect(foundCategory && foundCategory.name.startsWith("Updated") ? true : false).to.be.true;
+        });
+
+        // Checklist item
+        const foundChecklistItem = data.checklist_items.find(item => item.id === bru.getEnvVar("checklistItemsId"));
+
+        test("updated checklist item should be present", function() {
+          expect(foundChecklistItem ? true : false).to.be.true;
+        });
+
+        test("updated checklist item should have correct title", function() {
+          expect(foundChecklistItem && foundChecklistItem.title.startsWith("Updated:") ? true : false).to.be.true;
+        });
+
+        test("updated checklist item should have correct completed status", function() {
+          expect(foundChecklistItem && foundChecklistItem.is_completed === true ? true : false).to.be.true;
+        });
+  assertions:
+    - expression: res.status
+      operator: eq
+      value: "200"
+    - expression: res.body.ok
+      operator: isTruthy
+
+settings:
+  encodeUrl: false
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

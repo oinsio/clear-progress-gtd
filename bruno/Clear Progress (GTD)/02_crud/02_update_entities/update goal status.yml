@@ -21,7 +21,7 @@ http:
           "goals": [
             {
               "id": "{{goalId}}",
-              "title": "Learn something great",
+              "title": "Updated: Learn something great",
               "description": "Master the fundamentals and build a real project",
               "cover_file_id": "",
               "status": "completed",
