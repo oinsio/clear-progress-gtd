@@ -206,8 +206,13 @@ paths:
         - `created` — new record was inserted
         - `accepted` — change was applied, `version` was incremented
         - `conflict` — server record is newer; response includes `server_record`
+        - `rejected` — record was not saved; response includes `reason`
 
         On conflict, the client must overwrite its local copy with `server_record`.
+
+        **Validation rules:**
+        - `title` (Task, Goal, ChecklistItem) and `name` (Context, Category) must not be blank
+          (empty string or whitespace only). Blank records are rejected with `reason: "title or name must not be blank"`.
       requestBody:
         required: true
         content:
@@ -320,6 +325,99 @@ paths:
                       checklist_items: []
                       settings: []
                     server_time: "2026-03-04T14:35:00.000Z"
+                rejected_task:
+                  summary: Rejected — task has blank title
+                  value:
+                    ok: true
+                    results:
+                      tasks:
+                        - id: a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d
+                          status: rejected
+                          reason: title or name must not be blank
+                      goals: []
+                      contexts: []
+                      categories: []
+                      checklist_items: []
+                      settings: []
+                    server_time: "2026-03-04T13:00:02.000Z"
+                rejected_goal:
+                  summary: Rejected — goal has blank title
+                  value:
+                    ok: true
+                    results:
+                      tasks: []
+                      goals:
+                        - id: b2c3d4e5-f6a7-4b8c-9d0e-1f2a3b4c5d6e
+                          status: rejected
+                          reason: title or name must not be blank
+                      contexts: []
+                      categories: []
+                      checklist_items: []
+                      settings: []
+                    server_time: "2026-03-04T13:00:02.000Z"
+                rejected_context:
+                  summary: Rejected — context has blank name
+                  value:
+                    ok: true
+                    results:
+                      tasks: []
+                      goals: []
+                      contexts:
+                        - id: c3d4e5f6-a7b8-4c9d-0e1f-2a3b4c5d6e7f
+                          status: rejected
+                          reason: title or name must not be blank
+                      categories: []
+                      checklist_items: []
+                      settings: []
+                    server_time: "2026-03-04T13:00:02.000Z"
+                rejected_category:
+                  summary: Rejected — category has blank name
+                  value:
+                    ok: true
+                    results:
+                      tasks: []
+                      goals: []
+                      contexts: []
+                      categories:
+                        - id: d4e5f6a7-b8c9-4d0e-1f2a-3b4c5d6e7f8a
+                          status: rejected
+                          reason: title or name must not be blank
+                      checklist_items: []
+                      settings: []
+                    server_time: "2026-03-04T13:00:02.000Z"
+                rejected_checklist_item:
+                  summary: Rejected — checklist item has blank title
+                  value:
+                    ok: true
+                    results:
+                      tasks: []
+                      goals: []
+                      contexts: []
+                      categories: []
+                      checklist_items:
+                        - id: e5f6a7b8-c9d0-4e1f-2a3b-4c5d6e7f8a9b
+                          status: rejected
+                          reason: title or name must not be blank
+                      settings: []
+                    server_time: "2026-03-04T13:00:02.000Z"
+                mixed_batch:
+                  summary: Mixed batch — valid task created, invalid goal rejected
+                  value:
+                    ok: true
+                    results:
+                      tasks:
+                        - id: b8c9d0e1-f2a3-4b4c-5d6e-7f8a9b0c1d2e
+                          status: created
+                          version: 1
+                      goals:
+                        - id: b2c3d4e5-f6a7-4b8c-9d0e-1f2a3b4c5d6e
+                          status: rejected
+                          reason: title or name must not be blank
+                      contexts: []
+                      categories: []
+                      checklist_items: []
+                      settings: []
+                    server_time: "2026-03-04T13:00:02.000Z"
 
   /exec#upload_cover:
     post:
@@ -805,24 +903,33 @@ components:
           example: f47ac10b-58cc-4372-a567-0e02b2c3d479
         status:
           type: string
-          enum: [created, accepted, conflict]
+          enum: [created, accepted, conflict, rejected]
           description: |
             - `created` — new record was inserted on the server
             - `accepted` — change was applied, `version` was incremented
             - `conflict` — server record is newer; see `server_record`
+            - `rejected` — record failed validation; see `reason`. Record was NOT saved
           example: accepted
         version:
           type: integer
-          description: Current version on the server (for created and accepted)
+          description: Present for `created` and `accepted` statuses
           example: 3
         server_record:
-          description: Current server record on conflict. Client must overwrite its local copy
+          description: Present for `conflict` status. Client must overwrite its local copy
           oneOf:
             - $ref: '#/components/schemas/Task'
             - $ref: '#/components/schemas/Goal'
             - $ref: '#/components/schemas/Context'
             - $ref: '#/components/schemas/Category'
             - $ref: '#/components/schemas/ChecklistItem'
+        reason:
+          type: string
+          description: |
+            Present for `rejected` status. Human-readable explanation of why the record was rejected.
+
+            Known values:
+            - `"title or name must not be blank"` — `title` (Task, Goal, ChecklistItem) or `name` (Context, Category) is empty or whitespace-only
+          example: title or name must not be blank
 
     PushChanges:
       type: object
