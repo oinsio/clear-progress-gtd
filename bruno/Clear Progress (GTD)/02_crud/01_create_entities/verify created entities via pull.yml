@@ -1,0 +1,95 @@
+info:
+  name: verify created entities via pull
+  type: http
+  seq: 7
+
+http:
+  method: post
+  url: https://script.google.com/macros/s/{{deploymentId}}/exec#pull
+  headers:
+    - name: accept
+      value: application/json
+    - name: Content-Type
+      value: application/json
+  body:
+    type: json
+    data: |-
+      {
+        "action": "pull",
+        "versions": {
+          "tasks": 0,
+          "goals": 0,
+          "contexts": 0,
+          "categories": 0,
+          "checklist_items": 0
+        }
+      }
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: after-response
+      code: |-
+        const tasks = res.body.data.tasks;
+        const goals = res.body.data.goals;
+        const contexts = res.body.data.contexts;
+        const categories = res.body.data.categories;
+        const checklistItems = res.body.data.checklist_items;
+
+        const taskId = bru.getEnvVar("taskId");
+        const goalId = bru.getEnvVar("goalId");
+        const contextId = bru.getEnvVar("contextId");
+        const categoryId = bru.getEnvVar("categoryId");
+        const checklistItemsId = bru.getEnvVar("checklistItemsId");
+
+        const foundTask = tasks.find(item => item.id === taskId);
+        const foundGoal = goals.find(item => item.id === goalId);
+        const foundContext = contexts.find(item => item.id === contextId);
+        const foundCategory = categories.find(item => item.id === categoryId);
+        const foundChecklistItem = checklistItems.find(item => item.id === checklistItemsId);
+
+        bru.setVar("taskFoundInPull", foundTask && !foundTask.is_deleted ? "true" : "false");
+        bru.setVar("goalFoundInPull", foundGoal && !foundGoal.is_deleted ? "true" : "false");
+        bru.setVar("contextFoundInPull", foundContext && !foundContext.is_deleted ? "true" : "false");
+        bru.setVar("categoryFoundInPull", foundCategory && !foundCategory.is_deleted ? "true" : "false");
+        bru.setVar("checklistItemFoundInPull", foundChecklistItem && !foundChecklistItem.is_deleted ? "true" : "false");
+    - type: tests
+      code: |-
+        const data = res.getBody().data;
+
+        const isPresentAndNotDeleted = (list, id) => {
+          const item = list?.find(i => i.id === id);
+          return !!(item && !item.is_deleted);
+        };
+
+        test("task should be present and not deleted", function() {
+          expect(isPresentAndNotDeleted(data.tasks, bru.getEnvVar("taskId"))).to.be.true;
+        });
+
+        test("goal should be present and not deleted", function() {
+          expect(isPresentAndNotDeleted(data.goals, bru.getEnvVar("goalId"))).to.be.true;
+        });
+
+        test("context should be present and not deleted", function() {
+          expect(isPresentAndNotDeleted(data.contexts, bru.getEnvVar("contextId"))).to.be.true;
+        });
+
+        test("category should be present and not deleted", function() {
+          expect(isPresentAndNotDeleted(data.categories, bru.getEnvVar("categoryId"))).to.be.true;
+        });
+
+        test("checklist item should be present and not deleted", function() {
+          expect(isPresentAndNotDeleted(data.checklist_items, bru.getEnvVar("checklistItemsId"))).to.be.true;
+        });
+  assertions:
+    - expression: res.status
+      operator: eq
+      value: "200"
+    - expression: res.body.ok
+      operator: isTruthy
+
+settings:
+  encodeUrl: false
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

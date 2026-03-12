@@ -24,7 +24,7 @@ http:
           "checklist_items": [
             {
               "id": "{{$randomUUID}}",
-              "task_id": "{{$taskId}}",
+              "task_id": "{{taskId}}",
               "title": "{{$randomCatchPhrase}}",
               "is_completed": false,
               "sort_order": 1000,
