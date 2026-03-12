@@ -1,0 +1,65 @@
+info:
+  name: push checklist item with empty task_id
+  type: http
+  seq: 12
+
+http:
+  method: post
+  url: https://script.google.com/macros/s/{{deploymentId}}/exec#push
+  headers:
+    - name: accept
+      value: application/json
+    - name: Content-Type
+      value: application/json
+  body:
+    type: json
+    data: |-
+      {
+        "action": "push",
+        "changes": {
+          "tasks": [],
+          "goals": [],
+          "contexts": [],
+          "categories": [],
+          "checklist_items": [
+            {
+              "id": "{{$randomUUID}}",
+              "task_id": "",
+              "title": "Subtask without parent",
+              "is_completed": false,
+              "sort_order": 9999,
+              "is_deleted": false,
+              "created_at": "{{$isoTimestamp}}",
+              "updated_at": "{{$isoTimestamp}}",
+              "version": 1
+            }
+          ],
+          "settings": []
+        }
+      }
+  auth: inherit
+
+runtime:
+  assertions:
+    - expression: res.status
+      operator: eq
+      value: "200"
+    - expression: res.body.ok
+      operator: isDefined
+    - expression: res.body.results.checklist_items[0].status
+      operator: eq
+      value: rejected
+    - expression: res.body.results.checklist_items[0].reason
+      operator: eq
+      value: task_id is required and must be a valid UUID v4
+
+settings:
+  encodeUrl: false
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |
+  Pushes a checklist item with an empty task_id.
+  task_id is a required FK — empty string is not allowed.
+  Expected behavior: server rejects the record with status rejected and reason message.
