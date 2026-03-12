@@ -1,7 +1,7 @@
 info:
-  name: purge data
+  name: pull only changed entity
   type: folder
-  seq: 7
+  seq: 2
 
 request:
   auth: inherit

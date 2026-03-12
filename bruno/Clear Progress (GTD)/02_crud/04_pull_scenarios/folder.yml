@@ -1,7 +1,7 @@
 info:
-  name: purge data
+  name: pull scenarios
   type: folder
-  seq: 7
+  seq: 4
 
 request:
   auth: inherit

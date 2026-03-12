@@ -1,0 +1,69 @@
+info:
+  name: pull with high goal and context versions
+  type: http
+  seq: 2
+
+http:
+  method: post
+  url: https://script.google.com/macros/s/{{deploymentId}}/exec#pull
+  headers:
+    - name: accept
+      value: application/json
+    - name: Content-Type
+      value: application/json
+  body:
+    type: json
+    data: |-
+      {
+        "action": "pull",
+        "versions": {
+          "tasks": 0,
+          "goals": 99999,
+          "contexts": 99999,
+          "categories": 99999,
+          "checklist_items": 99999
+        }
+      }
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const data = res.getBody().data;
+        const taskId = bru.getEnvVar("pullScen2TaskId");
+
+        test("tasks array should contain the pushed task", function() {
+          const task = data.tasks?.find(t => t.id === taskId);
+          expect(task).to.not.be.undefined;
+        });
+
+        test("goals array should be empty (version too high)", function() {
+          expect(data.goals).to.be.an("array").that.is.empty;
+        });
+
+        test("contexts array should be empty (version too high)", function() {
+          expect(data.contexts).to.be.an("array").that.is.empty;
+        });
+
+        test("categories array should be empty (version too high)", function() {
+          expect(data.categories).to.be.an("array").that.is.empty;
+        });
+
+        test("checklist_items array should be empty (version too high)", function() {
+          expect(data.checklist_items).to.be.an("array").that.is.empty;
+        });
+  assertions:
+    - expression: res.status
+      operator: eq
+      value: "200"
+    - expression: res.body.ok
+      operator: isTruthy
+    - expression: res.body.data.tasks
+      operator: isDefined
+
+settings:
+  encodeUrl: false
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
