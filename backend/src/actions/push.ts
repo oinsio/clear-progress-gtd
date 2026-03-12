@@ -1,4 +1,4 @@
-import { PUSH_STATUSES, CONFLICT_RESOLUTION, ERROR_MESSAGES, isBlankString } from '../helpers/constants';
+import { PUSH_STATUSES, CONFLICT_RESOLUTION, ERROR_MESSAGES, isBlankString, isValidUuid } from '../helpers/constants';
 import { jsonOk, jsonError, jsonNotInitialized, ERROR_CODES } from '../helpers/response';
 import { resolveConflict } from '../helpers/conflict';
 import { getAllTasks, upsertTask } from '../sheets/tasks.sheet';
@@ -15,14 +15,43 @@ function getEntityLabel(entity: AnyEntity): string {
   return 'title' in entity ? entity.title : entity.name;
 }
 
+function getInvalidForeignKeyReason(record: AnyEntity): string | null {
+  if ('task_id' in record) {
+    if (!isValidUuid(record.task_id)) {
+      return ERROR_MESSAGES.INVALID_REQUIRED_FK;
+    }
+  }
+  if ('goal_id' in record) {
+    if (record.goal_id !== '' && !isValidUuid(record.goal_id)) {
+      return ERROR_MESSAGES.INVALID_OPTIONAL_FK;
+    }
+    if (record.context_id !== '' && !isValidUuid(record.context_id)) {
+      return ERROR_MESSAGES.INVALID_OPTIONAL_FK;
+    }
+    if (record.category_id !== '' && !isValidUuid(record.category_id)) {
+      return ERROR_MESSAGES.INVALID_OPTIONAL_FK;
+    }
+  }
+  return null;
+}
+
 function processRecords<T extends AnyEntity>(
   incoming: T[],
   existing: T[],
   upsertFn: (record: T) => void
 ): PushItemResult[] {
   return incoming.map(record => {
+    if (!isValidUuid(record.id)) {
+      return { id: record.id, status: PUSH_STATUSES.REJECTED, reason: ERROR_MESSAGES.INVALID_ID };
+    }
+
     if (isBlankString(getEntityLabel(record))) {
       return { id: record.id, status: PUSH_STATUSES.REJECTED, reason: ERROR_MESSAGES.BLANK_TITLE };
+    }
+
+    const fkError = getInvalidForeignKeyReason(record);
+    if (fkError) {
+      return { id: record.id, status: PUSH_STATUSES.REJECTED, reason: fkError };
     }
 
     const serverRecord = existing.find(e => e.id === record.id);

@@ -119,10 +119,19 @@ export const ERROR_MESSAGES = {
   INIT_REQUIRED: 'Call init before using the API',
   PURGE_CONFIRM_REQUIRED: 'confirm must be true to purge deleted records',
   BLANK_TITLE: 'title or name must not be blank',
+  INVALID_ID: 'id must be a valid UUID v4',
+  INVALID_OPTIONAL_FK: 'foreign key must be empty or a valid UUID v4',
+  INVALID_REQUIRED_FK: 'task_id is required and must be a valid UUID v4',
 } as const;
 
 export function isBlankString(value: string): boolean {
   return value.trim().length === 0;
+}
+
+const UUID_V4_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+export function isValidUuid(value: string): boolean {
+  return typeof value === 'string' && UUID_V4_REGEX.test(value);
 }
 
 export function thumbnailUrl(fileId: string): string {
