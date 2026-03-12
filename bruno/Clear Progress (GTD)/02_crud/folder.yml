@@ -1,7 +1,7 @@
 info:
-  name: soft-delete entities
+  name: crud
   type: folder
-  seq: 4
+  seq: 2
 
 request:
   auth: inherit

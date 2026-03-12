@@ -1,7 +1,7 @@
 info:
-  name: cover
+  name: soft-delete entities
   type: folder
-  seq: 5
+  seq: 3
 
 request:
   auth: inherit

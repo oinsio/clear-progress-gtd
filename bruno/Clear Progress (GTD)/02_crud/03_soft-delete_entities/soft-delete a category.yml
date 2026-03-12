@@ -22,13 +22,13 @@ http:
           "contexts": [],
           "categories": [
             {
-              "id": "{{$randomUUID}}",
+              "id": "{{categoryId}}",
               "name": "Removed Category",
               "sort_order": 2000,
               "is_deleted": true,
               "created_at": "{{$isoTimestamp}}",
               "updated_at": "{{$isoTimestamp}}",
-              "version": 2
+              "version": 3
             }
           ],
           "checklist_items": [],

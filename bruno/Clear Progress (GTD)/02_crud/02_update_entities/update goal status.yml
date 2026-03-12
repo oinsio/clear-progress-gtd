@@ -1,7 +1,7 @@
 info:
-  name: soft-delete a checklist item
+  name: update goal status
   type: http
-  seq: 8
+  seq: 2
 
 http:
   method: post
@@ -18,22 +18,23 @@ http:
         "action": "push",
         "changes": {
           "tasks": [],
-          "goals": [],
-          "contexts": [],
-          "categories": [],
-          "checklist_items": [
+          "goals": [
             {
-              "id": "{{$randomUUID}}",
-              "task_id": "{{$randomUUID}}",
-              "title": "Removed subtask",
-              "is_completed": false,
-              "sort_order": 2000,
-              "is_deleted": true,
+              "id": "{{goalId}}",
+              "title": "Learn something great",
+              "description": "Master the fundamentals and build a real project",
+              "cover_file_id": "",
+              "status": "completed",
+              "sort_order": 1000,
+              "is_deleted": false,
               "created_at": "{{$isoTimestamp}}",
               "updated_at": "{{$isoTimestamp}}",
               "version": 2
             }
           ],
+          "contexts": [],
+          "categories": [],
+          "checklist_items": [],
           "settings": []
         }
       }
@@ -46,11 +47,13 @@ runtime:
       value: "200"
     - expression: res.body.ok
       operator: isTruthy
-    - expression: res.body.results.checklist_items[0].id
+    - expression: res.body.results.goals[0].id
       operator: isDefined
-    - expression: res.body.results.checklist_items[0].status
+    - expression: res.body.results.goals[0].status
       operator: eq
-      value: created
+      value: accepted
+    - expression: res.body.results.goals[0].version
+      operator: isDefined
     - expression: res.body.server_time
       operator: isDefined
 

@@ -1,0 +1,69 @@
+info:
+  name: update task fields
+  type: http
+  seq: 1
+
+http:
+  method: post
+  url: https://script.google.com/macros/s/{{deploymentId}}/exec#push
+  headers:
+    - name: accept
+      value: application/json
+    - name: Content-Type
+      value: application/json
+  body:
+    type: json
+    data: |-
+      {
+        "action": "push",
+        "changes": {
+          "tasks": [
+            {
+              "id": "{{taskId}}",
+              "title": "Updated: Schedule a doctor's appointment",
+              "notes": "Changed to today, goal unlinked",
+              "box": "today",
+              "goal_id": "",
+              "context_id": "{{contextId}}",
+              "category_id": "{{categoryId}}",
+              "is_completed": false,
+              "completed_at": "",
+              "repeat_rule": "",
+              "sort_order": 4000,
+              "is_deleted": false,
+              "created_at": "{{$isoTimestamp}}",
+              "updated_at": "{{$isoTimestamp}}",
+              "version": 2
+            }
+          ],
+          "goals": [],
+          "contexts": [],
+          "categories": [],
+          "checklist_items": [],
+          "settings": []
+        }
+      }
+  auth: inherit
+
+runtime:
+  assertions:
+    - expression: res.status
+      operator: eq
+      value: "200"
+    - expression: res.body.ok
+      operator: isTruthy
+    - expression: res.body.results.tasks[0].id
+      operator: isDefined
+    - expression: res.body.results.tasks[0].status
+      operator: eq
+      value: accepted
+    - expression: res.body.results.tasks[0].version
+      operator: isDefined
+    - expression: res.body.server_time
+      operator: isDefined
+
+settings:
+  encodeUrl: false
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

@@ -1,5 +1,5 @@
 info:
-  name: soft-delete a task
+  name: update category name
   type: http
   seq: 4
 
@@ -17,28 +17,20 @@ http:
       {
         "action": "push",
         "changes": {
-          "tasks": [
-            {
-              "id": "{{$randomUUID}}",
-              "title": "Call the dentist",
-              "notes": "",
-              "box": "today",
-              "goal_id": "",
-              "context_id": "",
-              "category_id": "",
-              "is_completed": false,
-              "completed_at": "",
-              "repeat_rule": "",
-              "sort_order": 3000,
-              "is_deleted": true,
-              "created_at": "{{$isoTimestamp}}",
-              "updated_at": "{{$isoTimestamp}}",
-              "version": 4
-            }
-          ],
+          "tasks": [],
           "goals": [],
           "contexts": [],
-          "categories": [],
+          "categories": [
+            {
+              "id": "{{categoryId}}",
+              "name": "Updated Work",
+              "sort_order": 1000,
+              "is_deleted": false,
+              "created_at": "{{$isoTimestamp}}",
+              "updated_at": "{{$isoTimestamp}}",
+              "version": 2
+            }
+          ],
           "checklist_items": [],
           "settings": []
         }
@@ -52,11 +44,13 @@ runtime:
       value: "200"
     - expression: res.body.ok
       operator: isTruthy
-    - expression: res.body.results.tasks[0].id
+    - expression: res.body.results.categories[0].id
       operator: isDefined
-    - expression: res.body.results.tasks[0].status
+    - expression: res.body.results.categories[0].status
       operator: eq
-      value: created
+      value: accepted
+    - expression: res.body.results.categories[0].version
+      operator: isDefined
     - expression: res.body.server_time
       operator: isDefined
 
