@@ -1,7 +1,7 @@
 info:
-  name: push task with invalid context_id
+  name: push goal without title
   type: http
-  seq: 10
+  seq: 1
 
 http:
   method: post
@@ -17,18 +17,14 @@ http:
       {
         "action": "push",
         "changes": {
-          "tasks": [
+          "tasks": [],
+          "goals": [
             {
               "id": "{{$randomUUID}}",
-              "title": "Task with invalid context_id",
-              "notes": "",
-              "box": "inbox",
-              "goal_id": "",
-              "context_id": "not-a-uuid",
-              "category_id": "",
-              "is_completed": false,
-              "completed_at": "",
-              "repeat_rule": "",
+              "title": "",
+              "description": "",
+              "cover_file_id": "",
+              "status": "not_started",
               "sort_order": 9999,
               "is_deleted": false,
               "created_at": "{{$isoTimestamp}}",
@@ -36,7 +32,6 @@ http:
               "version": 1
             }
           ],
-          "goals": [],
           "contexts": [],
           "categories": [],
           "checklist_items": [],
@@ -52,12 +47,12 @@ runtime:
       value: "200"
     - expression: res.body.ok
       operator: isDefined
-    - expression: res.body.results.tasks[0].status
+    - expression: res.body.results.goals[0].status
       operator: eq
       value: rejected
-    - expression: res.body.results.tasks[0].reason
+    - expression: res.body.results.goals[0].reason
       operator: eq
-      value: foreign key must be empty or a valid UUID v4
+      value: title or name must not be blank
 
 settings:
   encodeUrl: false
@@ -66,6 +61,6 @@ settings:
   maxRedirects: 5
 
 docs: |
-  Pushes a task with a non-empty, non-UUID context_id.
-  Optional FK must be either "" or a valid UUID v4.
-  Expected behavior: server rejects the record with status rejected and reason message.
+  Pushes a goal with an empty title.
+  Expected behavior: server either rejects (ok: false) or accepts (ok: true with status accepted/created).
+  This test documents actual server behavior for empty-title goals.

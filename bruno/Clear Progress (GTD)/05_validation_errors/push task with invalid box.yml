@@ -1,7 +1,7 @@
 info:
   name: push task with invalid box
   type: http
-  seq: 6
+  seq: 4
 
 http:
   method: post

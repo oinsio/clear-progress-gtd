@@ -1,5 +1,5 @@
 info:
-  name: push context without name
+  name: push checklist item without title
   type: http
   seq: 3
 
@@ -19,10 +19,14 @@ http:
         "changes": {
           "tasks": [],
           "goals": [],
-          "contexts": [
+          "contexts": [],
+          "categories": [],
+          "checklist_items": [
             {
               "id": "{{$randomUUID}}",
-              "name": "",
+              "task_id": "{{$randomUUID}}",
+              "title": "",
+              "is_completed": false,
               "sort_order": 9999,
               "is_deleted": false,
               "created_at": "{{$isoTimestamp}}",
@@ -30,8 +34,6 @@ http:
               "version": 1
             }
           ],
-          "categories": [],
-          "checklist_items": [],
           "settings": []
         }
       }
@@ -44,10 +46,10 @@ runtime:
       value: "200"
     - expression: res.body.ok
       operator: isDefined
-    - expression: res.body.results.contexts[0].status
+    - expression: res.body.results.checklist_items[0].status
       operator: eq
       value: rejected
-    - expression: res.body.results.contexts[0].reason
+    - expression: res.body.results.checklist_items[0].reason
       operator: eq
       value: title or name must not be blank
 
@@ -58,5 +60,5 @@ settings:
   maxRedirects: 5
 
 docs: |
-  Pushes a context with an empty name.
+  Pushes a checklist item with an empty title.
   Expected behavior: server rejects the record with status rejected and reason message.

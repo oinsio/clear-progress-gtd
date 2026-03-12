@@ -1,7 +1,7 @@
 info:
-  name: push task with invalid category_id
+  name: push task with invalid goal_id
   type: http
-  seq: 11
+  seq: 7
 
 http:
   method: post
@@ -20,12 +20,12 @@ http:
           "tasks": [
             {
               "id": "{{$randomUUID}}",
-              "title": "Task with invalid category_id",
+              "title": "Task with invalid goal_id",
               "notes": "",
               "box": "inbox",
-              "goal_id": "",
+              "goal_id": "not-a-uuid",
               "context_id": "",
-              "category_id": "not-a-uuid",
+              "category_id": "",
               "is_completed": false,
               "completed_at": "",
               "repeat_rule": "",
@@ -66,6 +66,6 @@ settings:
   maxRedirects: 5
 
 docs: |
-  Pushes a task with a non-empty, non-UUID category_id.
+  Pushes a task with a non-empty, non-UUID goal_id.
   Optional FK must be either "" or a valid UUID v4.
   Expected behavior: server rejects the record with status rejected and reason message.

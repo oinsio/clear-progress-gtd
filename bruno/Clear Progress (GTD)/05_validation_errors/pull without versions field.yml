@@ -1,7 +1,7 @@
 info:
   name: pull without versions field
   type: http
-  seq: 4
+  seq: 2
 
 http:
   method: post

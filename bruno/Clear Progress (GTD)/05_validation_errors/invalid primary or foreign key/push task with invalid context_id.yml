@@ -1,7 +1,7 @@
 info:
-  name: push checklist item with invalid task_id
+  name: push task with invalid context_id
   type: http
-  seq: 13
+  seq: 7
 
 http:
   method: post
@@ -17,16 +17,18 @@ http:
       {
         "action": "push",
         "changes": {
-          "tasks": [],
-          "goals": [],
-          "contexts": [],
-          "categories": [],
-          "checklist_items": [
+          "tasks": [
             {
               "id": "{{$randomUUID}}",
-              "task_id": "not-a-uuid",
-              "title": "Subtask with invalid parent id",
+              "title": "Task with invalid context_id",
+              "notes": "",
+              "box": "inbox",
+              "goal_id": "",
+              "context_id": "not-a-uuid",
+              "category_id": "",
               "is_completed": false,
+              "completed_at": "",
+              "repeat_rule": "",
               "sort_order": 9999,
               "is_deleted": false,
               "created_at": "{{$isoTimestamp}}",
@@ -34,6 +36,10 @@ http:
               "version": 1
             }
           ],
+          "goals": [],
+          "contexts": [],
+          "categories": [],
+          "checklist_items": [],
           "settings": []
         }
       }
@@ -46,12 +52,12 @@ runtime:
       value: "200"
     - expression: res.body.ok
       operator: isDefined
-    - expression: res.body.results.checklist_items[0].status
+    - expression: res.body.results.tasks[0].status
       operator: eq
       value: rejected
-    - expression: res.body.results.checklist_items[0].reason
+    - expression: res.body.results.tasks[0].reason
       operator: eq
-      value: task_id is required and must be a valid UUID v4
+      value: foreign key must be empty or a valid UUID v4
 
 settings:
   encodeUrl: false
@@ -60,6 +66,6 @@ settings:
   maxRedirects: 5
 
 docs: |
-  Pushes a checklist item with a non-UUID task_id.
-  task_id is a required FK — must be a valid UUID v4.
+  Pushes a task with a non-empty, non-UUID context_id.
+  Optional FK must be either "" or a valid UUID v4.
   Expected behavior: server rejects the record with status rejected and reason message.
