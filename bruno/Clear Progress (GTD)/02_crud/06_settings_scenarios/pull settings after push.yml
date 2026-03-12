@@ -1,0 +1,73 @@
+info:
+  name: pull settings after push
+  type: http
+  seq: 3
+
+http:
+  method: post
+  url: https://script.google.com/macros/s/{{deploymentId}}/exec#pull
+  headers:
+    - name: accept
+      value: application/json
+    - name: Content-Type
+      value: application/json
+  body:
+    type: json
+    data: |-
+      {
+        "action": "pull",
+        "versions": {
+          "tasks": 0,
+          "goals": 0,
+          "contexts": 0,
+          "categories": 0,
+          "checklist_items": 0,
+          "settings": 0
+        }
+      }
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const settings = res.getBody().settings;
+
+        const defaultBox = settings?.find(s => s.key === "default_box");
+        const accentColor = settings?.find(s => s.key === "accent_color");
+
+        test("pull response should contain settings array", function() {
+          expect(settings).to.be.an("array");
+        });
+
+        test("default_box setting should be present in pull", function() {
+          expect(defaultBox).to.not.be.undefined;
+        });
+
+        test("default_box value should reflect the latest update (today)", function() {
+          expect(defaultBox?.value).to.eq("today");
+        });
+
+        test("accent_color setting should be present in pull", function() {
+          expect(accentColor).to.not.be.undefined;
+        });
+
+        test("accent_color value should be green", function() {
+          expect(accentColor?.value).to.eq("green");
+        });
+  assertions:
+    - expression: res.status
+      operator: eq
+      value: "200"
+    - expression: res.body.ok
+      operator: isTruthy
+    - expression: res.body.settings
+      operator: isDefined
+    - expression: res.body.server_time
+      operator: isDefined
+
+settings:
+  encodeUrl: false
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

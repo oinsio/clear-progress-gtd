@@ -1,7 +1,7 @@
 info:
-  name: push settings
+  name: push all settings keys
   type: http
-  seq: 6
+  seq: 1
 
 http:
   method: post
@@ -39,14 +39,18 @@ http:
   auth: inherit
 
 runtime:
+  scripts:
+    - type: after-response
+      code: |-
+        const settings = res.body.results.settings;
+        bru.setEnvVar("settingDefaultBoxId", settings[0].id);
+        bru.setEnvVar("settingAccentColorId", settings[1].id);
   assertions:
     - expression: res.status
       operator: eq
       value: "200"
     - expression: res.body.ok
       operator: isTruthy
-    - expression: res.body.results
-      operator: isDefined
     - expression: res.body.results.settings[0].id
       operator: isDefined
     - expression: res.body.results.settings[0].status
