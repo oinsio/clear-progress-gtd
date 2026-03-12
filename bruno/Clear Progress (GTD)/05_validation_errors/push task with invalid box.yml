@@ -51,9 +51,13 @@ runtime:
       operator: eq
       value: "200"
     - expression: res.body.ok
-      operator: isFalsy
-    - expression: res.body.error
-      operator: isDefined
+      operator: isTruthy
+    - expression: res.body.results.tasks[0].status
+      operator: eq
+      value: rejected
+    - expression: res.body.results.tasks[0].reason
+      operator: eq
+      value: "box must be one of: inbox, today, week, later"
 
 settings:
   encodeUrl: false

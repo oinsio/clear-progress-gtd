@@ -492,6 +492,66 @@ describe('push', () => {
     });
   });
 
+  describe('rejected record (invalid box)', () => {
+    it.each(['', 'INBOX', 'tomorrow', 'someday', 'bad-box'])(
+      'should return status: rejected for task with box="%s"',
+      (invalidBox) => {
+        const task = makeTask({ box: invalidBox as Task['box'] });
+        vi.mocked(getAllTasks).mockReturnValue([]);
+
+        push({ tasks: [task] });
+
+        const results = parseResponse().results as Record<string, unknown[]>;
+        expect(results.tasks[0]).toMatchObject({ status: 'rejected' });
+      },
+    );
+
+    it('should not call upsertTask when task has invalid box', () => {
+      const task = makeTask({ box: 'invalid' as Task['box'] });
+      vi.mocked(getAllTasks).mockReturnValue([]);
+
+      push({ tasks: [task] });
+
+      expect(upsertTask).not.toHaveBeenCalled();
+    });
+
+    it('should include reason field when box is invalid', () => {
+      const task = makeTask({ box: 'someday' as Task['box'] });
+      vi.mocked(getAllTasks).mockReturnValue([]);
+
+      push({ tasks: [task] });
+
+      const results = parseResponse().results as Record<string, unknown[]>;
+      expect(results.tasks[0]).toHaveProperty('reason');
+    });
+
+    it.each(['inbox', 'today', 'week', 'later'] as Task['box'][])(
+      'should NOT reject task with valid box="%s"',
+      (validBox) => {
+        const task = makeTask({ box: validBox });
+        vi.mocked(getAllTasks).mockReturnValue([]);
+
+        push({ tasks: [task] });
+
+        const results = parseResponse().results as Record<string, unknown[]>;
+        expect(results.tasks[0]).toMatchObject({ status: 'created' });
+      },
+    );
+
+    it('should process valid task alongside rejected one with invalid box', () => {
+      const validTask = makeTask({ id: 'a7b8c9d0-e1f2-4345-89ab-cdef01234567', box: 'today' });
+      const invalidBoxTask = makeTask({ id: 'cccccccc-cccc-4ccc-accc-cccccccccccc', box: 'invalid' as Task['box'] });
+      vi.mocked(getAllTasks).mockReturnValue([]);
+
+      push({ tasks: [validTask, invalidBoxTask] });
+
+      const results = parseResponse().results as Record<string, unknown[]>;
+      expect(results.tasks).toHaveLength(2);
+      expect(results.tasks[0]).toMatchObject({ status: 'created' });
+      expect(results.tasks[1]).toMatchObject({ status: 'rejected' });
+    });
+  });
+
   describe('rejected record (invalid foreign key)', () => {
     const VALID_FK_UUID = 'f47ac10b-58cc-4372-a567-0e02b2c3d479';
 

@@ -122,6 +122,7 @@ export const ERROR_MESSAGES = {
   INVALID_ID: 'id must be a valid UUID v4',
   INVALID_OPTIONAL_FK: 'foreign key must be empty or a valid UUID v4',
   INVALID_REQUIRED_FK: 'task_id is required and must be a valid UUID v4',
+  INVALID_BOX: 'box must be one of: inbox, today, week, later',
 } as const;
 
 export function isBlankString(value: string): boolean {

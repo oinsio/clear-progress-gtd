@@ -1,4 +1,4 @@
-import { PUSH_STATUSES, CONFLICT_RESOLUTION, ERROR_MESSAGES, isBlankString, isValidUuid } from '../helpers/constants';
+import { PUSH_STATUSES, CONFLICT_RESOLUTION, ERROR_MESSAGES, VALID_BOXES, isBlankString, isValidUuid } from '../helpers/constants';
 import { jsonOk, jsonError, jsonNotInitialized, ERROR_CODES } from '../helpers/response';
 import { resolveConflict } from '../helpers/conflict';
 import { getAllTasks, upsertTask } from '../sheets/tasks.sheet';
@@ -47,6 +47,10 @@ function processRecords<T extends AnyEntity>(
 
     if (isBlankString(getEntityLabel(record))) {
       return { id: record.id, status: PUSH_STATUSES.REJECTED, reason: ERROR_MESSAGES.BLANK_TITLE };
+    }
+
+    if ('box' in record && !VALID_BOXES.includes(record.box)) {
+      return { id: record.id, status: PUSH_STATUSES.REJECTED, reason: ERROR_MESSAGES.INVALID_BOX };
     }
 
     const fkError = getInvalidForeignKeyReason(record);
