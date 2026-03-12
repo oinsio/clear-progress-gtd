@@ -39,6 +39,50 @@ describe('uploadCover', () => {
     vi.mocked(Drive.Files.create).mockReturnValue({ id: 'new-file-id' });
   });
 
+  describe('mime_type validation', () => {
+    it('should return ok: false when mime_type is not an image type', () => {
+      uploadCover({ ...validPayload, mime_type: 'application/pdf' });
+
+      expect(parseResponse().ok).toBe(false);
+    });
+
+    it('should return INVALID_PAYLOAD error code when mime_type is not an image type', () => {
+      uploadCover({ ...validPayload, mime_type: 'application/pdf' });
+
+      expect(parseResponse().error).toBe(ERROR_CODES.INVALID_PAYLOAD);
+    });
+
+    it('should return descriptive message when mime_type is not an image type', () => {
+      uploadCover({ ...validPayload, mime_type: 'text/plain' });
+
+      expect(parseResponse().message).toBe('mime_type must be an image type (image/*)');
+    });
+
+    it('should not decode base64 when mime_type is invalid', () => {
+      uploadCover({ ...validPayload, mime_type: 'application/json' });
+
+      expect(Utilities.base64Decode).not.toHaveBeenCalled();
+    });
+
+    it('should accept image/jpeg as valid mime_type', () => {
+      uploadCover({ ...validPayload, mime_type: 'image/jpeg' });
+
+      expect(parseResponse().ok).toBe(true);
+    });
+
+    it('should accept image/png as valid mime_type', () => {
+      uploadCover({ ...validPayload, mime_type: 'image/png' });
+
+      expect(parseResponse().ok).toBe(true);
+    });
+
+    it('should accept image/webp as valid mime_type', () => {
+      uploadCover({ ...validPayload, mime_type: 'image/webp' });
+
+      expect(parseResponse().ok).toBe(true);
+    });
+  });
+
   describe('missing data field', () => {
     it('should return ok: false when data field is missing', () => {
       const payloadWithoutData = { goal_id: 'goal-1', filename: 'cover.jpg', mime_type: 'image/jpeg' };

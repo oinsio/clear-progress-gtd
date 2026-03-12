@@ -119,6 +119,7 @@ export const ERROR_MESSAGES = {
   INIT_REQUIRED: 'Call init before using the API',
   PURGE_CONFIRM_REQUIRED: 'confirm must be true to purge deleted records',
   DATA_REQUIRED: 'data field is required',
+  COVER_INVALID_MIME: 'mime_type must be an image type (image/*)',
   BLANK_TITLE: 'title or name must not be blank',
   INVALID_ID: 'id must be a valid UUID v4',
   INVALID_OPTIONAL_FK: 'foreign key must be empty or a valid UUID v4',

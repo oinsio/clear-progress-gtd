@@ -1,0 +1,53 @@
+info:
+  name: upload cover invalid mime
+  type: http
+  seq: 7
+
+http:
+  method: post
+  url: https://script.google.com/macros/s/{{deploymentId}}/exec#upload_cover
+  headers:
+    - name: accept
+      value: application/json
+    - name: Content-Type
+      value: application/json
+  body:
+    type: json
+    data: |-
+      {
+        "action": "upload_cover",
+        "goal_id": "{{$randomUUID}}",
+        "filename": "document.pdf",
+        "mime_type": "application/pdf",
+        "data": "{{coverEdgeCaseData}}"
+      }
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: before-request
+      code: |-
+        const base64Data = bru.getCollectionVar("cover_for_edge_cases");
+        bru.setVar("coverEdgeCaseData", base64Data);
+  assertions:
+    - expression: res.status
+      operator: eq
+      value: "200"
+    - expression: res.body.ok
+      operator: isFalsy
+    - expression: res.body.error
+      operator: eq
+      value: INVALID_PAYLOAD
+    - expression: res.body.message
+      operator: eq
+      value: mime_type must be an image type (image/*)
+
+settings:
+  encodeUrl: false
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |
+  upload_cover called with mime_type: "application/pdf" (not an image/* type).
+  Expected: server rejects with ok: false, error: INVALID_PAYLOAD before decoding any data.
