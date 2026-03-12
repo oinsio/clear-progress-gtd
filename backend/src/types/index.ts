@@ -82,7 +82,8 @@ export interface VersionMap {
 
 export interface PushItemResult {
   id: string;
-  status: 'created' | 'accepted' | 'conflict';
+  status: 'created' | 'accepted' | 'conflict' | 'rejected';
   version?: number;
   server_record?: Task | Goal | Context | Category | ChecklistItem;
+  reason?: string;
 }

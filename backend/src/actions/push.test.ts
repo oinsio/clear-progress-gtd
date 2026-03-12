@@ -349,6 +349,149 @@ describe('push', () => {
     });
   });
 
+  describe('rejected record (blank title/name)', () => {
+    it('should return status: rejected for task with empty title', () => {
+      const blankTask = makeTask({ id: 'task-blank', title: '' });
+      vi.mocked(getAllTasks).mockReturnValue([]);
+
+      push({ tasks: [blankTask] });
+
+      const results = parseResponse().results as Record<string, unknown[]>;
+      expect(results.tasks[0]).toMatchObject({ id: 'task-blank', status: 'rejected' });
+    });
+
+    it('should not call upsertTask when task title is empty', () => {
+      const blankTask = makeTask({ title: '' });
+      vi.mocked(getAllTasks).mockReturnValue([]);
+
+      push({ tasks: [blankTask] });
+
+      expect(upsertTask).not.toHaveBeenCalled();
+    });
+
+    it('should return status: rejected for task with whitespace-only title', () => {
+      const blankTask = makeTask({ id: 'task-ws', title: '   ' });
+      vi.mocked(getAllTasks).mockReturnValue([]);
+
+      push({ tasks: [blankTask] });
+
+      const results = parseResponse().results as Record<string, unknown[]>;
+      expect(results.tasks[0]).toMatchObject({ id: 'task-ws', status: 'rejected' });
+    });
+
+    it('should return status: rejected for goal with empty title', () => {
+      const blankGoal = makeGoal({ id: 'goal-blank', title: '' });
+      vi.mocked(getAllGoals).mockReturnValue([]);
+
+      push({ goals: [blankGoal] });
+
+      const results = parseResponse().results as Record<string, unknown[]>;
+      expect(results.goals[0]).toMatchObject({ id: 'goal-blank', status: 'rejected' });
+    });
+
+    it('should not call upsertGoal when goal title is empty', () => {
+      const blankGoal = makeGoal({ title: '' });
+      vi.mocked(getAllGoals).mockReturnValue([]);
+
+      push({ goals: [blankGoal] });
+
+      expect(upsertGoal).not.toHaveBeenCalled();
+    });
+
+    it('should return status: rejected for context with empty name', () => {
+      const blankContext = makeContext({ id: 'context-blank', name: '' });
+      vi.mocked(getAllContexts).mockReturnValue([]);
+
+      push({ contexts: [blankContext] });
+
+      const results = parseResponse().results as Record<string, unknown[]>;
+      expect(results.contexts[0]).toMatchObject({ id: 'context-blank', status: 'rejected' });
+    });
+
+    it('should not call upsertContext when context name is empty', () => {
+      const blankContext = makeContext({ name: '' });
+      vi.mocked(getAllContexts).mockReturnValue([]);
+
+      push({ contexts: [blankContext] });
+
+      expect(upsertContext).not.toHaveBeenCalled();
+    });
+
+    it('should return status: rejected for category with empty name', () => {
+      const blankCategory = makeCategory({ id: 'category-blank', name: '' });
+      vi.mocked(getAllCategories).mockReturnValue([]);
+
+      push({ categories: [blankCategory] });
+
+      const results = parseResponse().results as Record<string, unknown[]>;
+      expect(results.categories[0]).toMatchObject({ id: 'category-blank', status: 'rejected' });
+    });
+
+    it('should not call upsertCategory when category name is empty', () => {
+      const blankCategory = makeCategory({ name: '' });
+      vi.mocked(getAllCategories).mockReturnValue([]);
+
+      push({ categories: [blankCategory] });
+
+      expect(upsertCategory).not.toHaveBeenCalled();
+    });
+
+    it('should return status: rejected for checklist_item with empty title', () => {
+      const blankItem = makeChecklistItem({ id: 'item-blank', title: '' });
+      vi.mocked(getAllChecklistItems).mockReturnValue([]);
+
+      push({ checklist_items: [blankItem] });
+
+      const results = parseResponse().results as Record<string, unknown[]>;
+      expect(results.checklist_items[0]).toMatchObject({ id: 'item-blank', status: 'rejected' });
+    });
+
+    it('should not call upsertChecklistItem when checklist item title is empty', () => {
+      const blankItem = makeChecklistItem({ title: '' });
+      vi.mocked(getAllChecklistItems).mockReturnValue([]);
+
+      push({ checklist_items: [blankItem] });
+
+      expect(upsertChecklistItem).not.toHaveBeenCalled();
+    });
+
+    it('should include reason field in rejected result', () => {
+      const blankTask = makeTask({ title: '' });
+      vi.mocked(getAllTasks).mockReturnValue([]);
+
+      push({ tasks: [blankTask] });
+
+      const results = parseResponse().results as Record<string, unknown[]>;
+      expect(results.tasks[0]).toHaveProperty('reason');
+    });
+
+    it('should process valid records alongside rejected ones in same array', () => {
+      const validTask = makeTask({ id: 'task-valid', title: 'Valid task' });
+      const blankTask = makeTask({ id: 'task-blank', title: '' });
+      vi.mocked(getAllTasks).mockReturnValue([]);
+
+      push({ tasks: [validTask, blankTask] });
+
+      const results = parseResponse().results as Record<string, unknown[]>;
+      expect(results.tasks).toHaveLength(2);
+      expect(results.tasks[0]).toMatchObject({ id: 'task-valid', status: 'created' });
+      expect(results.tasks[1]).toMatchObject({ id: 'task-blank', status: 'rejected' });
+    });
+
+    it('should handle rejected task and created goal in same push', () => {
+      const blankTask = makeTask({ id: 'task-blank', title: '' });
+      const validGoal = makeGoal({ id: 'goal-valid', title: 'Valid goal' });
+      vi.mocked(getAllTasks).mockReturnValue([]);
+      vi.mocked(getAllGoals).mockReturnValue([]);
+
+      push({ tasks: [blankTask], goals: [validGoal] });
+
+      const results = parseResponse().results as Record<string, unknown[]>;
+      expect(results.tasks[0]).toMatchObject({ id: 'task-blank', status: 'rejected' });
+      expect(results.goals[0]).toMatchObject({ id: 'goal-valid', status: 'created' });
+    });
+  });
+
   describe('error handling', () => {
     it('should return NOT_INITIALIZED error when sheet throws with NOT_INITIALIZED message', () => {
       vi.mocked(getAllTasks).mockImplementation(() => {

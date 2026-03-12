@@ -47,6 +47,12 @@ runtime:
       value: "200"
     - expression: res.body.ok
       operator: isDefined
+    - expression: res.body.results.goals[0].status
+      operator: eq
+      value: rejected
+    - expression: res.body.results.goals[0].reason
+      operator: eq
+      value: title or name must not be blank
 
 settings:
   encodeUrl: false

@@ -1,4 +1,4 @@
-import { PUSH_STATUSES, CONFLICT_RESOLUTION } from '../helpers/constants';
+import { PUSH_STATUSES, CONFLICT_RESOLUTION, ERROR_MESSAGES, isBlankString } from '../helpers/constants';
 import { jsonOk, jsonError, jsonNotInitialized, ERROR_CODES } from '../helpers/response';
 import { resolveConflict } from '../helpers/conflict';
 import { getAllTasks, upsertTask } from '../sheets/tasks.sheet';
@@ -11,12 +11,20 @@ import type { Task, Goal, Context, Category, ChecklistItem, Setting, PushItemRes
 
 type AnyEntity = Task | Goal | Context | Category | ChecklistItem;
 
+function getEntityLabel(entity: AnyEntity): string {
+  return 'title' in entity ? entity.title : entity.name;
+}
+
 function processRecords<T extends AnyEntity>(
   incoming: T[],
   existing: T[],
   upsertFn: (record: T) => void
 ): PushItemResult[] {
   return incoming.map(record => {
+    if (isBlankString(getEntityLabel(record))) {
+      return { id: record.id, status: PUSH_STATUSES.REJECTED, reason: ERROR_MESSAGES.BLANK_TITLE };
+    }
+
     const serverRecord = existing.find(e => e.id === record.id);
 
     if (!serverRecord) {

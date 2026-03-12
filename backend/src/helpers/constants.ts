@@ -74,6 +74,7 @@ export const PUSH_STATUSES = {
   CREATED: 'created',
   ACCEPTED: 'accepted',
   CONFLICT: 'conflict',
+  REJECTED: 'rejected',
 } as const;
 
 export const DRIVE_QUERY_FIELDS = {
@@ -117,7 +118,12 @@ export const ERROR_MESSAGES = {
   SHEET_NOT_FOUND: 'Sheet not found',
   INIT_REQUIRED: 'Call init before using the API',
   PURGE_CONFIRM_REQUIRED: 'confirm must be true to purge deleted records',
+  BLANK_TITLE: 'title or name must not be blank',
 } as const;
+
+export function isBlankString(value: string): boolean {
+  return value.trim().length === 0;
+}
 
 export function thumbnailUrl(fileId: string): string {
   return `https://drive.google.com/thumbnail?id=${fileId}&sz=w400`;

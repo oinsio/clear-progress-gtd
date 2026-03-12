@@ -1,7 +1,7 @@
 info:
-  name: push task without title
+  name: push checklist item without title
   type: http
-  seq: 1
+  seq: 5
 
 http:
   method: post
@@ -17,18 +17,16 @@ http:
       {
         "action": "push",
         "changes": {
-          "tasks": [
+          "tasks": [],
+          "goals": [],
+          "contexts": [],
+          "categories": [],
+          "checklist_items": [
             {
               "id": "{{$randomUUID}}",
+              "task_id": "{{$randomUUID}}",
               "title": "",
-              "notes": "",
-              "box": "inbox",
-              "goal_id": "",
-              "context_id": "",
-              "category_id": "",
               "is_completed": false,
-              "completed_at": "",
-              "repeat_rule": "",
               "sort_order": 9999,
               "is_deleted": false,
               "created_at": "{{$isoTimestamp}}",
@@ -36,10 +34,6 @@ http:
               "version": 1
             }
           ],
-          "goals": [],
-          "contexts": [],
-          "categories": [],
-          "checklist_items": [],
           "settings": []
         }
       }
@@ -52,10 +46,10 @@ runtime:
       value: "200"
     - expression: res.body.ok
       operator: isDefined
-    - expression: res.body.results.tasks[0].status
+    - expression: res.body.results.checklist_items[0].status
       operator: eq
       value: rejected
-    - expression: res.body.results.tasks[0].reason
+    - expression: res.body.results.checklist_items[0].reason
       operator: eq
       value: title or name must not be blank
 
@@ -66,6 +60,5 @@ settings:
   maxRedirects: 5
 
 docs: |
-  Pushes a task with an empty title.
-  Expected behavior: server either rejects (ok: false) or accepts (ok: true with status accepted/created).
-  This test documents actual server behavior for empty-title tasks.
+  Pushes a checklist item with an empty title.
+  Expected behavior: server rejects the record with status rejected and reason message.
