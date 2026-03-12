@@ -1,0 +1,66 @@
+info:
+  name: push task with invalid box
+  type: http
+  seq: 6
+
+http:
+  method: post
+  url: https://script.google.com/macros/s/{{deploymentId}}/exec#push
+  headers:
+    - name: accept
+      value: application/json
+    - name: Content-Type
+      value: application/json
+  body:
+    type: json
+    data: |-
+      {
+        "action": "push",
+        "changes": {
+          "tasks": [
+            {
+              "id": "{{$randomUUID}}",
+              "title": "Task with invalid box",
+              "notes": "",
+              "box": "invalid_value",
+              "goal_id": "",
+              "context_id": "",
+              "category_id": "",
+              "is_completed": false,
+              "completed_at": "",
+              "repeat_rule": "",
+              "sort_order": 9999,
+              "is_deleted": false,
+              "created_at": "2025-01-01T00:00:00.000Z",
+              "updated_at": "2025-01-01T00:00:00.000Z",
+              "version": 1
+            }
+          ],
+          "goals": [],
+          "contexts": [],
+          "categories": [],
+          "checklist_items": [],
+          "settings": []
+        }
+      }
+  auth: inherit
+
+runtime:
+  assertions:
+    - expression: res.status
+      operator: eq
+      value: "200"
+    - expression: res.body.ok
+      operator: isFalsy
+    - expression: res.body.error
+      operator: isDefined
+
+settings:
+  encodeUrl: false
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |
+  Valid box values: inbox, today, week, later.
+  Expected: server rejects the task with ok: false and an error message.

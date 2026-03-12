@@ -1,0 +1,43 @@
+info:
+  name: upload cover without base64
+  type: http
+  seq: 7
+
+http:
+  method: post
+  url: https://script.google.com/macros/s/{{deploymentId}}/exec#upload_cover
+  headers:
+    - name: accept
+      value: application/json
+    - name: Content-Type
+      value: application/json
+  body:
+    type: json
+    data: |-
+      {
+        "action": "upload_cover",
+        "goal_id": "{{$randomUUID}}",
+        "filename": "cover.jpg",
+        "mime_type": "image/jpeg"
+      }
+  auth: inherit
+
+runtime:
+  assertions:
+    - expression: res.status
+      operator: eq
+      value: "200"
+    - expression: res.body.ok
+      operator: isFalsy
+    - expression: res.body.error
+      operator: isDefined
+
+settings:
+  encodeUrl: false
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |
+  upload_cover called without the required base64_data (data) field.
+  Expected: server rejects with ok: false and an error message.

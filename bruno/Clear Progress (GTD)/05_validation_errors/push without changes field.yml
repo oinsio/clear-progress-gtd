@@ -1,0 +1,36 @@
+info:
+  name: push without changes field
+  type: http
+  seq: 5
+
+http:
+  method: post
+  url: https://script.google.com/macros/s/{{deploymentId}}/exec#push
+  headers:
+    - name: accept
+      value: application/json
+    - name: Content-Type
+      value: application/json
+  body:
+    type: json
+    data: |-
+      {
+        "action": "push"
+      }
+  auth: inherit
+
+runtime:
+  assertions:
+    - expression: res.status
+      operator: eq
+      value: "200"
+    - expression: res.body.ok
+      operator: isFalsy
+    - expression: res.body.error
+      operator: isDefined
+
+settings:
+  encodeUrl: false
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

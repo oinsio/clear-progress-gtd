@@ -1,0 +1,65 @@
+info:
+  name: push task without title
+  type: http
+  seq: 1
+
+http:
+  method: post
+  url: https://script.google.com/macros/s/{{deploymentId}}/exec#push
+  headers:
+    - name: accept
+      value: application/json
+    - name: Content-Type
+      value: application/json
+  body:
+    type: json
+    data: |-
+      {
+        "action": "push",
+        "changes": {
+          "tasks": [
+            {
+              "id": "{{$randomUUID}}",
+              "title": "",
+              "notes": "",
+              "box": "inbox",
+              "goal_id": "",
+              "context_id": "",
+              "category_id": "",
+              "is_completed": false,
+              "completed_at": "",
+              "repeat_rule": "",
+              "sort_order": 9999,
+              "is_deleted": false,
+              "created_at": "{{$isoTimestamp}}",
+              "updated_at": "{{$isoTimestamp}}",
+              "version": 1
+            }
+          ],
+          "goals": [],
+          "contexts": [],
+          "categories": [],
+          "checklist_items": [],
+          "settings": []
+        }
+      }
+  auth: inherit
+
+runtime:
+  assertions:
+    - expression: res.status
+      operator: eq
+      value: "200"
+    - expression: res.body.ok
+      operator: isDefined
+
+settings:
+  encodeUrl: false
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |
+  Pushes a task with an empty title.
+  Expected behavior: server either rejects (ok: false) or accepts (ok: true with status accepted/created).
+  This test documents actual server behavior for empty-title tasks.
