@@ -1,0 +1,59 @@
+info:
+  name: verify all entities created via pull
+  type: http
+  seq: 2
+
+http:
+  method: post
+  url: https://script.google.com/macros/s/{{deploymentId}}/exec#pull
+  headers:
+    - name: accept
+      value: application/json
+    - name: Content-Type
+      value: application/json
+  body:
+    type: json
+    data: |-
+      {
+        "action": "pull",
+        "versions": {
+          "tasks": 0,
+          "goals": 0,
+          "contexts": 0,
+          "categories": 0,
+          "checklist_items": 0
+        }
+      }
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const data = res.getBody().data;
+
+        const findActive = (list, id) => list?.find(i => i.id === id && !i.is_deleted);
+
+        test("batch task should be present and not deleted", function() {
+          expect(findActive(data.tasks, bru.getEnvVar("batchMultiTaskId"))).to.not.be.undefined;
+        });
+
+        test("batch goal should be present and not deleted", function() {
+          expect(findActive(data.goals, bru.getEnvVar("batchMultiGoalId"))).to.not.be.undefined;
+        });
+
+        test("batch context should be present and not deleted", function() {
+          expect(findActive(data.contexts, bru.getEnvVar("batchMultiContextId"))).to.not.be.undefined;
+        });
+  assertions:
+    - expression: res.status
+      operator: eq
+      value: "200"
+    - expression: res.body.ok
+      operator: isTruthy
+
+settings:
+  encodeUrl: false
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

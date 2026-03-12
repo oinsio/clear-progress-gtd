@@ -1,0 +1,7 @@
+info:
+  name: push mix of new and updated
+  type: folder
+  seq: 3
+
+request:
+  auth: inherit

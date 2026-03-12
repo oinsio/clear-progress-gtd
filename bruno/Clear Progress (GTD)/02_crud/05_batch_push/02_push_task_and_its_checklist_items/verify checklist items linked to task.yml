@@ -1,0 +1,69 @@
+info:
+  name: verify checklist items linked to task
+  type: http
+  seq: 2
+
+http:
+  method: post
+  url: https://script.google.com/macros/s/{{deploymentId}}/exec#pull
+  headers:
+    - name: accept
+      value: application/json
+    - name: Content-Type
+      value: application/json
+  body:
+    type: json
+    data: |-
+      {
+        "action": "pull",
+        "versions": {
+          "tasks": 0,
+          "goals": 0,
+          "contexts": 0,
+          "categories": 0,
+          "checklist_items": 0
+        }
+      }
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const data = res.getBody().data;
+        const taskId = bru.getEnvVar("batchChecklistTaskId");
+        const item1Id = bru.getEnvVar("batchChecklistItem1Id");
+        const item2Id = bru.getEnvVar("batchChecklistItem2Id");
+
+        test("task should be present in pull response", function() {
+          const task = data.tasks?.find(t => t.id === taskId);
+          expect(task).to.not.be.undefined;
+        });
+
+        test("first checklist item should be linked to the task", function() {
+          const item = data.checklist_items?.find(i => i.id === item1Id);
+          expect(item?.task_id).to.eq(taskId);
+        });
+
+        test("second checklist item should be linked to the task", function() {
+          const item = data.checklist_items?.find(i => i.id === item2Id);
+          expect(item?.task_id).to.eq(taskId);
+        });
+
+        test("both checklist items should have sort_order in ascending order", function() {
+          const item1 = data.checklist_items?.find(i => i.id === item1Id);
+          const item2 = data.checklist_items?.find(i => i.id === item2Id);
+          expect(item1?.sort_order).to.be.lessThan(item2?.sort_order);
+        });
+  assertions:
+    - expression: res.status
+      operator: eq
+      value: "200"
+    - expression: res.body.ok
+      operator: isTruthy
+
+settings:
+  encodeUrl: false
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

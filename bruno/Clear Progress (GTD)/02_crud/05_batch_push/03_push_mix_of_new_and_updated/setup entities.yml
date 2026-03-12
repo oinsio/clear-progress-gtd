@@ -1,0 +1,88 @@
+info:
+  name: setup entities
+  type: http
+  seq: 1
+
+http:
+  method: post
+  url: https://script.google.com/macros/s/{{deploymentId}}/exec#push
+  headers:
+    - name: accept
+      value: application/json
+    - name: Content-Type
+      value: application/json
+  body:
+    type: json
+    data: |-
+      {
+        "action": "push",
+        "changes": {
+          "tasks": [
+            {
+              "id": "{{$randomUUID}}",
+              "title": "Mix setup: task to update {{$randomCity}}",
+              "notes": "",
+              "box": "inbox",
+              "goal_id": "",
+              "context_id": "",
+              "category_id": "",
+              "is_completed": false,
+              "completed_at": "",
+              "repeat_rule": "",
+              "sort_order": 1000,
+              "is_deleted": false,
+              "created_at": "{{$isoTimestamp}}",
+              "updated_at": "{{$isoTimestamp}}",
+              "version": 1
+            },
+            {
+              "id": "{{$randomUUID}}",
+              "title": "Mix setup: task to delete {{$randomCity}}",
+              "notes": "",
+              "box": "later",
+              "goal_id": "",
+              "context_id": "",
+              "category_id": "",
+              "is_completed": false,
+              "completed_at": "",
+              "repeat_rule": "",
+              "sort_order": 2000,
+              "is_deleted": false,
+              "created_at": "{{$isoTimestamp}}",
+              "updated_at": "{{$isoTimestamp}}",
+              "version": 1
+            }
+          ],
+          "goals": [],
+          "contexts": [],
+          "categories": [],
+          "checklist_items": [],
+          "settings": []
+        }
+      }
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: after-response
+      code: |-
+        bru.setEnvVar("batchMixUpdateTaskId", res.body.results.tasks[0].id);
+        bru.setEnvVar("batchMixDeleteTaskId", res.body.results.tasks[1].id);
+  assertions:
+    - expression: res.status
+      operator: eq
+      value: "200"
+    - expression: res.body.ok
+      operator: isTruthy
+    - expression: res.body.results.tasks[0].status
+      operator: eq
+      value: created
+    - expression: res.body.results.tasks[1].status
+      operator: eq
+      value: created
+
+settings:
+  encodeUrl: false
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

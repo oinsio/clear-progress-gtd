@@ -1,0 +1,65 @@
+info:
+  name: verify via pull
+  type: http
+  seq: 3
+
+http:
+  method: post
+  url: https://script.google.com/macros/s/{{deploymentId}}/exec#pull
+  headers:
+    - name: accept
+      value: application/json
+    - name: Content-Type
+      value: application/json
+  body:
+    type: json
+    data: |-
+      {
+        "action": "pull",
+        "versions": {
+          "tasks": 0,
+          "goals": 0,
+          "contexts": 0,
+          "categories": 0,
+          "checklist_items": 0
+        }
+      }
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const tasks = res.getBody().data.tasks;
+
+        const newTaskId = bru.getEnvVar("batchMixNewTaskId");
+        const updatedTaskId = bru.getEnvVar("batchMixUpdateTaskId");
+        const deletedTaskId = bru.getEnvVar("batchMixDeleteTaskId");
+
+        test("newly created task should be present and active", function() {
+          const task = tasks?.find(t => t.id === newTaskId);
+          expect(task?.is_deleted).to.be.false;
+        });
+
+        test("updated task should have new title and box", function() {
+          const task = tasks?.find(t => t.id === updatedTaskId);
+          expect(task?.title).to.eq("Mix batch: updated title");
+          expect(task?.box).to.eq("today");
+        });
+
+        test("soft-deleted task should have is_deleted = true", function() {
+          const task = tasks?.find(t => t.id === deletedTaskId);
+          expect(task?.is_deleted).to.be.true;
+        });
+  assertions:
+    - expression: res.status
+      operator: eq
+      value: "200"
+    - expression: res.body.ok
+      operator: isTruthy
+
+settings:
+  encodeUrl: false
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

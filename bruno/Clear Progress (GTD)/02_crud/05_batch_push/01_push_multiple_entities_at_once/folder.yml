@@ -1,0 +1,7 @@
+info:
+  name: push multiple entities at once
+  type: folder
+  seq: 1
+
+request:
+  auth: inherit

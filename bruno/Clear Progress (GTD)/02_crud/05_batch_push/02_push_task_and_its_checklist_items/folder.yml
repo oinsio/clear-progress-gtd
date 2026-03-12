@@ -1,0 +1,7 @@
+info:
+  name: push task and its checklist items
+  type: folder
+  seq: 2
+
+request:
+  auth: inherit
