@@ -1,7 +1,7 @@
 info:
   name: upload duplicate cover
   type: http
-  seq: 1
+  seq: 2
 
 http:
   method: post

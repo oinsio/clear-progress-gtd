@@ -30,8 +30,7 @@ runtime:
         // 1. List of options and weights
         const options = [
           { varName: "cover_1", weight: 40 },
-          { varName: "cover_2", weight: 10 },
-          { varName: "cover_3", weight: 50 }
+          { varName: "cover_2", weight: 60 }
         ];
 
         // 2. Select based on weights

@@ -1,0 +1,53 @@
+info:
+  name: upload cover
+  type: http
+  seq: 2
+
+http:
+  method: post
+  url: https://script.google.com/macros/s/{{deploymentId}}/exec#upload_cover
+  headers:
+    - name: accept
+      value: application/json
+    - name: Content-Type
+      value: application/json
+  body:
+    type: json
+    data: |-
+      {
+        "action": "upload_cover",
+        "goal_id": "{{lifecycleGoalId}}",
+        "filename": "lifecycle-cover.jpg",
+        "mime_type": "image/jpeg",
+        "data": "{{coverBase64Data}}"
+      }
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: before-request
+      code: |-
+        const base64Data = bru.getCollectionVar("cover_for_lifecycle_case");
+        bru.setVar("coverBase64Data", base64Data);
+    - type: after-response
+      code: |-
+        bru.setVar("lifecycleCoverFileId", res.body.file_id);
+        bru.setVar("lifecycleCoverUrl", res.body.thumbnail_url);
+  assertions:
+    - expression: res.status
+      operator: eq
+      value: "200"
+    - expression: res.body.ok
+      operator: isTruthy
+    - expression: res.body.file_id
+      operator: isDefined
+    - expression: res.body.thumbnail_url
+      operator: isDefined
+    - expression: res.body.reused
+      operator: isDefined
+
+settings:
+  encodeUrl: false
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

@@ -1,7 +1,7 @@
 info:
-  name: push goal with cover for ref test
+  name: create goal
   type: http
-  seq: 4
+  seq: 1
 
 http:
   method: post
@@ -21,11 +21,11 @@ http:
           "goals": [
             {
               "id": "{{$randomUUID}}",
-              "title": "Goal with referenced cover",
-              "description": "",
-              "cover_file_id": "{{refTestFileId}}",
+              "title": "Goal with Cover {{$randomInt}}",
+              "description": "Testing full cover lifecycle",
+              "cover_file_id": "",
               "status": "in_progress",
-              "sort_order": 9999,
+              "sort_order": 1000,
               "is_deleted": false,
               "created_at": "{{$isoTimestamp}}",
               "updated_at": "{{$isoTimestamp}}",
@@ -41,12 +41,19 @@ http:
   auth: inherit
 
 runtime:
+  scripts:
+    - type: after-response
+      code: |-
+        bru.setVar("lifecycleGoalId", res.body.results.goals[0].id);
+        bru.setVar("lifecycleGoalVersion", res.body.results.goals[0].version);
   assertions:
     - expression: res.status
       operator: eq
       value: "200"
     - expression: res.body.ok
       operator: isTruthy
+    - expression: res.body.results.goals[0].id
+      operator: isDefined
     - expression: res.body.results.goals[0].status
       operator: eq
       value: created

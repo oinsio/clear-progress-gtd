@@ -1,7 +1,7 @@
 info:
   name: purge deleted data
   type: http
-  seq: 4
+  seq: 1
 
 http:
   method: post

@@ -1,7 +1,7 @@
 info:
   name: upload cover for ref test
   type: http
-  seq: 4
+  seq: 1
 
 http:
   method: post
