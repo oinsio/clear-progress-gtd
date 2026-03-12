@@ -210,9 +210,20 @@ paths:
 
         On conflict, the client must overwrite its local copy with `server_record`.
 
-        **Validation rules:**
-        - `title` (Task, Goal, ChecklistItem) and `name` (Context, Category) must not be blank
-          (empty string or whitespace only). Blank records are rejected with `reason: "title or name must not be blank"`.
+        **Validation rules (applied in order; first failure determines `reason`):**
+
+        1. **`id`** — must be a valid UUID v4. Invalid records are rejected with
+           `reason: "id must be a valid UUID v4"`.
+
+        2. **`title` / `name`** — must not be blank (empty string or whitespace only).
+           Rejected with `reason: "title or name must not be blank"`.
+
+        3. **Foreign keys:**
+           - `goal_id`, `context_id`, `category_id` (Task) — must be `""` (not linked) or a valid UUID v4.
+             Rejected with `reason: "foreign key must be empty or a valid UUID v4"`.
+           - `task_id` (ChecklistItem) — required; must be a valid UUID v4, empty string is not allowed.
+             Rejected with `reason: "task_id is required and must be a valid UUID v4"`.
+           - `cover_file_id` (Goal) — Google Drive file ID, not validated as UUID.
       requestBody:
         required: true
         content:
@@ -398,6 +409,51 @@ paths:
                         - id: e5f6a7b8-c9d0-4e1f-2a3b-4c5d6e7f8a9b
                           status: rejected
                           reason: title or name must not be blank
+                      settings: []
+                    server_time: "2026-03-04T13:00:02.000Z"
+                rejected_invalid_id:
+                  summary: Rejected — record has invalid id
+                  value:
+                    ok: true
+                    results:
+                      tasks:
+                        - id: not-a-uuid
+                          status: rejected
+                          reason: id must be a valid UUID v4
+                      goals: []
+                      contexts: []
+                      categories: []
+                      checklist_items: []
+                      settings: []
+                    server_time: "2026-03-04T13:00:02.000Z"
+                rejected_invalid_optional_fk:
+                  summary: Rejected — task has invalid goal_id (non-empty, non-UUID)
+                  value:
+                    ok: true
+                    results:
+                      tasks:
+                        - id: b8c9d0e1-f2a3-4b4c-5d6e-7f8a9b0c1d2e
+                          status: rejected
+                          reason: foreign key must be empty or a valid UUID v4
+                      goals: []
+                      contexts: []
+                      categories: []
+                      checklist_items: []
+                      settings: []
+                    server_time: "2026-03-04T13:00:02.000Z"
+                rejected_missing_required_fk:
+                  summary: Rejected — checklist item has empty task_id
+                  value:
+                    ok: true
+                    results:
+                      tasks: []
+                      goals: []
+                      contexts: []
+                      categories: []
+                      checklist_items:
+                        - id: e5f6a7b8-c9d0-4e1f-2a3b-4c5d6e7f8a9b
+                          status: rejected
+                          reason: task_id is required and must be a valid UUID v4
                       settings: []
                     server_time: "2026-03-04T13:00:02.000Z"
                 mixed_batch:
@@ -928,8 +984,11 @@ components:
             Present for `rejected` status. Human-readable explanation of why the record was rejected.
 
             Known values:
+            - `"id must be a valid UUID v4"` — `id` is missing, empty, or not a UUID v4
             - `"title or name must not be blank"` — `title` (Task, Goal, ChecklistItem) or `name` (Context, Category) is empty or whitespace-only
-          example: title or name must not be blank
+            - `"foreign key must be empty or a valid UUID v4"` — `goal_id`, `context_id`, or `category_id` on Task is not `""` and not a valid UUID v4
+            - `"task_id is required and must be a valid UUID v4"` — `task_id` on ChecklistItem is empty or not a valid UUID v4
+          example: id must be a valid UUID v4
 
     PushChanges:
       type: object
