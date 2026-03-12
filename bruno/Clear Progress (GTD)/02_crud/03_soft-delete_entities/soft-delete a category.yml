@@ -1,7 +1,7 @@
 info:
   name: soft-delete a category
   type: http
-  seq: 8
+  seq: 3
 
 http:
   method: post
@@ -48,7 +48,7 @@ runtime:
       operator: isDefined
     - expression: res.body.results.categories[0].status
       operator: eq
-      value: created
+      value: accepted
     - expression: res.body.server_time
       operator: isDefined
 

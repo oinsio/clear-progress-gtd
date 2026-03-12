@@ -1,7 +1,7 @@
 info:
   name: soft-delete a checklist item
   type: http
-  seq: 8
+  seq: 1
 
 http:
   method: post
@@ -50,7 +50,7 @@ runtime:
       operator: isDefined
     - expression: res.body.results.checklist_items[0].status
       operator: eq
-      value: created
+      value: accepted
     - expression: res.body.server_time
       operator: isDefined
 
