@@ -82,6 +82,16 @@ export class TaskService {
     return this.update(id, { box });
   }
 
+  async getCompleted(): Promise<Task[]> {
+    const tasks = await this.taskRepository.getCompleted();
+    return tasks.sort((taskA, taskB) => {
+      if (taskA.completed_at && taskB.completed_at) {
+        return taskB.completed_at.localeCompare(taskA.completed_at);
+      }
+      return taskB.sort_order - taskA.sort_order;
+    });
+  }
+
   async getByGoalId(goalId: string): Promise<Task[]> {
     const tasks = await this.taskRepository.getByGoalId(goalId);
     return tasks.sort((taskA, taskB) => taskA.sort_order - taskB.sort_order);

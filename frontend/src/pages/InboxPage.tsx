@@ -5,11 +5,15 @@ import { BoxFilterBar } from "@/components/tasks/BoxFilterBar";
 import { RightFilterPanel, type RightPanelMode } from "@/components/tasks/RightFilterPanel";
 import { useTasks } from "@/hooks/useTasks";
 import { useGoals } from "@/hooks/useGoals";
+import { useContexts } from "@/hooks/useContexts";
+import { useCategories } from "@/hooks/useCategories";
+import { useCompletedTasks } from "@/hooks/useCompletedTasks";
 import { useSearch } from "@/hooks/useSearch";
 import type { BoxFilter } from "@/types/common";
 import type { Task } from "@/types/entities";
 import { BOX_FILTER_ALL, BOX, BOX_FILTER_LABELS } from "@/constants";
 import { cn } from "@/shared/lib/cn";
+import * as React from "react";
 
 const SEARCH_DEBOUNCE_MS = 300;
 const TODAY_SECTION_LABEL = "Сегодня";
@@ -84,8 +88,11 @@ function AddTaskInput({
 
 export default function InboxPage() {
   const [activeBox, setActiveBox] = useState<BoxFilter>(BOX_FILTER_ALL);
-  const [rightPanel, setRightPanel] = useState<RightPanelMode>(null);
+  const [filterMode, setFilterMode] = useState<RightPanelMode>("tasks");
+  const [isPanelOpen, setIsPanelOpen] = useState(false);
   const [selectedGoalId, setSelectedGoalId] = useState<string | null>(null);
+  const [selectedContextId, setSelectedContextId] = useState<string | null>(null);
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
   const [isAddingTask, setIsAddingTask] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -94,6 +101,9 @@ export default function InboxPage() {
   const { tasks: weekTasks, completeTask: completeWeek, deleteTask: deleteWeek, createTask: createWeekTask } = useTasks(BOX.WEEK);
   const { tasks: laterTasks, completeTask: completeLater, deleteTask: deleteLater, createTask: createLaterTask } = useTasks(BOX.LATER);
   const { goals } = useGoals();
+  const { contexts } = useContexts();
+  const { categories } = useCategories();
+  const { completedTasks } = useCompletedTasks();
   const { results: searchResults, isSearching, search, clear: clearSearch } = useSearch();
 
   const searchDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -110,27 +120,34 @@ export default function InboxPage() {
     [search],
   );
 
-  const handleSearchToggle = useCallback(() => {
-    if (rightPanel === "search") {
-      setRightPanel(null);
-      setSearchQuery("");
-      clearSearch();
-    } else {
-      setRightPanel("search");
-    }
-  }, [rightPanel, clearSearch]);
+  const handlePanelToggle = useCallback(() => {
+    setIsPanelOpen((previous) => !previous);
+  }, []);
 
-  const handleGoalsToggle = useCallback(() => {
-    if (rightPanel === "goals") {
-      setRightPanel(null);
-      setSelectedGoalId(null);
-    } else {
-      setRightPanel("goals");
-    }
-  }, [rightPanel]);
+  const handleModeChange = useCallback(
+    (newMode: RightPanelMode) => {
+      setFilterMode(newMode);
+      if (newMode !== "search") {
+        setSearchQuery("");
+        clearSearch();
+      }
+      if (newMode !== "goals") setSelectedGoalId(null);
+      if (newMode !== "contexts") setSelectedContextId(null);
+      if (newMode !== "categories") setSelectedCategoryId(null);
+    },
+    [clearSearch],
+  );
 
   const handleGoalSelect = useCallback((goalId: string | null) => {
     setSelectedGoalId(goalId);
+  }, []);
+
+  const handleContextSelect = useCallback((contextId: string | null) => {
+    setSelectedContextId(contextId);
+  }, []);
+
+  const handleCategorySelect = useCallback((categoryId: string | null) => {
+    setSelectedCategoryId(categoryId);
   }, []);
 
   const handleBoxChange = useCallback((box: BoxFilter) => {
@@ -161,12 +178,21 @@ export default function InboxPage() {
     setIsAddingTask(false);
   }, []);
 
-  const applyGoalFilter = useCallback(
+  const applyFilters = useCallback(
     (tasks: Task[]): Task[] => {
-      if (!selectedGoalId) return tasks;
-      return tasks.filter((task) => task.goal_id === selectedGoalId);
+      let filtered = tasks.filter((task) => !task.is_completed);
+      if (selectedGoalId) {
+        filtered = filtered.filter((task) => task.goal_id === selectedGoalId);
+      }
+      if (selectedContextId) {
+        filtered = filtered.filter((task) => task.context_id === selectedContextId);
+      }
+      if (selectedCategoryId) {
+        filtered = filtered.filter((task) => task.category_id === selectedCategoryId);
+      }
+      return filtered;
     },
-    [selectedGoalId],
+    [selectedGoalId, selectedContextId, selectedCategoryId],
   );
 
   const targetBoxLabel = useMemo(() => {
@@ -175,7 +201,7 @@ export default function InboxPage() {
   }, [activeBox]);
 
   const renderContent = () => {
-    if (rightPanel === "search") {
+    if (filterMode === "search") {
       return (
         <TaskList
           tasks={searchResults}
@@ -185,9 +211,19 @@ export default function InboxPage() {
       );
     }
 
+    if (filterMode === "completed") {
+      return (
+        <TaskList
+          tasks={completedTasks}
+          onComplete={completeToday}
+          onDelete={deleteToday}
+        />
+      );
+    }
+
     if (activeBox === BOX_FILTER_ALL) {
-      const visibleTodayTasks = applyGoalFilter(todayTasks);
-      const visibleWeekTasks = applyGoalFilter(weekTasks);
+      const visibleTodayTasks = applyFilters(todayTasks);
+      const visibleWeekTasks = applyFilters(weekTasks);
       return (
         <>
           {isAddingTask && (
@@ -221,7 +257,7 @@ export default function InboxPage() {
     };
 
     const { tasks, onComplete, onDelete } = boxConfig[activeBox];
-    const visibleTasks = applyGoalFilter(tasks);
+    const visibleTasks = applyFilters(tasks);
 
     return (
       <>
@@ -250,7 +286,7 @@ export default function InboxPage() {
       {/* Main content column */}
       <div className="flex flex-1 flex-col overflow-hidden">
         {/* Search header */}
-        {rightPanel === "search" && (
+        {filterMode === "search" && (
           <header className="px-4 py-2 border-b border-gray-100 flex items-center gap-2">
             <input
               type="search"
@@ -276,12 +312,19 @@ export default function InboxPage() {
 
           {/* Right quick filter panel */}
           <RightFilterPanel
-            mode={rightPanel}
+            mode={filterMode}
+            isOpen={isPanelOpen}
             goals={goals}
+            contexts={contexts}
+            categories={categories}
             selectedGoalId={selectedGoalId}
-            onGoalsToggle={handleGoalsToggle}
-            onSearchToggle={handleSearchToggle}
+            selectedContextId={selectedContextId}
+            selectedCategoryId={selectedCategoryId}
+            onToggle={handlePanelToggle}
+            onModeChange={handleModeChange}
             onGoalSelect={handleGoalSelect}
+            onContextSelect={handleContextSelect}
+            onCategorySelect={handleCategorySelect}
           />
         </div>
 

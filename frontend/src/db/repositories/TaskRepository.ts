@@ -47,6 +47,12 @@ export class TaskRepository {
     return db.tasks.where("version").above(minVersion).toArray();
   }
 
+  async getCompleted(): Promise<Task[]> {
+    return db.tasks
+      .filter((task) => !task.is_deleted && task.is_completed)
+      .toArray();
+  }
+
   async getMaxVersion(): Promise<number> {
     const tasks = await db.tasks
       .orderBy("version")

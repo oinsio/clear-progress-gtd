@@ -1,106 +1,257 @@
-import { Search, Target, X } from "lucide-react";
+import {
+  Search,
+  Target,
+  MapPin,
+  Tag,
+  CheckSquare,
+  CheckCheck,
+  ChevronRight,
+  ChevronLeft,
+} from "lucide-react";
 import { cn } from "@/shared/lib/cn";
-import type { Goal } from "@/types/entities";
+import type { Goal, Context, Category } from "@/types/entities";
+import * as React from "react";
 
-export type RightPanelMode = "goals" | "search" | null;
+export type RightPanelMode =
+  | "tasks"
+  | "completed"
+  | "goals"
+  | "contexts"
+  | "categories"
+  | "search"
+  | null;
+
+interface FilterItem {
+  mode: Exclude<RightPanelMode, "search" | null>;
+  label: string;
+  Icon: React.ElementType;
+}
+
+const FILTER_ITEMS: FilterItem[] = [
+  { mode: "goals", label: "Цели", Icon: Target },
+  { mode: "contexts", label: "Контексты", Icon: MapPin },
+  { mode: "categories", label: "Категории", Icon: Tag },
+  { mode: "tasks", label: "Задачи", Icon: CheckSquare },
+  { mode: "completed", label: "Завершённые", Icon: CheckCheck },
+];
+
+interface SubListItem {
+  id: string;
+  label: string;
+}
+
+function SubListPanel({
+  items,
+  allLabel,
+  selectedId,
+  onSelect,
+}: {
+  items: SubListItem[];
+  allLabel: string;
+  selectedId: string | null;
+  onSelect: (id: string | null) => void;
+}) {
+  return (
+    <div className="w-40 flex flex-col border-l border-gray-100 bg-white overflow-y-auto">
+      <div className="px-2 py-2">
+        <button
+          type="button"
+          onClick={() => onSelect(null)}
+          className={cn(
+            "w-full text-left px-2 py-1.5 text-xs rounded-lg mb-1 transition-colors",
+            selectedId === null
+              ? "bg-green-50 text-green-700 font-medium"
+              : "text-gray-500 hover:bg-gray-50",
+          )}
+        >
+          {allLabel}
+        </button>
+        {items.map((item) => (
+          <button
+            key={item.id}
+            type="button"
+            onClick={() => onSelect(selectedId === item.id ? null : item.id)}
+            className={cn(
+              "w-full text-left px-2 py-1.5 text-xs rounded-lg mb-0.5 transition-colors leading-tight",
+              selectedId === item.id
+                ? "bg-green-50 text-green-700 font-medium"
+                : "text-gray-600 hover:bg-gray-50",
+            )}
+          >
+            {item.label}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 interface RightFilterPanelProps {
   mode: RightPanelMode;
+  isOpen: boolean;
   goals: Goal[];
+  contexts: Context[];
+  categories: Category[];
   selectedGoalId: string | null;
-  onGoalsToggle: () => void;
-  onSearchToggle: () => void;
+  selectedContextId: string | null;
+  selectedCategoryId: string | null;
+  onToggle: () => void;
+  onModeChange: (mode: RightPanelMode) => void;
   onGoalSelect: (id: string | null) => void;
+  onContextSelect: (id: string | null) => void;
+  onCategorySelect: (id: string | null) => void;
 }
 
 export function RightFilterPanel({
   mode,
+  isOpen,
   goals,
+  contexts,
+  categories,
   selectedGoalId,
-  onGoalsToggle,
-  onSearchToggle,
+  selectedContextId,
+  selectedCategoryId,
+  onToggle,
+  onModeChange,
   onGoalSelect,
+  onContextSelect,
+  onCategorySelect,
 }: RightFilterPanelProps) {
-  const isGoalsActive = mode === "goals";
-  const isSearchActive = mode === "search";
+  const activeGoals = goals.filter((goal) => !goal.is_deleted);
+  const activeContexts = contexts.filter((context) => !context.is_deleted);
+  const activeCategories = categories.filter((category) => !category.is_deleted);
+
+  const showSubList =
+    isOpen &&
+    (mode === "goals" || mode === "contexts" || mode === "categories");
 
   return (
     <div className="flex flex-shrink-0">
-      {/* Goals list panel — visible when goals mode active */}
-      {isGoalsActive && (
-        <div className="w-36 border-l border-gray-100 bg-white overflow-y-auto">
-          <div className="px-2 py-2">
-            <button
-              type="button"
-              onClick={() => onGoalSelect(null)}
-              className={cn(
-                "w-full text-left px-2 py-1.5 text-xs rounded-lg mb-1 transition-colors",
-                selectedGoalId === null
-                  ? "bg-green-50 text-green-700 font-medium"
-                  : "text-gray-500 hover:bg-gray-50",
-              )}
-            >
-              Все цели
-            </button>
-            {goals
-              .filter((goal) => !goal.is_deleted)
-              .map((goal) => (
-                <button
-                  key={goal.id}
-                  type="button"
-                  onClick={() =>
-                    onGoalSelect(selectedGoalId === goal.id ? null : goal.id)
-                  }
-                  className={cn(
-                    "w-full text-left px-2 py-1.5 text-xs rounded-lg mb-0.5 transition-colors leading-tight",
-                    selectedGoalId === goal.id
-                      ? "bg-green-50 text-green-700 font-medium"
-                      : "text-gray-600 hover:bg-gray-50",
-                  )}
-                >
-                  {goal.title}
-                </button>
-              ))}
-          </div>
-        </div>
+      {/* Sub-list for goals / contexts / categories */}
+      {showSubList && mode === "goals" && (
+        <SubListPanel
+          items={activeGoals.map((goal) => ({ id: goal.id, label: goal.title }))}
+          allLabel="Все цели"
+          selectedId={selectedGoalId}
+          onSelect={onGoalSelect}
+        />
+      )}
+      {showSubList && mode === "contexts" && (
+        <SubListPanel
+          items={activeContexts.map((context) => ({
+            id: context.id,
+            label: context.name,
+          }))}
+          allLabel="Все контексты"
+          selectedId={selectedContextId}
+          onSelect={onContextSelect}
+        />
+      )}
+      {showSubList && mode === "categories" && (
+        <SubListPanel
+          items={activeCategories.map((category) => ({
+            id: category.id,
+            label: category.name,
+          }))}
+          allLabel="Все категории"
+          selectedId={selectedCategoryId}
+          onSelect={onCategorySelect}
+        />
       )}
 
-      {/* Icon strip */}
-      <div className="w-11 flex flex-col items-center pt-3 gap-1 border-l border-gray-100 bg-white">
-        <button
-          type="button"
-          aria-label="Фильтр по целям"
-          data-testid="right-filter-goals"
-          onClick={onGoalsToggle}
-          className={cn(
-            "w-9 h-9 rounded-xl flex items-center justify-center transition-colors",
-            isGoalsActive
-              ? "bg-green-100 text-green-600"
-              : "text-gray-400 hover:bg-gray-100 hover:text-gray-600",
-          )}
-        >
-          {isGoalsActive && selectedGoalId ? (
-            <X className="w-5 h-5" aria-hidden="true" />
-          ) : (
-            <Target className="w-5 h-5" aria-hidden="true" />
-          )}
-        </button>
+      {/* Main panel */}
+      {isOpen ? (
+        <div className="w-48 flex flex-col bg-green-500 border-l border-green-600 overflow-hidden">
+          {/* Close button */}
+          <button
+            type="button"
+            aria-label="Закрыть панель фильтров"
+            data-testid="right-panel-toggle"
+            onClick={onToggle}
+            className="flex items-center justify-end px-3 py-3 text-white/70 hover:text-white hover:bg-green-600 transition-colors"
+          >
+            <ChevronRight className="w-5 h-5" aria-hidden="true" />
+          </button>
 
-        <button
-          type="button"
-          aria-label="Поиск по задачам"
-          data-testid="right-filter-search"
-          onClick={onSearchToggle}
-          className={cn(
-            "w-9 h-9 rounded-xl flex items-center justify-center transition-colors",
-            isSearchActive
-              ? "bg-green-100 text-green-600"
-              : "text-gray-400 hover:bg-gray-100 hover:text-gray-600",
-          )}
-        >
-          <Search className="w-5 h-5" aria-hidden="true" />
-        </button>
-      </div>
+          {/* Filter items */}
+          <nav className="flex-1 px-2 pb-2" aria-label="Фильтры задач">
+            {FILTER_ITEMS.map(({ mode: itemMode, label, Icon }) => {
+              const isActive = mode === itemMode;
+              return (
+                <button
+                  key={itemMode}
+                  type="button"
+                  aria-label={label}
+                  aria-pressed={isActive}
+                  data-testid={`right-filter-${itemMode}`}
+                  onClick={() => onModeChange(isActive ? null : itemMode)}
+                  className={cn(
+                    "w-full flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-medium transition-colors text-left",
+                    isActive
+                      ? "bg-white/20 text-white"
+                      : "text-white/80 hover:bg-white/10 hover:text-white",
+                  )}
+                >
+                  <Icon className="w-5 h-5 flex-shrink-0" aria-hidden="true" />
+                  <span>{label}</span>
+                </button>
+              );
+            })}
+          </nav>
+
+          {/* Search — pinned at bottom */}
+          <div className="px-2 pb-3 border-t border-green-400/50 pt-2">
+            <button
+              type="button"
+              aria-label="Поиск по задачам"
+              aria-pressed={mode === "search"}
+              data-testid="right-filter-search"
+              onClick={() => onModeChange(mode === "search" ? null : "search")}
+              className={cn(
+                "w-full flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-medium transition-colors text-left",
+                mode === "search"
+                  ? "bg-white/20 text-white"
+                  : "text-white/80 hover:bg-white/10 hover:text-white",
+              )}
+            >
+              <Search className="w-5 h-5 flex-shrink-0" aria-hidden="true" />
+              <span>Поиск</span>
+            </button>
+          </div>
+        </div>
+      ) : (
+        /* Collapsed strip */
+        <div className="w-10 flex flex-col items-center pt-3 gap-1 border-l border-gray-100 bg-white">
+          <button
+            type="button"
+            aria-label="Открыть панель фильтров"
+            data-testid="right-panel-toggle"
+            onClick={onToggle}
+            className={cn(
+              "w-8 h-8 rounded-xl flex items-center justify-center transition-colors",
+              mode !== null && mode !== "tasks"
+                ? "bg-green-100 text-green-600"
+                : "text-gray-400 hover:bg-gray-100 hover:text-gray-600",
+            )}
+          >
+            <ChevronLeft className="w-5 h-5" aria-hidden="true" />
+          </button>
+
+          {/* Active filter indicator */}
+          {mode !== null && mode !== "tasks" && (() => {
+            const activeItem =
+              FILTER_ITEMS.find((item) => item.mode === mode) ??
+              (mode === "search" ? { Icon: Search } : null);
+            if (!activeItem) return null;
+            const { Icon } = activeItem;
+            return (
+              <div className="w-8 h-8 rounded-xl bg-green-100 flex items-center justify-center text-green-600">
+                <Icon className="w-4 h-4" aria-hidden="true" />
+              </div>
+            );
+          })()}
+        </div>
+      )}
     </div>
   );
 }

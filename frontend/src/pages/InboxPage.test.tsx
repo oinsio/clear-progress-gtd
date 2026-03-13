@@ -7,18 +7,30 @@ import { buildGoal } from "@/test/factories/goalFactory";
 import type { UseTasksReturn } from "@/hooks/useTasks";
 import type { UseGoalsReturn } from "@/hooks/useGoals";
 import type { UseSearchReturn } from "@/hooks/useSearch";
+import type { UseContextsReturn } from "@/hooks/useContexts";
+import type { UseCategoriesReturn } from "@/hooks/useCategories";
+import type { UseCompletedTasksReturn } from "@/hooks/useCompletedTasks";
 
 vi.mock("@/hooks/useTasks");
 vi.mock("@/hooks/useGoals");
 vi.mock("@/hooks/useSearch");
+vi.mock("@/hooks/useContexts");
+vi.mock("@/hooks/useCategories");
+vi.mock("@/hooks/useCompletedTasks");
 
 import { useTasks } from "@/hooks/useTasks";
 import { useGoals } from "@/hooks/useGoals";
 import { useSearch } from "@/hooks/useSearch";
+import { useContexts } from "@/hooks/useContexts";
+import { useCategories } from "@/hooks/useCategories";
+import { useCompletedTasks } from "@/hooks/useCompletedTasks";
 
 const mockUseTasks = vi.mocked(useTasks);
 const mockUseGoals = vi.mocked(useGoals);
 const mockUseSearch = vi.mocked(useSearch);
+const mockUseContexts = vi.mocked(useContexts);
+const mockUseCategories = vi.mocked(useCategories);
+const mockUseCompletedTasks = vi.mocked(useCompletedTasks);
 
 function buildTasksHook(overrides: Partial<UseTasksReturn> = {}): UseTasksReturn {
   return {
@@ -54,6 +66,39 @@ function buildSearchHook(overrides: Partial<UseSearchReturn> = {}): UseSearchRet
   };
 }
 
+function buildContextsHook(overrides: Partial<UseContextsReturn> = {}): UseContextsReturn {
+  return {
+    contexts: [],
+    isLoading: false,
+    createContext: vi.fn(),
+    updateContext: vi.fn(),
+    deleteContext: vi.fn(),
+    ...overrides,
+  };
+}
+
+function buildCategoriesHook(overrides: Partial<UseCategoriesReturn> = {}): UseCategoriesReturn {
+  return {
+    categories: [],
+    isLoading: false,
+    createCategory: vi.fn(),
+    updateCategory: vi.fn(),
+    deleteCategory: vi.fn(),
+    ...overrides,
+  };
+}
+
+function buildCompletedTasksHook(
+  overrides: Partial<UseCompletedTasksReturn> = {},
+): UseCompletedTasksReturn {
+  return {
+    completedTasks: [],
+    isLoading: false,
+    reload: vi.fn(),
+    ...overrides,
+  };
+}
+
 function renderPage() {
   return render(
     <MemoryRouter>
@@ -62,11 +107,18 @@ function renderPage() {
   );
 }
 
+function openRightPanel() {
+  fireEvent.click(screen.getByTestId("right-panel-toggle"));
+}
+
 describe("InboxPage", () => {
   beforeEach(() => {
     mockUseTasks.mockReturnValue(buildTasksHook());
     mockUseGoals.mockReturnValue(buildGoalsHook());
     mockUseSearch.mockReturnValue(buildSearchHook());
+    mockUseContexts.mockReturnValue(buildContextsHook());
+    mockUseCategories.mockReturnValue(buildCategoriesHook());
+    mockUseCompletedTasks.mockReturnValue(buildCompletedTasksHook());
   });
 
   it("should render the main page container", () => {
@@ -88,10 +140,20 @@ describe("InboxPage", () => {
     expect(screen.getByTestId("add-task-button")).toBeInTheDocument();
   });
 
-  it("should render right filter panel icons", () => {
+  it("should render right panel toggle button", () => {
     renderPage();
+    expect(screen.getByTestId("right-panel-toggle")).toBeInTheDocument();
+  });
+
+  it("should show filter items when right panel is opened", () => {
+    renderPage();
+    openRightPanel();
     expect(screen.getByTestId("right-filter-goals")).toBeInTheDocument();
     expect(screen.getByTestId("right-filter-search")).toBeInTheDocument();
+    expect(screen.getByTestId("right-filter-tasks")).toBeInTheDocument();
+    expect(screen.getByTestId("right-filter-completed")).toBeInTheDocument();
+    expect(screen.getByTestId("right-filter-contexts")).toBeInTheDocument();
+    expect(screen.getByTestId("right-filter-categories")).toBeInTheDocument();
   });
 
   it("should show empty state in all-tasks sections when no tasks", () => {
@@ -115,16 +177,18 @@ describe("InboxPage", () => {
     expect(screen.getByTestId("add-task-input")).toBeInTheDocument();
   });
 
-  it("should activate search mode when search icon is clicked", () => {
+  it("should activate search mode when search filter is clicked", () => {
     renderPage();
+    openRightPanel();
     fireEvent.click(screen.getByTestId("right-filter-search"));
     expect(screen.getByTestId("search-input")).toBeInTheDocument();
   });
 
-  it("should show goals list in right panel when goals icon is clicked", () => {
+  it("should show goals sub-list when goals filter is clicked", () => {
     const goals = [buildGoal({ title: "My Goal" })];
     mockUseGoals.mockReturnValue(buildGoalsHook({ goals }));
     renderPage();
+    openRightPanel();
     fireEvent.click(screen.getByTestId("right-filter-goals"));
     expect(screen.getByText("My Goal")).toBeInTheDocument();
   });
@@ -133,7 +197,19 @@ describe("InboxPage", () => {
     const foundTasks = [buildTask({ title: "Found task" })];
     mockUseSearch.mockReturnValue(buildSearchHook({ results: foundTasks }));
     renderPage();
+    openRightPanel();
     fireEvent.click(screen.getByTestId("right-filter-search"));
+    expect(screen.getByTestId("task-item")).toBeInTheDocument();
+  });
+
+  it("should show completed tasks when completed filter is selected", () => {
+    const finishedTasks = [buildTask({ title: "Done task", is_completed: true })];
+    mockUseCompletedTasks.mockReturnValue(
+      buildCompletedTasksHook({ completedTasks: finishedTasks }),
+    );
+    renderPage();
+    openRightPanel();
+    fireEvent.click(screen.getByTestId("right-filter-completed"));
     expect(screen.getByTestId("task-item")).toBeInTheDocument();
   });
 });
