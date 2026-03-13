@@ -236,6 +236,10 @@ OAuth scopes: `drive.file` + `spreadsheets` (minimal).
 - Sync should be invisible to user; show subtle indicator only on error
 - All sync operations are non-blocking; UI never freezes waiting for sync
 
+## Frontend
+
+Before creating files, consult `project-structure.md`.
+
 ## Feature Scope
 
 ### MVP
