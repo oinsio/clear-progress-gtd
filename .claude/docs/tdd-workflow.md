@@ -41,6 +41,14 @@ When asked to set up or install something — just do it directly.
 - Improve code while keeping all tests green
 - Run `npx vitest run` after each change — show output
 
+## Step 5 — Mutate (VERIFY)
+
+- Run `npm run test:mutation` on the changed files
+- Analyze survived mutants — each survivor indicates a missed scenario or a weak assertion
+- Write additional tests to kill survived mutants
+- Re-run mutations after adding tests
+- Repeat until mutation score reaches ≥90%
+
 ## Rules
 
 - Never write implementation before its test exists
@@ -51,3 +59,4 @@ When asked to set up or install something — just do it directly.
 - Use `it.each` for parameterized / data-driven tests
 - When modifying existing code: verify a test exists first; if not, write a characterization test before changing anything
 - If asked to add a feature, start by listing behaviors and asking for confirmation
+- After completing the refactor phase, always verify tests with mutation testing before considering the task done
