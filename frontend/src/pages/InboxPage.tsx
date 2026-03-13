@@ -17,6 +17,7 @@ import * as React from "react";
 const SEARCH_DEBOUNCE_MS = 300;
 const TODAY_SECTION_LABEL = "Сегодня";
 const WEEK_SECTION_LABEL = "Неделя";
+const LATER_SECTION_LABEL = "Потом";
 
 function TaskSection({
   label,
@@ -233,6 +234,7 @@ export default function InboxPage() {
     if (activeBox === BOX_FILTER_ALL) {
       const visibleTodayTasks = applyFilters(todayTasks);
       const visibleWeekTasks = applyFilters(weekTasks);
+      const visibleLaterTasks = applyFilters(laterTasks);
       return (
         <>
           {isAddingTask && (
@@ -253,6 +255,12 @@ export default function InboxPage() {
             tasks={visibleWeekTasks}
             onComplete={completeWeek}
             onDelete={deleteWeek}
+          />
+          <TaskSection
+            label={LATER_SECTION_LABEL}
+            tasks={visibleLaterTasks}
+            onComplete={completeLater}
+            onDelete={deleteLater}
           />
         </>
       );
