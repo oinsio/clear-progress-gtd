@@ -83,6 +83,8 @@ export const DB_VERSION = 1;
 export const STORAGE_KEYS = {
   GAS_URL: "gas_url",
   LAST_SYNC: "last_sync",
+  ACCENT_COLOR: "accent_color",
+  DEFAULT_BOX: "default_box",
 } as const;
 
 export const SETTING_KEYS = {
