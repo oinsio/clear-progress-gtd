@@ -28,10 +28,14 @@ export const router = createBrowserRouter([
     path: ROUTES.SETUP,
     element: <SetupPage />,
   },
+  // Main tasks page — has its own layout with bottom filter bar and right panel
+  {
+    path: ROUTES.INBOX,
+    element: <InboxPage />,
+  },
   {
     element: <RootLayout />,
     children: [
-      { path: ROUTES.INBOX, element: <InboxPage /> },
       { path: ROUTES.TODAY, element: <TodayPage /> },
       { path: ROUTES.WEEK, element: <WeekPage /> },
       { path: ROUTES.LATER, element: <LaterPage /> },

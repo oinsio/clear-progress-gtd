@@ -13,6 +13,8 @@ export type SyncStatus = "idle" | "syncing" | "error" | "offline";
 
 export type PushResultStatus = "created" | "accepted" | "conflict" | "rejected";
 
+export type BoxFilter = Box | "all";
+
 export type RepeatRuleType =
   | "daily"
   | "weekdays"

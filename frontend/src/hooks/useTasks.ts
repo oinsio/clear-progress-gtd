@@ -9,6 +9,7 @@ const defaultTaskService = new TaskService(new TaskRepository());
 export interface UseTasksReturn {
   tasks: Task[];
   isLoading: boolean;
+  createTask: (title: string) => Promise<void>;
   completeTask: (id: string) => Promise<void>;
   deleteTask: (id: string) => Promise<void>;
   moveTask: (id: string, box: Box) => Promise<void>;
@@ -31,6 +32,14 @@ export function useTasks(
     setIsLoading(true);
     void loadTasks();
   }, [loadTasks]);
+
+  const createTask = useCallback(
+    async (title: string) => {
+      await taskService.create({ title, box });
+      await loadTasks();
+    },
+    [taskService, loadTasks, box],
+  );
 
   const completeTask = useCallback(
     async (id: string) => {
@@ -56,5 +65,5 @@ export function useTasks(
     [taskService, loadTasks],
   );
 
-  return { tasks, isLoading, completeTask, deleteTask, moveTask };
+  return { tasks, isLoading, createTask, completeTask, deleteTask, moveTask };
 }

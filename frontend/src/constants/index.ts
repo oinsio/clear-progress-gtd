@@ -1,4 +1,4 @@
-import type { Box, AccentColor, RepeatRuleType } from "@/types/common";
+import type { Box, BoxFilter, AccentColor, RepeatRuleType } from "@/types/common";
 
 export const ROUTES = {
   INBOX: "/inbox",
@@ -21,6 +21,24 @@ export const BOX = {
 
 
 export const BOX_ORDER: Box[] = ["inbox", "today", "week", "later"];
+
+export const BOX_FILTER_ALL = "all" as const satisfies BoxFilter;
+
+export const BOX_FILTER_LABELS: Record<BoxFilter, string> = {
+  all: "Все",
+  inbox: "Входящие",
+  today: "Сегодня",
+  week: "Неделя",
+  later: "Потом",
+};
+
+export const BOX_FILTER_ORDER: BoxFilter[] = [
+  "all",
+  "inbox",
+  "today",
+  "week",
+  "later",
+];
 
 export const DEFAULT_ACCENT_COLOR: AccentColor = "green";
 
