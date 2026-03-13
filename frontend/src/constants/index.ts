@@ -51,7 +51,7 @@ export const ACCENT_COLORS: AccentColor[] = [
 ];
 
 export const ACCENT_COLOR_VALUES: Record<AccentColor, string> = {
-  green: "#22c55e",
+  green: "#69B23E",
   orange: "#f97316",
   purple: "#a855f7",
   yellow: "#eab308",

@@ -7,12 +7,18 @@ import {
   CheckCheck,
   ChevronRight,
   ChevronLeft,
+  Inbox,
+  CircleUser,
+  Settings,
 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { cn } from "@/shared/lib/cn";
 import type { Goal, Context, Category } from "@/types/entities";
+import { ROUTES } from "@/constants";
 import * as React from "react";
 
 export type RightPanelMode =
+  | "inbox"
   | "tasks"
   | "completed"
   | "goals"
@@ -28,9 +34,10 @@ interface FilterItem {
 }
 
 const FILTER_ITEMS: FilterItem[] = [
-  { mode: "goals", label: "Цели", Icon: Target },
+  { mode: "inbox", label: "Входящие", Icon: Inbox },
   { mode: "contexts", label: "Контексты", Icon: MapPin },
   { mode: "categories", label: "Категории", Icon: Tag },
+  { mode: "goals", label: "Цели", Icon: Target },
   { mode: "tasks", label: "Задачи", Icon: CheckSquare },
   { mode: "completed", label: "Завершённые", Icon: CheckCheck },
 ];
@@ -117,6 +124,8 @@ export function RightFilterPanel({
   onContextSelect,
   onCategorySelect,
 }: RightFilterPanelProps) {
+  const navigate = useNavigate();
+
   const activeGoals = goals.filter((goal) => !goal.is_deleted);
   const activeContexts = contexts.filter((context) => !context.is_deleted);
   const activeCategories = categories.filter((category) => !category.is_deleted);
@@ -161,20 +170,21 @@ export function RightFilterPanel({
 
       {/* Main panel */}
       {isOpen ? (
-        <div className="w-48 flex flex-col bg-green-500 border-l border-green-600 overflow-hidden">
-          {/* Close button */}
+        <div className="w-52 flex flex-col bg-green-500 border-l border-green-600 overflow-hidden">
+          {/* Account / login row */}
           <button
             type="button"
-            aria-label="Закрыть панель фильтров"
-            data-testid="right-panel-toggle"
-            onClick={onToggle}
-            className="flex items-center justify-end px-3 py-3 text-white/70 hover:text-white hover:bg-green-600 transition-colors"
+            aria-label="Войти в аккаунт"
+            data-testid="right-panel-account"
+            onClick={() => navigate(ROUTES.SETUP)}
+            className="flex items-center justify-between px-4 py-4 text-white hover:bg-green-600 transition-colors border-b border-green-400/40"
           >
-            <ChevronRight className="w-5 h-5" aria-hidden="true" />
+            <span className="text-base font-medium">Войдите</span>
+            <CircleUser className="w-8 h-8" aria-hidden="true" />
           </button>
 
           {/* Filter items */}
-          <nav className="flex-1 px-2 pb-2" aria-label="Фильтры задач">
+          <nav className="flex-1 px-2 py-2 overflow-y-auto" aria-label="Фильтры задач">
             {FILTER_ITEMS.map(({ mode: itemMode, label, Icon }) => {
               const isActive = mode === itemMode;
               return (
@@ -199,8 +209,8 @@ export function RightFilterPanel({
             })}
           </nav>
 
-          {/* Search — pinned at bottom */}
-          <div className="px-2 pb-3 border-t border-green-400/50 pt-2">
+          {/* Bottom actions: Search + Settings + Close */}
+          <div className="px-2 pb-3 border-t border-green-400/50 pt-2 space-y-0.5">
             <button
               type="button"
               aria-label="Поиск по задачам"
@@ -217,6 +227,27 @@ export function RightFilterPanel({
               <Search className="w-5 h-5 flex-shrink-0" aria-hidden="true" />
               <span>Поиск</span>
             </button>
+
+            <button
+              type="button"
+              aria-label="Настройки"
+              data-testid="right-panel-settings"
+              onClick={() => navigate(ROUTES.SETTINGS)}
+              className="w-full flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-medium transition-colors text-left text-white/80 hover:bg-white/10 hover:text-white"
+            >
+              <Settings className="w-5 h-5 flex-shrink-0" aria-hidden="true" />
+              <span>Настройки</span>
+            </button>
+
+            <button
+              type="button"
+              aria-label="Закрыть панель"
+              data-testid="right-panel-toggle"
+              onClick={onToggle}
+              className="w-full flex items-center justify-end px-3 py-2 text-white/50 hover:text-white transition-colors"
+            >
+              <ChevronRight className="w-5 h-5" aria-hidden="true" />
+            </button>
           </div>
         </div>
       ) : (
@@ -224,7 +255,7 @@ export function RightFilterPanel({
         <div className="w-10 flex flex-col items-center pt-3 gap-1 border-l border-gray-100 bg-white">
           <button
             type="button"
-            aria-label="Открыть панель фильтров"
+            aria-label="Открыть панель"
             data-testid="right-panel-toggle"
             onClick={onToggle}
             className={cn(

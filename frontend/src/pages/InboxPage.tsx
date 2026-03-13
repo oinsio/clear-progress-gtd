@@ -211,6 +211,16 @@ export default function InboxPage() {
       );
     }
 
+    if (filterMode === "inbox") {
+      return (
+        <TaskList
+          tasks={applyFilters(inboxTasks)}
+          onComplete={completeInbox}
+          onDelete={deleteInbox}
+        />
+      );
+    }
+
     if (filterMode === "completed") {
       return (
         <TaskList

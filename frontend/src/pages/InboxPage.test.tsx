@@ -212,4 +212,22 @@ describe("InboxPage", () => {
     fireEvent.click(screen.getByTestId("right-filter-completed"));
     expect(screen.getByTestId("task-item")).toBeInTheDocument();
   });
+
+  it("should show inbox tasks when inbox filter is selected", () => {
+    const inboxTasks = [buildTask({ title: "Inbox task", box: "inbox" })];
+    mockUseTasks.mockImplementation((box) =>
+      buildTasksHook({ tasks: box === "inbox" ? inboxTasks : [] }),
+    );
+    renderPage();
+    openRightPanel();
+    fireEvent.click(screen.getByTestId("right-filter-inbox"));
+    expect(screen.getByTestId("task-item")).toBeInTheDocument();
+  });
+
+  it("should render account and settings buttons in open panel", () => {
+    renderPage();
+    openRightPanel();
+    expect(screen.getByTestId("right-panel-account")).toBeInTheDocument();
+    expect(screen.getByTestId("right-panel-settings")).toBeInTheDocument();
+  });
 });
