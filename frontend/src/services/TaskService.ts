@@ -55,10 +55,23 @@ export class TaskService {
   }
 
   async complete(id: string): Promise<Task> {
-    return this.update(id, {
+    const existingTask = await this.taskRepository.getById(id);
+    if (!existingTask) {
+      throw new Error(`Task not found: ${id}`);
+    }
+    const completedTask = await this.update(id, {
       is_completed: true,
       completed_at: new Date().toISOString(),
     });
+    if (existingTask.repeat_rule) {
+      await this.createRecurringCopy(existingTask);
+    }
+    return completedTask;
+  }
+
+  private async createRecurringCopy(task: Task): Promise<Task> {
+    const { id: _id, version: _version, created_at: _ca, updated_at: _ua, is_completed: _ic, completed_at: _cat, ...taskProps } = task;
+    return this.create({ ...taskProps, is_completed: false, completed_at: "" });
   }
 
   async softDelete(id: string): Promise<Task> {
@@ -67,6 +80,11 @@ export class TaskService {
 
   async moveToBox(id: string, box: Box): Promise<Task> {
     return this.update(id, { box });
+  }
+
+  async getByGoalId(goalId: string): Promise<Task[]> {
+    const tasks = await this.taskRepository.getByGoalId(goalId);
+    return tasks.sort((taskA, taskB) => taskA.sort_order - taskB.sort_order);
   }
 
   async searchByTitle(query: string): Promise<Task[]> {

@@ -1,4 +1,4 @@
-import type { Box, AccentColor } from "@/types/common";
+import type { Box, AccentColor, RepeatRuleType } from "@/types/common";
 
 export const ROUTES = {
   INBOX: "/inbox",
@@ -74,3 +74,11 @@ export const PUSH_RESULT_STATUS = {
   CONFLICT: "conflict",
   REJECTED: "rejected",
 } as const;
+
+export const REPEAT_RULE_TYPE = {
+  DAILY: "daily",
+  WEEKDAYS: "weekdays",
+  WEEKLY: "weekly",
+  MONTHLY: "monthly",
+  INTERVAL: "interval",
+} as const satisfies Record<string, RepeatRuleType>;
