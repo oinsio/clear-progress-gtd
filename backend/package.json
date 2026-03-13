@@ -6,9 +6,12 @@
     "build": "node esbuild.config.mjs && cp appsscript.json dist/",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "test:mutation": "stryker run"
   },
   "devDependencies": {
+    "@stryker-mutator/core": "^9.6.0",
+    "@stryker-mutator/vitest-runner": "^9.6.0",
     "@types/google-apps-script": "^1.0.0",
     "esbuild": "^0.27.3",
     "typescript": "^5.0.0",
