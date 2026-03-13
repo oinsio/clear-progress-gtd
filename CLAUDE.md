@@ -318,3 +318,10 @@ Before creating files, consult `project-structure.md`.
 - Tailwind classes in JSX are an exception — they are NOT hardcoded values
 - Detailed rules and examples: `.claude/rules/code-style.md`
 - Variable and function naming rules: `.claude/rules/naming.md`
+
+## Post-Edit Workflow
+
+After creating or editing any source file (.ts, .tsx, .json, .js, ):
+1. Call `getDiagnostics` via the webstorm MCP tool for the changed file
+2. If there are errors or warnings — fix them immediately before moving on
+3. Do NOT ask for confirmation to fix IDE diagnostics — just fix them

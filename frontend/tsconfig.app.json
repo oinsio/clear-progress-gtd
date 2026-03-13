@@ -15,6 +15,9 @@
     "noEmit": true,
     "jsx": "react-jsx",
 
+    /* Types */
+    "types": ["vitest/globals"],
+
     /* Strict mode */
     "strict": true,
     "noUnusedLocals": true,
@@ -28,5 +31,6 @@
       "@/*": ["./src/*"]
     }
   },
-  "include": ["src"]
+  "include": ["src"],
+  "exclude": ["reports"]
 }
