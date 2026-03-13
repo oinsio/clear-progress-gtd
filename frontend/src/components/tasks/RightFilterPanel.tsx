@@ -14,6 +14,7 @@ import {
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/shared/lib/cn";
 import type { Goal, Context, Category } from "@/types/entities";
+import type { PanelSide } from "@/types/common";
 import { ROUTES } from "@/constants";
 import * as React from "react";
 
@@ -51,15 +52,22 @@ function SubListPanel({
   items,
   allLabel,
   selectedId,
+  side = "right",
   onSelect,
 }: {
   items: SubListItem[];
   allLabel: string;
   selectedId: string | null;
+  side?: PanelSide;
   onSelect: (id: string | null) => void;
 }) {
   return (
-    <div className="w-40 flex flex-col border-l border-gray-100 bg-white overflow-y-auto">
+    <div
+      className={cn(
+        "w-40 flex flex-col bg-white overflow-y-auto",
+        side === "right" ? "border-l border-gray-100" : "border-r border-gray-100",
+      )}
+    >
       <div className="px-2 py-2">
         <button
           type="button"
@@ -102,6 +110,7 @@ interface RightFilterPanelProps {
   selectedGoalId: string | null;
   selectedContextId: string | null;
   selectedCategoryId: string | null;
+  side?: PanelSide;
   onToggle: () => void;
   onModeChange: (mode: RightPanelMode) => void;
   onGoalSelect: (id: string | null) => void;
@@ -118,6 +127,7 @@ export function RightFilterPanel({
   selectedGoalId,
   selectedContextId,
   selectedCategoryId,
+  side = "right",
   onToggle,
   onModeChange,
   onGoalSelect,
@@ -134,14 +144,25 @@ export function RightFilterPanel({
     isOpen &&
     (mode === "goals" || mode === "contexts" || mode === "categories");
 
+  const isLeft = side === "left";
+  const panelBorder = isLeft ? "border-r border-accent/70" : "border-l border-accent/70";
+  const CloseIcon = isLeft ? ChevronLeft : ChevronRight;
+  const OpenIcon = isLeft ? ChevronRight : ChevronLeft;
+
   return (
-    <div className="flex flex-shrink-0">
+    <div
+      className={cn(
+        "flex flex-shrink-0",
+        isLeft && "order-first flex-row-reverse",
+      )}
+    >
       {/* Sub-list for goals / contexts / categories */}
       {showSubList && mode === "goals" && (
         <SubListPanel
           items={activeGoals.map((goal) => ({ id: goal.id, label: goal.title }))}
           allLabel="Все цели"
           selectedId={selectedGoalId}
+          side={side}
           onSelect={onGoalSelect}
         />
       )}
@@ -153,6 +174,7 @@ export function RightFilterPanel({
           }))}
           allLabel="Все контексты"
           selectedId={selectedContextId}
+          side={side}
           onSelect={onContextSelect}
         />
       )}
@@ -164,13 +186,14 @@ export function RightFilterPanel({
           }))}
           allLabel="Все категории"
           selectedId={selectedCategoryId}
+          side={side}
           onSelect={onCategorySelect}
         />
       )}
 
       {/* Main panel */}
       {isOpen ? (
-        <div className="w-52 flex flex-col bg-accent border-l border-accent/70 overflow-hidden">
+        <div className={cn("w-52 flex flex-col bg-accent overflow-hidden", panelBorder)}>
           {/* Account / login row */}
           <button
             type="button"
@@ -246,13 +269,13 @@ export function RightFilterPanel({
               onClick={onToggle}
               className="w-full flex items-center justify-end px-3 py-2 text-white/50 hover:text-white transition-colors"
             >
-              <ChevronRight className="w-5 h-5" aria-hidden="true" />
+              <CloseIcon className="w-5 h-5" aria-hidden="true" />
             </button>
           </div>
         </div>
       ) : (
         /* Collapsed strip */
-        <div className="w-14 flex flex-col items-center bg-accent border-l border-accent/70 overflow-hidden">
+        <div className={cn("w-14 flex flex-col items-center bg-accent overflow-hidden", panelBorder)}>
           {/* Account icon */}
           <button
             type="button"
@@ -313,7 +336,7 @@ export function RightFilterPanel({
               onClick={onToggle}
               className="w-10 h-8 rounded-xl flex items-center justify-center text-white/50 hover:text-white hover:bg-white/10 transition-colors"
             >
-              <ChevronLeft className="w-4 h-4" aria-hidden="true" />
+              <OpenIcon className="w-4 h-4" aria-hidden="true" />
             </button>
           </div>
         </div>

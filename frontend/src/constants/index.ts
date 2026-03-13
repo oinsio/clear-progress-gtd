@@ -1,4 +1,4 @@
-import type { Box, BoxFilter, AccentColor, RepeatRuleType } from "@/types/common";
+import type { Box, BoxFilter, AccentColor, PanelSide, RepeatRuleType } from "@/types/common";
 
 export const ROUTES = {
   INBOX: "/inbox",
@@ -39,6 +39,10 @@ export const BOX_FILTER_ORDER: BoxFilter[] = [
   "week",
   "later",
 ];
+
+export const DEFAULT_PANEL_SIDE: PanelSide = "right";
+
+export const PANEL_SIDES: PanelSide[] = ["left", "right"];
 
 export const DEFAULT_ACCENT_COLOR: AccentColor = "green";
 
@@ -85,6 +89,7 @@ export const STORAGE_KEYS = {
   LAST_SYNC: "last_sync",
   ACCENT_COLOR: "accent_color",
   DEFAULT_BOX: "default_box",
+  PANEL_SIDE: "panel_side",
 } as const;
 
 export const SETTING_KEYS = {

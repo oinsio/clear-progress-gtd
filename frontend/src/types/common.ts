@@ -30,6 +30,8 @@ export type RepeatRuleType =
   | "monthly"
   | "interval";
 
+export type PanelSide = "left" | "right";
+
 export interface RepeatRule {
   type: RepeatRuleType;
   days?: number[];

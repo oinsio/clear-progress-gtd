@@ -8,6 +8,7 @@ import { useContexts } from "@/hooks/useContexts";
 import { useCategories } from "@/hooks/useCategories";
 import { useCompletedTasks } from "@/hooks/useCompletedTasks";
 import { useSearch } from "@/hooks/useSearch";
+import { usePanelSide } from "@/hooks/usePanelSide";
 import type { BoxFilter } from "@/types/common";
 import type { Task } from "@/types/entities";
 import { BOX_FILTER_ALL, BOX, BOX_FILTER_LABELS } from "@/constants";
@@ -105,6 +106,7 @@ export default function InboxPage() {
   const { categories } = useCategories();
   const { completedTasks } = useCompletedTasks();
   const { results: searchResults, isSearching, search, clear: clearSearch } = useSearch();
+  const { panelSide } = usePanelSide();
 
   const searchDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -332,6 +334,7 @@ export default function InboxPage() {
             selectedGoalId={selectedGoalId}
             selectedContextId={selectedContextId}
             selectedCategoryId={selectedCategoryId}
+            side={panelSide}
             onToggle={handlePanelToggle}
             onModeChange={handleModeChange}
             onGoalSelect={handleGoalSelect}

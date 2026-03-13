@@ -2,10 +2,16 @@ import { useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSettings } from "@/hooks/useSettings";
 import { useTheme } from "@/app/providers/ThemeProvider";
+import { usePanelSide } from "@/hooks/usePanelSide";
 import { RightFilterPanel, type RightPanelMode } from "@/components/tasks/RightFilterPanel";
-import { BOX_ORDER, BOX_FILTER_LABELS, ACCENT_COLORS, ACCENT_COLOR_VALUES, ROUTES } from "@/constants";
-import type { Box, AccentColor } from "@/types/common";
+import { BOX_ORDER, BOX_FILTER_LABELS, ACCENT_COLORS, ACCENT_COLOR_VALUES, PANEL_SIDES, ROUTES } from "@/constants";
+import type { Box, AccentColor, PanelSide } from "@/types/common";
 import { cn } from "@/shared/lib/cn";
+
+const PANEL_SIDE_LABELS: Record<PanelSide, string> = {
+  left: "Слева",
+  right: "Справа",
+};
 
 const ACCENT_COLOR_LABELS: Record<AccentColor, string> = {
   coral: "Коралловый",
@@ -25,6 +31,7 @@ export default function SettingsPage() {
   const navigate = useNavigate();
   const { defaultBox, setDefaultBox } = useSettings();
   const { accentColor, setAccentColor } = useTheme();
+  const { panelSide, setPanelSide } = usePanelSide();
 
   const handlePanelToggle = useCallback(() => {
     setIsPanelOpen((previous) => !previous);
@@ -47,6 +54,10 @@ export default function SettingsPage() {
 
   const handleColorSelect = (color: AccentColor): void => {
     void setAccentColor(color);
+  };
+
+  const handlePanelSideSelect = (side: PanelSide): void => {
+    setPanelSide(side);
   };
 
   return (
@@ -107,6 +118,30 @@ export default function SettingsPage() {
                 })}
               </div>
             </section>
+            {/* Panel side section */}
+            <section data-testid="settings-panel-side" className="space-y-3">
+              <h2 className="text-sm font-medium text-gray-500 uppercase tracking-wide">
+                Расположение панели
+              </h2>
+              <div className="flex flex-wrap gap-2">
+                {PANEL_SIDES.map((side) => (
+                  <button
+                    key={side}
+                    data-testid={`settings-panel-side-option-${side}`}
+                    aria-pressed={panelSide === side}
+                    onClick={() => handlePanelSideSelect(side)}
+                    className={cn(
+                      "px-4 py-2 rounded-lg text-sm font-medium border transition-colors",
+                      panelSide === side
+                        ? "bg-accent border-accent text-white"
+                        : "bg-white border-gray-200 text-gray-700 hover:border-gray-300",
+                    )}
+                  >
+                    {PANEL_SIDE_LABELS[side]}
+                  </button>
+                ))}
+              </div>
+            </section>
           </div>
         </main>
       </div>
@@ -121,6 +156,7 @@ export default function SettingsPage() {
         selectedGoalId={null}
         selectedContextId={null}
         selectedCategoryId={null}
+        side={panelSide}
         onToggle={handlePanelToggle}
         onModeChange={handleModeChange}
         onGoalSelect={() => undefined}
