@@ -22,6 +22,8 @@ export const BOX = {
 
 export const BOX_ORDER: Box[] = ["inbox", "today", "week", "later"];
 
+export const DEFAULT_ACCENT_COLOR: AccentColor = "green";
+
 export const ACCENT_COLORS: AccentColor[] = [
   "green",
   "orange",
