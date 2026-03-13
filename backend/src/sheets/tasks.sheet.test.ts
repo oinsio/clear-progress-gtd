@@ -138,6 +138,8 @@ describe('getAllTasks', () => {
     expect(task.category_id).toBe('cat-1');
     expect(task.completed_at).toBe('2025-06-01T00:00:00.000Z');
     expect(task.repeat_rule).toBe('FREQ=DAILY');
+    expect(task.created_at).toBe('2025-01-01T00:00:00.000Z');
+    expect(task.updated_at).toBe('2025-03-01T00:00:00.000Z');
   });
 
   it('should map numeric fields sort_order and version', () => {
@@ -194,6 +196,35 @@ describe('getAllTasks', () => {
 
       expect(getAllTasks()[0].box).toBe(box);
     }
+  });
+
+  it('should coerce null row values to empty string for string fields', () => {
+    const sheetMock = makeSheetMock([
+      TASK_HEADERS,
+      makeTaskRow({
+        title: null,
+        notes: null,
+        goal_id: null,
+        context_id: null,
+        category_id: null,
+        completed_at: null,
+        repeat_rule: null,
+        created_at: null,
+        updated_at: null,
+      }),
+    ]);
+    vi.mocked(getSheet).mockReturnValue(sheetMock as never);
+
+    const [task] = getAllTasks();
+    expect(task.title).toBe('');
+    expect(task.notes).toBe('');
+    expect(task.goal_id).toBe('');
+    expect(task.context_id).toBe('');
+    expect(task.category_id).toBe('');
+    expect(task.completed_at).toBe('');
+    expect(task.repeat_rule).toBe('');
+    expect(task.created_at).toBe('');
+    expect(task.updated_at).toBe('');
   });
 
   it('should call getSheet with Tasks sheet name', () => {

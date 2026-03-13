@@ -264,11 +264,32 @@ describe('uploadCover', () => {
       );
     });
 
+    it('should correctly convert negative digest bytes to unsigned hex', () => {
+      // GAS computeDigest returns signed bytes; -1 → 255 → 'ff', -128 → 128 → '80'
+      vi.mocked(Utilities.computeDigest).mockReturnValue([-1, -128, ...Array(30).fill(0)] as never);
+
+      uploadCover(validPayload);
+
+      expect(Drive.Files.create).toHaveBeenCalledWith(
+        expect.objectContaining({ description: 'ff80' + '00'.repeat(30) }),
+        expect.anything(),
+      );
+    });
+
     it('should use hash prefix as the base of new filename', () => {
       uploadCover(validPayload);
 
       expect(Drive.Files.create).toHaveBeenCalledWith(
         expect.objectContaining({ name: expect.stringContaining(MOCK_HASH_PREFIX) }),
+        expect.anything(),
+      );
+    });
+
+    it('should use only the hash prefix length in the filename, not the full hash', () => {
+      uploadCover({ ...validPayload, filename: 'cover.jpg' });
+
+      expect(Drive.Files.create).toHaveBeenCalledWith(
+        expect.objectContaining({ name: `${MOCK_HASH_PREFIX}.jpg` }),
         expect.anything(),
       );
     });

@@ -180,6 +180,19 @@ describe('getAllChecklistItems', () => {
 
     expect(getSheet).toHaveBeenCalledWith(SHEET_NAMES.CHECKLIST_ITEMS);
   });
+
+  it('should coerce null row values to empty string for string fields', () => {
+    vi.mocked(getSheet).mockReturnValue(makeSheetMock([
+      ITEM_HEADERS,
+      makeItemRow({ task_id: null, title: null, created_at: null, updated_at: null }),
+    ]) as never);
+
+    const [item] = getAllChecklistItems();
+    expect(item.task_id).toBe('');
+    expect(item.title).toBe('');
+    expect(item.created_at).toBe('');
+    expect(item.updated_at).toBe('');
+  });
 });
 
 describe('getChecklistItemsByVersion', () => {

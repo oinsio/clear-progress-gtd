@@ -156,6 +156,18 @@ describe('getAllCategories', () => {
 
     expect(getSheet).toHaveBeenCalledWith(SHEET_NAMES.CATEGORIES);
   });
+
+  it('should coerce null row values to empty string for string fields', () => {
+    vi.mocked(getSheet).mockReturnValue(makeSheetMock([
+      CAT_HEADERS,
+      makeCategoryRow({ name: null, created_at: null, updated_at: null }),
+    ]) as never);
+
+    const [category] = getAllCategories();
+    expect(category.name).toBe('');
+    expect(category.created_at).toBe('');
+    expect(category.updated_at).toBe('');
+  });
 });
 
 describe('getCategoriesByVersion', () => {

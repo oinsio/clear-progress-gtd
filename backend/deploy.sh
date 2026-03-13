@@ -79,6 +79,8 @@ cmd_build() {
   cd "$SCRIPT_DIR"
   npm install --silent
   npm run test
+  info "Check tests quality..."
+  npm run test:mutation
   info "Compiling TypeScript..."
   rm -rf dist/
   npm run build

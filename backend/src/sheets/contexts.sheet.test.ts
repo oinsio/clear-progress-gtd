@@ -156,6 +156,18 @@ describe('getAllContexts', () => {
 
     expect(getSheet).toHaveBeenCalledWith(SHEET_NAMES.CONTEXTS);
   });
+
+  it('should coerce null row values to empty string for string fields', () => {
+    vi.mocked(getSheet).mockReturnValue(makeSheetMock([
+      CTX_HEADERS,
+      makeContextRow({ name: null, created_at: null, updated_at: null }),
+    ]) as never);
+
+    const [context] = getAllContexts();
+    expect(context.name).toBe('');
+    expect(context.created_at).toBe('');
+    expect(context.updated_at).toBe('');
+  });
 });
 
 describe('getContextsByVersion', () => {

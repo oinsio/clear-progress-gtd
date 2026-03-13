@@ -117,6 +117,22 @@ describe('getAllGoals', () => {
     expect(goal.title).toBe('My goal');
     expect(goal.description).toBe('Some description');
     expect(goal.cover_file_id).toBe('drive-file-id');
+    expect(goal.created_at).toBe('2025-01-01T00:00:00.000Z');
+    expect(goal.updated_at).toBe('2025-03-01T00:00:00.000Z');
+  });
+
+  it('should coerce null row values to empty string for string fields', () => {
+    vi.mocked(getSheet).mockReturnValue(makeSheetMock([
+      GOAL_HEADERS,
+      makeGoalRow({ title: null, description: null, cover_file_id: null, created_at: null, updated_at: null }),
+    ]) as never);
+
+    const [goal] = getAllGoals();
+    expect(goal.title).toBe('');
+    expect(goal.description).toBe('');
+    expect(goal.cover_file_id).toBe('');
+    expect(goal.created_at).toBe('');
+    expect(goal.updated_at).toBe('');
   });
 
   it('should map numeric fields sort_order and version', () => {
@@ -379,6 +395,25 @@ describe('getCoverFileIds', () => {
     vi.mocked(getSheet).mockReturnValue(makeSheetMock([GOAL_HEADERS]) as never);
 
     expect(getCoverFileIds()).toEqual([]);
+  });
+
+  it('should exclude goals with null cover_file_id cell value', () => {
+    vi.mocked(getSheet).mockReturnValue(makeSheetMock([
+      GOAL_HEADERS,
+      makeGoalRow({ cover_file_id: null }),
+    ]) as never);
+
+    expect(getCoverFileIds()).toEqual([]);
+  });
+
+  it('should return only non-empty cover_file_ids when mixing null and valid values', () => {
+    vi.mocked(getSheet).mockReturnValue(makeSheetMock([
+      GOAL_HEADERS,
+      makeGoalRow({ id: 'goal-1', cover_file_id: 'file-123' }),
+      makeGoalRow({ id: 'goal-2', cover_file_id: null }),
+    ]) as never);
+
+    expect(getCoverFileIds()).toEqual(['file-123']);
   });
 });
 

@@ -59,6 +59,27 @@ describe('purge', () => {
     expect(response.error).toBe(ERROR_CODES.INVALID_PAYLOAD);
   });
 
+  it('should return error when payload is null', () => {
+    purge(null as never);
+    const response = parseResponse();
+    expect(response.ok).toBe(false);
+    expect(response.error).toBe(ERROR_CODES.INVALID_PAYLOAD);
+  });
+
+  it('should return error when payload is undefined', () => {
+    purge(undefined as never);
+    const response = parseResponse();
+    expect(response.ok).toBe(false);
+    expect(response.error).toBe(ERROR_CODES.INVALID_PAYLOAD);
+  });
+
+  it.each([1, 'true', {}, []])('should return error when confirm is %s (truthy but not true)', (value) => {
+    purge({ confirm: value });
+    const response = parseResponse();
+    expect(response.ok).toBe(false);
+    expect(response.error).toBe(ERROR_CODES.INVALID_PAYLOAD);
+  });
+
   it('should return zeros when no soft-deleted records exist', () => {
     purge({ confirm: true });
     const response = parseResponse();
@@ -89,6 +110,72 @@ describe('purge', () => {
     purge({ confirm: true });
 
     expect(deleteTasksByIds).toHaveBeenCalledWith([]);
+  });
+
+  it('should delete soft-deleted goals and return correct count', () => {
+    vi.mocked(getAllGoals).mockReturnValue([
+      { id: 'goal-1', is_deleted: true } as never,
+      { id: 'goal-2', is_deleted: false } as never,
+    ]);
+    vi.mocked(deleteGoalsByIds).mockReturnValue(1);
+
+    purge({ confirm: true });
+    const response = parseResponse();
+
+    expect(deleteGoalsByIds).toHaveBeenCalledWith(['goal-1']);
+    expect(response.purged).toMatchObject({ goals: 1 });
+  });
+
+  it('should delete only soft-deleted contexts and exclude active ones', () => {
+    vi.mocked(getAllContexts).mockReturnValue([
+      { id: 'ctx-1', is_deleted: true } as never,
+      { id: 'ctx-2', is_deleted: false } as never,
+    ]);
+    vi.mocked(deleteContextsByIds).mockReturnValue(1);
+
+    purge({ confirm: true });
+    const response = parseResponse();
+
+    expect(deleteContextsByIds).toHaveBeenCalledWith(['ctx-1']);
+    expect(response.purged).toMatchObject({ contexts: 1 });
+  });
+
+  it('should delete only soft-deleted categories and exclude active ones', () => {
+    vi.mocked(getAllCategories).mockReturnValue([
+      { id: 'cat-1', is_deleted: true } as never,
+      { id: 'cat-2', is_deleted: false } as never,
+    ]);
+    vi.mocked(deleteCategoriesByIds).mockReturnValue(1);
+
+    purge({ confirm: true });
+    const response = parseResponse();
+
+    expect(deleteCategoriesByIds).toHaveBeenCalledWith(['cat-1']);
+    expect(response.purged).toMatchObject({ categories: 1 });
+  });
+
+  it('should delete only soft-deleted checklist items and exclude active ones', () => {
+    vi.mocked(getAllChecklistItems).mockReturnValue([
+      { id: 'cl-1', is_deleted: true } as never,
+      { id: 'cl-2', is_deleted: false } as never,
+    ]);
+    vi.mocked(deleteChecklistItemsByIds).mockReturnValue(1);
+
+    purge({ confirm: true });
+    const response = parseResponse();
+
+    expect(deleteChecklistItemsByIds).toHaveBeenCalledWith(['cl-1']);
+    expect(response.purged).toMatchObject({ checklist_items: 1 });
+  });
+
+  it('should return INTERNAL_ERROR when a sheet operation throws', () => {
+    vi.mocked(getAllTasks).mockImplementation(() => { throw new Error('Sheet error'); });
+
+    purge({ confirm: true });
+    const response = parseResponse();
+
+    expect(response.ok).toBe(false);
+    expect(response.error).toBe(ERROR_CODES.INTERNAL_ERROR);
   });
 
   it('should delete soft-deleted records for all entity types', () => {
