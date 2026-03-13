@@ -1,0 +1,10 @@
+node_modules/
+dist/
+.env
+.env.local
+.env.*.local
+*.tsbuildinfo
+coverage/
+playwright-report/
+test-results/
+package-lock.json
