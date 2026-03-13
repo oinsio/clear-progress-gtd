@@ -12,6 +12,14 @@ export const ROUTES = {
   SETUP: "/setup",
 } as const;
 
+export const BOX = {
+  INBOX: "inbox",
+  TODAY: "today",
+  WEEK: "week",
+  LATER: "later",
+} as const satisfies Record<string, Box>;
+
+
 export const BOX_ORDER: Box[] = ["inbox", "today", "week", "later"];
 
 export const ACCENT_COLORS: AccentColor[] = [

@@ -1,8 +1,7 @@
 {
   "mcpServers": {
-    "jetbrains": {
-      "command": "npx",
-      "args": ["-y", "@jetbrains/mcp-proxy"]
+    "webstorm": {
+      "url": "http://localhost:63342/api/mcp/sse"
     },
     "shadcn": {
       "command": "npx",
