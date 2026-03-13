@@ -3,6 +3,10 @@
     "jetbrains": {
       "command": "npx",
       "args": ["-y", "@jetbrains/mcp-proxy"]
+    },
+    "shadcn": {
+      "command": "npx",
+      "args": ["shadcn@latest", "mcp"]
     }
   }
 }
