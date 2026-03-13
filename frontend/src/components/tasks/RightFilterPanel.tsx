@@ -252,35 +252,70 @@ export function RightFilterPanel({
         </div>
       ) : (
         /* Collapsed strip */
-        <div className="w-10 flex flex-col items-center pt-3 gap-1 border-l border-gray-100 bg-white">
+        <div className="w-14 flex flex-col items-center bg-green-500 border-l border-green-600 overflow-hidden">
+          {/* Account icon */}
           <button
             type="button"
-            aria-label="Открыть панель"
-            data-testid="right-panel-toggle"
-            onClick={onToggle}
-            className={cn(
-              "w-8 h-8 rounded-xl flex items-center justify-center transition-colors",
-              mode !== null && mode !== "tasks"
-                ? "bg-green-100 text-green-600"
-                : "text-gray-400 hover:bg-gray-100 hover:text-gray-600",
-            )}
+            aria-label="Войти в аккаунт"
+            data-testid="right-panel-account"
+            onClick={() => navigate(ROUTES.SETUP)}
+            className="w-10 h-10 flex items-center justify-center mt-3 mb-1 rounded-xl text-white/80 hover:bg-white/10 hover:text-white transition-colors"
           >
-            <ChevronLeft className="w-5 h-5" aria-hidden="true" />
+            <CircleUser className="w-6 h-6" aria-hidden="true" />
           </button>
 
-          {/* Active filter indicator */}
-          {mode !== null && mode !== "tasks" && (() => {
-            const activeItem =
-              FILTER_ITEMS.find((item) => item.mode === mode) ??
-              (mode === "search" ? { Icon: Search } : null);
-            if (!activeItem) return null;
-            const { Icon } = activeItem;
-            return (
-              <div className="w-8 h-8 rounded-xl bg-green-100 flex items-center justify-center text-green-600">
-                <Icon className="w-4 h-4" aria-hidden="true" />
-              </div>
-            );
-          })()}
+          {/* All filter icons */}
+          <nav className="flex-1 flex flex-col items-center gap-1 py-1 overflow-y-auto" aria-label="Фильтры задач">
+            {FILTER_ITEMS.map(({ mode: itemMode, label, Icon }) => {
+              const isActive = mode === itemMode;
+              return (
+                <button
+                  key={itemMode}
+                  type="button"
+                  aria-label={label}
+                  aria-pressed={isActive}
+                  data-testid={`right-filter-${itemMode}`}
+                  onClick={() => onModeChange(isActive ? null : itemMode)}
+                  className={cn(
+                    "w-10 h-10 rounded-xl flex items-center justify-center transition-colors flex-shrink-0",
+                    isActive
+                      ? "bg-white/20 text-white"
+                      : "text-white/70 hover:bg-white/10 hover:text-white",
+                  )}
+                >
+                  <Icon className="w-5 h-5" aria-hidden="true" />
+                </button>
+              );
+            })}
+          </nav>
+
+          {/* Bottom: search + expand toggle */}
+          <div className="flex flex-col items-center pb-3 gap-1 border-t border-green-400/50 pt-2">
+            <button
+              type="button"
+              aria-label="Поиск по задачам"
+              aria-pressed={mode === "search"}
+              data-testid="right-filter-search"
+              onClick={() => onModeChange(mode === "search" ? null : "search")}
+              className={cn(
+                "w-10 h-10 rounded-xl flex items-center justify-center transition-colors",
+                mode === "search"
+                  ? "bg-white/20 text-white"
+                  : "text-white/70 hover:bg-white/10 hover:text-white",
+              )}
+            >
+              <Search className="w-5 h-5" aria-hidden="true" />
+            </button>
+            <button
+              type="button"
+              aria-label="Открыть панель"
+              data-testid="right-panel-toggle"
+              onClick={onToggle}
+              className="w-10 h-8 rounded-xl flex items-center justify-center text-white/50 hover:text-white hover:bg-white/10 transition-colors"
+            >
+              <ChevronLeft className="w-4 h-4" aria-hidden="true" />
+            </button>
+          </div>
         </div>
       )}
     </div>
