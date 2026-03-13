@@ -1,5 +1,4 @@
 import { useState, useCallback, useRef, useEffect, useMemo } from "react";
-import { Sidebar } from "@/components/layout/Sidebar";
 import { TaskList } from "@/components/tasks/TaskList";
 import { BoxFilterBar } from "@/components/tasks/BoxFilterBar";
 import { RightFilterPanel, type RightPanelMode } from "@/components/tasks/RightFilterPanel";
@@ -288,11 +287,6 @@ export default function InboxPage() {
       data-testid="inbox-page"
       className="flex h-screen overflow-hidden bg-white"
     >
-      {/* Desktop sidebar */}
-      <div className="hidden md:flex">
-        <Sidebar />
-      </div>
-
       {/* Main content column */}
       <div className="flex flex-1 flex-col overflow-hidden">
         {/* Search header */}
