@@ -4,27 +4,39 @@
 
 @layer base {
   :root {
-    --color-accent: #22c55e; /* green default */
+    --color-accent: 105 178 62; /* green default */
   }
 
   :root[data-accent="green"] {
-    --color-accent: #22c55e;
+    --color-accent: 105 178 62;
   }
 
   :root[data-accent="orange"] {
-    --color-accent: #f97316;
-  }
-
-  :root[data-accent="purple"] {
-    --color-accent: #a855f7;
+    --color-accent: 245 124 0;
   }
 
   :root[data-accent="yellow"] {
-    --color-accent: #eab308;
+    --color-accent: 244 201 67;
   }
 
-  :root[data-accent="crimson"] {
-    --color-accent: #dc2626;
+  :root[data-accent="teal"] {
+    --color-accent: 13 148 136;
+  }
+
+  :root[data-accent="blue"] {
+    --color-accent: 37 99 235;
+  }
+
+  :root[data-accent="indigo"] {
+    --color-accent: 79 70 229;
+  }
+
+  :root[data-accent="purple"] {
+    --color-accent: 168 85 247;
+  }
+
+  :root[data-accent="coral"] {
+    --color-accent: 251 113 133;
   }
 
   * {

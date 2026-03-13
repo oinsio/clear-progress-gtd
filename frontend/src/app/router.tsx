@@ -28,10 +28,14 @@ export const router = createBrowserRouter([
     path: ROUTES.SETUP,
     element: <SetupPage />,
   },
-  // Main tasks page — has its own layout with bottom filter bar and right panel
+  // Pages with their own full-screen layout (bottom filter bar + right panel)
   {
     path: ROUTES.INBOX,
     element: <InboxPage />,
+  },
+  {
+    path: ROUTES.SETTINGS,
+    element: <SettingsPage />,
   },
   {
     element: <RootLayout />,
@@ -42,7 +46,6 @@ export const router = createBrowserRouter([
       { path: ROUTES.GOALS, element: <GoalsPage /> },
       { path: ROUTES.GOAL, element: <GoalPage /> },
       { path: ROUTES.SEARCH, element: <SearchPage /> },
-      { path: ROUTES.SETTINGS, element: <SettingsPage /> },
     ],
   },
 ]);

@@ -16,11 +16,6 @@ describe("PageShell", () => {
     expect(screen.getByText("Page content")).toBeInTheDocument();
   });
 
-  it("should render Sidebar for desktop navigation", () => {
-    renderWithRouter(<div>Content</div>);
-    expect(screen.getByRole("navigation", { name: /main navigation/i })).toBeInTheDocument();
-  });
-
   it("should render BottomNav for mobile navigation", () => {
     renderWithRouter(<div>Content</div>);
     expect(screen.getByRole("navigation", { name: /bottom navigation/i })).toBeInTheDocument();

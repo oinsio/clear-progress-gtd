@@ -31,7 +31,7 @@ function TaskSection({
 }) {
   return (
     <section>
-      <h2 className="px-4 py-2 text-sm font-semibold text-green-600 bg-gray-50 sticky top-0">
+      <h2 className="px-4 py-2 text-sm font-semibold text-accent bg-gray-50 sticky top-0">
         {label} ({tasks.length})
       </h2>
       <TaskList tasks={tasks} onComplete={onComplete} onDelete={onDelete} />
@@ -69,7 +69,7 @@ function AddTaskInput({
 
   return (
     <div className="px-4 py-3 border-b border-gray-100 flex items-center gap-3">
-      <div className="w-5 h-5 rounded-full border-2 border-green-400 flex-shrink-0" />
+      <div className="w-5 h-5 rounded-full border-2 border-accent flex-shrink-0" />
       <input
         ref={inputRef}
         type="text"

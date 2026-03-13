@@ -43,19 +43,25 @@ export const BOX_FILTER_ORDER: BoxFilter[] = [
 export const DEFAULT_ACCENT_COLOR: AccentColor = "green";
 
 export const ACCENT_COLORS: AccentColor[] = [
-  "green",
+  "coral",
   "orange",
-  "purple",
   "yellow",
-  "crimson",
+  "green",
+  "teal",
+  "blue",
+  "indigo",
+  "purple",
 ];
 
 export const ACCENT_COLOR_VALUES: Record<AccentColor, string> = {
-  green: "#69B23E",
-  orange: "#f97316",
+  coral: "#fb7185",
+  orange: "#f57c00",
+  yellow: "#f4c943",
+  green: "#69b23e",
+  teal: "#0d9488",
+  blue: "#2563eb",
+  indigo: "#4f46e5",
   purple: "#a855f7",
-  yellow: "#eab308",
-  crimson: "#dc2626",
 };
 
 export const API_ACTIONS = {

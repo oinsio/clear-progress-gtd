@@ -17,7 +17,7 @@ export function TaskItem({ task, onComplete, onDelete }: TaskItemProps) {
         type="button"
         aria-label="Complete task"
         onClick={() => onComplete(task.id)}
-        className="w-5 h-5 rounded-full border-2 border-gray-300 flex-shrink-0 hover:border-green-500 transition-colors"
+        className="w-5 h-5 rounded-full border-2 border-gray-300 flex-shrink-0 hover:border-accent transition-colors"
       />
       <span
         data-testid="task-item-title"

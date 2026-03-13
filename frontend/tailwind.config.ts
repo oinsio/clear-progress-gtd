@@ -7,7 +7,7 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        accent: "var(--color-accent)",
+        accent: "rgb(var(--color-accent) / <alpha-value>)",
         green: {
           50: "#EBF6E3",
           100: "#D2ECBF",

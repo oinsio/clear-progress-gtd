@@ -1,0 +1,114 @@
+import { render, screen, fireEvent } from "@testing-library/react";
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import { MemoryRouter } from "react-router-dom";
+import SettingsPage from "./SettingsPage";
+import type { UseSettingsReturn } from "@/hooks/useSettings";
+import type { AccentColor } from "@/types/common";
+
+vi.mock("@/hooks/useSettings");
+vi.mock("@/app/providers/ThemeProvider");
+
+import { useSettings } from "@/hooks/useSettings";
+import { useTheme } from "@/app/providers/ThemeProvider";
+
+const mockUseSettings = vi.mocked(useSettings);
+const mockUseTheme = vi.mocked(useTheme);
+
+function buildSettingsHook(overrides: Partial<UseSettingsReturn> = {}): UseSettingsReturn {
+  return {
+    defaultBox: "today",
+    accentColor: "green",
+    isLoading: false,
+    setDefaultBox: vi.fn().mockResolvedValue(undefined),
+    setAccentColor: vi.fn().mockResolvedValue(undefined),
+    ...overrides,
+  };
+}
+
+function buildThemeHook(overrides: { accentColor?: AccentColor; setAccentColor?: ReturnType<typeof vi.fn> } = {}): ReturnType<typeof useTheme> {
+  return {
+    accentColor: "green",
+    setAccentColor: vi.fn().mockResolvedValue(undefined),
+    ...overrides,
+  };
+}
+
+function renderPage() {
+  return render(
+    <MemoryRouter>
+      <SettingsPage />
+    </MemoryRouter>,
+  );
+}
+
+describe("SettingsPage", () => {
+  beforeEach(() => {
+    mockUseSettings.mockReturnValue(buildSettingsHook());
+    mockUseTheme.mockReturnValue(buildThemeHook());
+  });
+
+  it("should render the settings page container", () => {
+    renderPage();
+    expect(screen.getByTestId("settings-page")).toBeInTheDocument();
+  });
+
+  it("should render the default box section", () => {
+    renderPage();
+    expect(screen.getByTestId("settings-default-box")).toBeInTheDocument();
+  });
+
+  it("should render all four box options", () => {
+    renderPage();
+    expect(screen.getByTestId("settings-box-option-inbox")).toBeInTheDocument();
+    expect(screen.getByTestId("settings-box-option-today")).toBeInTheDocument();
+    expect(screen.getByTestId("settings-box-option-week")).toBeInTheDocument();
+    expect(screen.getByTestId("settings-box-option-later")).toBeInTheDocument();
+  });
+
+  it("should mark the current default box as active", () => {
+    mockUseSettings.mockReturnValue(buildSettingsHook({ defaultBox: "week" }));
+    renderPage();
+    expect(screen.getByTestId("settings-box-option-week")).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getByTestId("settings-box-option-inbox")).toHaveAttribute("aria-pressed", "false");
+  });
+
+  it("should call setDefaultBox when a box option is clicked", async () => {
+    const setDefaultBox = vi.fn().mockResolvedValue(undefined);
+    mockUseSettings.mockReturnValue(buildSettingsHook({ defaultBox: "today", setDefaultBox }));
+    renderPage();
+    fireEvent.click(screen.getByTestId("settings-box-option-inbox"));
+    expect(setDefaultBox).toHaveBeenCalledWith("inbox");
+  });
+
+  it("should render the accent color section", () => {
+    renderPage();
+    expect(screen.getByTestId("settings-accent-color")).toBeInTheDocument();
+  });
+
+  it("should render all eight color options", () => {
+    renderPage();
+    expect(screen.getByTestId("settings-color-option-coral")).toBeInTheDocument();
+    expect(screen.getByTestId("settings-color-option-orange")).toBeInTheDocument();
+    expect(screen.getByTestId("settings-color-option-yellow")).toBeInTheDocument();
+    expect(screen.getByTestId("settings-color-option-green")).toBeInTheDocument();
+    expect(screen.getByTestId("settings-color-option-teal")).toBeInTheDocument();
+    expect(screen.getByTestId("settings-color-option-blue")).toBeInTheDocument();
+    expect(screen.getByTestId("settings-color-option-indigo")).toBeInTheDocument();
+    expect(screen.getByTestId("settings-color-option-purple")).toBeInTheDocument();
+  });
+
+  it("should mark the current accent color as active", () => {
+    mockUseTheme.mockReturnValue(buildThemeHook({ accentColor: "orange" }));
+    renderPage();
+    expect(screen.getByTestId("settings-color-option-orange")).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getByTestId("settings-color-option-green")).toHaveAttribute("aria-pressed", "false");
+  });
+
+  it("should call setAccentColor when a color option is clicked", () => {
+    const setAccentColor = vi.fn().mockResolvedValue(undefined);
+    mockUseTheme.mockReturnValue(buildThemeHook({ setAccentColor }));
+    renderPage();
+    fireEvent.click(screen.getByTestId("settings-color-option-teal"));
+    expect(setAccentColor).toHaveBeenCalledWith("teal");
+  });
+});

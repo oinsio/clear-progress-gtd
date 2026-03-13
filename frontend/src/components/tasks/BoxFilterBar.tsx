@@ -26,7 +26,7 @@ export function BoxFilterBar({
             className={cn(
               "flex-shrink-0 px-3 py-2 text-sm font-medium rounded-lg transition-colors",
               activeBox === box
-                ? "text-green-600 bg-green-50"
+                ? "text-accent bg-accent/10"
                 : "text-gray-500 hover:text-gray-800 hover:bg-gray-50",
             )}
           >
@@ -39,7 +39,7 @@ export function BoxFilterBar({
         aria-label="Добавить задачу"
         data-testid="add-task-button"
         onClick={onAddTask}
-        className="ml-2 flex-shrink-0 w-9 h-9 bg-green-500 text-white rounded-full flex items-center justify-center shadow-md hover:bg-green-600 active:bg-green-700 transition-colors"
+        className="ml-2 flex-shrink-0 w-9 h-9 bg-accent text-white rounded-full flex items-center justify-center shadow-md hover:bg-accent/80 active:bg-accent/70 transition-colors"
       >
         <Plus className="w-5 h-5" aria-hidden="true" />
       </button>

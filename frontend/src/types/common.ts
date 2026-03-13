@@ -7,7 +7,15 @@ export type GoalStatus =
   | "completed"
   | "cancelled";
 
-export type AccentColor = "green" | "orange" | "purple" | "yellow" | "crimson";
+export type AccentColor =
+  | "coral"
+  | "orange"
+  | "yellow"
+  | "green"
+  | "teal"
+  | "blue"
+  | "indigo"
+  | "purple";
 
 export type SyncStatus = "idle" | "syncing" | "error" | "offline";
 

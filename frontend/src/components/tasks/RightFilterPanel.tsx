@@ -67,7 +67,7 @@ function SubListPanel({
           className={cn(
             "w-full text-left px-2 py-1.5 text-xs rounded-lg mb-1 transition-colors",
             selectedId === null
-              ? "bg-green-50 text-green-700 font-medium"
+              ? "bg-accent/10 text-accent font-medium"
               : "text-gray-500 hover:bg-gray-50",
           )}
         >
@@ -81,7 +81,7 @@ function SubListPanel({
             className={cn(
               "w-full text-left px-2 py-1.5 text-xs rounded-lg mb-0.5 transition-colors leading-tight",
               selectedId === item.id
-                ? "bg-green-50 text-green-700 font-medium"
+                ? "bg-accent/10 text-accent font-medium"
                 : "text-gray-600 hover:bg-gray-50",
             )}
           >
@@ -170,14 +170,14 @@ export function RightFilterPanel({
 
       {/* Main panel */}
       {isOpen ? (
-        <div className="w-52 flex flex-col bg-green-500 border-l border-green-600 overflow-hidden">
+        <div className="w-52 flex flex-col bg-accent border-l border-accent/70 overflow-hidden">
           {/* Account / login row */}
           <button
             type="button"
             aria-label="Войти в аккаунт"
             data-testid="right-panel-account"
             onClick={() => navigate(ROUTES.SETUP)}
-            className="flex items-center justify-between px-4 py-4 text-white hover:bg-green-600 transition-colors border-b border-green-400/40"
+            className="flex items-center justify-between px-4 py-4 text-white hover:bg-black/15 transition-colors border-b border-white/20"
           >
             <span className="text-base font-medium">Войдите</span>
             <CircleUser className="w-8 h-8" aria-hidden="true" />
@@ -210,7 +210,7 @@ export function RightFilterPanel({
           </nav>
 
           {/* Bottom actions: Search + Settings + Close */}
-          <div className="px-2 pb-3 border-t border-green-400/50 pt-2 space-y-0.5">
+          <div className="px-2 pb-3 border-t border-white/25 pt-2 space-y-0.5">
             <button
               type="button"
               aria-label="Поиск по задачам"
@@ -252,7 +252,7 @@ export function RightFilterPanel({
         </div>
       ) : (
         /* Collapsed strip */
-        <div className="w-14 flex flex-col items-center bg-green-500 border-l border-green-600 overflow-hidden">
+        <div className="w-14 flex flex-col items-center bg-accent border-l border-accent/70 overflow-hidden">
           {/* Account icon */}
           <button
             type="button"
@@ -290,7 +290,7 @@ export function RightFilterPanel({
           </nav>
 
           {/* Bottom: search + expand toggle */}
-          <div className="flex flex-col items-center pb-3 gap-1 border-t border-green-400/50 pt-2">
+          <div className="flex flex-col items-center pb-3 gap-1 border-t border-white/25 pt-2">
             <button
               type="button"
               aria-label="Поиск по задачам"
