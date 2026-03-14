@@ -1,10 +1,12 @@
 import { useState, useEffect, useCallback } from "react";
-import { X } from "lucide-react";
+import { X, Inbox } from "lucide-react";
 import type { Task } from "@/types/entities";
 import type { Goal } from "@/types/entities";
 import type { Box } from "@/types/common";
 import { cn } from "@/shared/lib/cn";
 import { BOX, BOX_FILTER_LABELS } from "@/constants";
+import { TodayBoxIcon, WeekBoxIcon, LaterBoxIcon } from "./BoxIcons";
+import * as React from "react";
 
 interface TaskEditModalProps {
   task: Task;
@@ -15,6 +17,13 @@ interface TaskEditModalProps {
 }
 
 const BOX_OPTIONS: Box[] = [BOX.INBOX, BOX.TODAY, BOX.WEEK, BOX.LATER];
+
+const BOX_ICONS: Record<Box, React.FC<{ className?: string }>> = {
+  [BOX.INBOX]: ({ className }: { className?: string }) => <Inbox className={className} />,
+  [BOX.TODAY]: TodayBoxIcon,
+  [BOX.WEEK]: WeekBoxIcon,
+  [BOX.LATER]: LaterBoxIcon,
+};
 
 export function TaskEditModal({
   task,
@@ -109,25 +118,29 @@ export function TaskEditModal({
 
           {/* Box selector */}
           <div>
-            <label className="text-xs font-medium text-gray-500 mb-2 block">Коробка</label>
-            <div className="flex gap-2">
-              {BOX_OPTIONS.map((box) => (
-                <button
-                  key={box}
-                  type="button"
-                  aria-label={BOX_FILTER_LABELS[box]}
-                  aria-pressed={selectedBox === box}
-                  onClick={() => setSelectedBox(box)}
-                  className={cn(
-                    "flex-1 text-xs py-2 rounded-lg border transition-colors",
-                    selectedBox === box
-                      ? "bg-accent text-white border-accent"
-                      : "border-gray-200 text-gray-600 hover:border-accent hover:text-accent",
-                  )}
-                >
-                  {BOX_FILTER_LABELS[box]}
-                </button>
-              ))}
+            <label className="text-xs font-medium text-gray-500 mb-2 block">Коробочка</label>
+            <div className="flex gap-1">
+              {BOX_OPTIONS.map((box) => {
+                const BoxIcon = BOX_ICONS[box];
+                const isSelected = selectedBox === box;
+                return (
+                  <button
+                    key={box}
+                    type="button"
+                    aria-label={BOX_FILTER_LABELS[box]}
+                    aria-pressed={isSelected}
+                    onClick={() => setSelectedBox(box)}
+                    className={cn(
+                      "flex items-center justify-center w-10 h-10 rounded-full transition-colors",
+                      isSelected
+                        ? "text-accent"
+                        : "text-gray-400 hover:text-gray-600 hover:bg-gray-100",
+                    )}
+                  >
+                    <BoxIcon className="w-7 h-7" />
+                  </button>
+                );
+              })}
             </div>
           </div>
 
