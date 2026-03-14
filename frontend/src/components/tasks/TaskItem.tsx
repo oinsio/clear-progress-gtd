@@ -1,4 +1,5 @@
 import { useState, useCallback } from "react";
+import { FileText } from "lucide-react";
 import type { Task } from "@/types/entities";
 import type { Goal } from "@/types/entities";
 import type { Box } from "@/types/common";
@@ -72,7 +73,7 @@ export function TaskItem({ task, goals, onComplete, onUpdate, onMove }: TaskItem
               </span>
             )}
             {task.notes && !task.is_completed && (
-              <span className="text-xs text-gray-400 mt-0.5 truncate">{task.notes}</span>
+              <FileText size={12} className="text-gray-400 mt-0.5 flex-shrink-0" />
             )}
           </button>
         </div>
