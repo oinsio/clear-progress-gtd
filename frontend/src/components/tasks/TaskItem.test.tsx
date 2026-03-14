@@ -61,14 +61,57 @@ describe("TaskItem", () => {
     expect(onComplete).toHaveBeenCalledWith(task.id);
   });
 
-  it("should call onComplete with task id when complete button is clicked on completed task", async () => {
+  it("should NOT call onComplete immediately when complete button is clicked on completed task", async () => {
     const task = buildTask({ is_completed: true });
     const onComplete = vi.fn();
     render(<TaskItem task={task} goals={[]} onComplete={onComplete} onUpdate={vi.fn()} onMove={vi.fn()} />);
     await userEvent.click(
       screen.getByRole("button", { name: /noncomplete task/i }),
     );
+    expect(onComplete).not.toHaveBeenCalled();
+  });
+
+  it("should show restore confirmation when complete button is clicked on completed task", async () => {
+    const task = buildTask({ is_completed: true });
+    render(<TaskItem task={task} goals={[]} onComplete={vi.fn()} onUpdate={vi.fn()} onMove={vi.fn()} />);
+    await userEvent.click(
+      screen.getByRole("button", { name: /noncomplete task/i }),
+    );
+    expect(screen.getByTestId("restore-confirmation")).toBeInTheDocument();
+  });
+
+  it("should call onComplete with task id when 'Вернуть' button is clicked", async () => {
+    const task = buildTask({ is_completed: true });
+    const onComplete = vi.fn();
+    render(<TaskItem task={task} goals={[]} onComplete={onComplete} onUpdate={vi.fn()} onMove={vi.fn()} />);
+    await userEvent.click(screen.getByRole("button", { name: /noncomplete task/i }));
+    await userEvent.click(screen.getByRole("button", { name: /вернуть/i }));
     expect(onComplete).toHaveBeenCalledWith(task.id);
+  });
+
+  it("should hide restore confirmation after 'Вернуть' is clicked", async () => {
+    const task = buildTask({ is_completed: true });
+    render(<TaskItem task={task} goals={[]} onComplete={vi.fn()} onUpdate={vi.fn()} onMove={vi.fn()} />);
+    await userEvent.click(screen.getByRole("button", { name: /noncomplete task/i }));
+    await userEvent.click(screen.getByRole("button", { name: /вернуть/i }));
+    expect(screen.queryByTestId("restore-confirmation")).not.toBeInTheDocument();
+  });
+
+  it("should hide restore confirmation when cancel button is clicked", async () => {
+    const task = buildTask({ is_completed: true });
+    render(<TaskItem task={task} goals={[]} onComplete={vi.fn()} onUpdate={vi.fn()} onMove={vi.fn()} />);
+    await userEvent.click(screen.getByRole("button", { name: /noncomplete task/i }));
+    await userEvent.click(screen.getByRole("button", { name: /отмена/i }));
+    expect(screen.queryByTestId("restore-confirmation")).not.toBeInTheDocument();
+  });
+
+  it("should NOT call onComplete when cancel button is clicked", async () => {
+    const task = buildTask({ is_completed: true });
+    const onComplete = vi.fn();
+    render(<TaskItem task={task} goals={[]} onComplete={onComplete} onUpdate={vi.fn()} onMove={vi.fn()} />);
+    await userEvent.click(screen.getByRole("button", { name: /noncomplete task/i }));
+    await userEvent.click(screen.getByRole("button", { name: /отмена/i }));
+    expect(onComplete).not.toHaveBeenCalled();
   });
 
   it("should have aria-label 'Complete task' when task is not completed", () => {

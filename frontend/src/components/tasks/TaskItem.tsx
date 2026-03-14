@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { FileText } from "lucide-react";
 import type { Task } from "@/types/entities";
 import type { Goal } from "@/types/entities";
@@ -19,6 +19,7 @@ interface TaskItemProps {
 export function TaskItem({ task, goals, onComplete, onUpdate, onMove }: TaskItemProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isConfirmingRestore, setIsConfirmingRestore] = useState(false);
 
   const handleBodyClick = useCallback(() => {
     setIsExpanded((previous) => !previous);
@@ -33,15 +34,40 @@ export function TaskItem({ task, goals, onComplete, onUpdate, onMove }: TaskItem
     setIsEditModalOpen(false);
   }, []);
 
+  const handleCompleteClick = useCallback(() => {
+    if (task.is_completed) {
+      setIsConfirmingRestore(true);
+    } else {
+      onComplete(task.id);
+    }
+  }, [task.is_completed, task.id, onComplete]);
+
+  const handleRestoreConfirm = useCallback(() => {
+    onComplete(task.id);
+    setIsConfirmingRestore(false);
+  }, [task.id, onComplete]);
+
+  const handleRestoreCancel = useCallback(() => {
+    setIsConfirmingRestore(false);
+  }, []);
+
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if ((isExpanded || isConfirmingRestore) && containerRef.current) {
+      containerRef.current.scrollIntoView?.({ block: "nearest", behavior: "smooth" });
+    }
+  }, [isExpanded, isConfirmingRestore]);
+
   return (
     <>
-      <div data-testid="task-item" className="border-b border-gray-100">
+      <div ref={containerRef} data-testid="task-item" className="border-b border-gray-100">
         {/* Main task row */}
         <div className="flex items-center gap-3 px-4 py-3">
           <button
             type="button"
             aria-label={task.is_completed ? "Noncomplete task" : "Complete task"}
-            onClick={() => onComplete(task.id)}
+            onClick={handleCompleteClick}
             className={cn(
               "w-5 h-5 rounded-full border-2 flex-shrink-0 transition-colors self-start mt-0.5",
               task.is_completed
@@ -77,6 +103,34 @@ export function TaskItem({ task, goals, onComplete, onUpdate, onMove }: TaskItem
             )}
           </button>
         </div>
+
+        {/* Restore confirmation panel */}
+        {isConfirmingRestore && (
+          <div
+            data-testid="restore-confirmation"
+            className="flex items-center justify-between px-4 py-2 bg-gray-50 border-t border-gray-100"
+          >
+            <span className="text-sm text-gray-600">Вернуть задачу?</span>
+            <div className="flex gap-3">
+              <button
+                type="button"
+                aria-label="Отмена"
+                onClick={handleRestoreCancel}
+                className="text-sm text-gray-500"
+              >
+                Отмена
+              </button>
+              <button
+                type="button"
+                aria-label="Вернуть"
+                onClick={handleRestoreConfirm}
+                className="text-sm text-accent font-medium"
+              >
+                Вернуть
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Quick actions panel */}
         {isExpanded && (
