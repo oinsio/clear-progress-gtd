@@ -1,11 +1,11 @@
 import { useState, useCallback } from "react";
-import { FileText, Target, Pencil } from "lucide-react";
+import { FileText, Target, Pencil, Inbox } from "lucide-react";
 import type { Task } from "@/types/entities";
 import type { Goal } from "@/types/entities";
 import type { Box } from "@/types/common";
 import { cn } from "@/shared/lib/cn";
 import { BOX, BOX_FILTER_LABELS } from "@/constants";
-import { TodayBoxIcon, WeekBoxIcon, LaterBoxIcon, AllBoxesIcon } from "./BoxIcons";
+import { TodayBoxIcon, WeekBoxIcon, LaterBoxIcon } from "./BoxIcons";
 import * as React from "react";
 
 type QuickActionMode = "none" | "notes" | "goal" | "box";
@@ -18,10 +18,11 @@ interface TaskQuickActionsProps {
   onOpenEdit: () => void;
 }
 
-const BOX_OPTIONS: Box[] = [BOX.TODAY, BOX.WEEK, BOX.LATER];
+const INBOX_BOX_OPTIONS: Box[] = [BOX.INBOX, BOX.TODAY, BOX.WEEK, BOX.LATER];
+const TASK_BOX_OPTIONS: Box[] = [BOX.TODAY, BOX.WEEK, BOX.LATER];
 
 const BOX_ICONS: Record<Box, React.FC<{ className?: string }>> = {
-  [BOX.INBOX]: AllBoxesIcon,
+  [BOX.INBOX]: ({ className }: { className?: string }) => <Inbox className={className} />,
   [BOX.TODAY]: TodayBoxIcon,
   [BOX.WEEK]: WeekBoxIcon,
   [BOX.LATER]: LaterBoxIcon,
@@ -202,7 +203,7 @@ export function TaskQuickActions({
       {/* Box picker */}
       {activeMode === "box" && (
         <div className="px-3 pb-2 flex gap-1">
-          {BOX_OPTIONS.map((box) => {
+          {(task.box === BOX.INBOX ? INBOX_BOX_OPTIONS : TASK_BOX_OPTIONS).map((box) => {
             const BoxIcon = BOX_ICONS[box];
             const isCurrentBox = task.box === box;
             return (
