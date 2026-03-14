@@ -3,72 +3,16 @@ import { ChevronDown, Plus } from "lucide-react";
 import { cn } from "@/shared/lib/cn";
 import type { BoxFilter } from "@/types/common";
 import { TASK_BOX_FILTER_ORDER, BOX_FILTER_LABELS } from "@/constants";
+import { TodayBoxIcon, WeekBoxIcon, LaterBoxIcon, AllBoxesIcon } from "./BoxIcons";
+import * as React from "react";
 
 type TaskBoxFilter = Exclude<BoxFilter, "inbox">;
 
-// Filled star inside a thin circle outline — Today
-function TodayFilterIcon({ className }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 24 24" className={className} fill="none" aria-hidden="true">
-      <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="1.5" />
-      <path
-        d="M12 6.5l1.545 3.13 3.455.502-2.5 2.437.59 3.441L12 14.3l-3.09 1.71.59-3.441L7 10.132l3.455-.502L12 6.5z"
-        fill="currentColor"
-        stroke="none"
-      />
-    </svg>
-  );
-}
-
-// Circle with "+7" text — Week (matches reference)
-function WeekFilterIcon({ className }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 100 100" className={className} fill="none" aria-hidden="true">
-        <circle cx="50" cy="50" r="46" fill="none" stroke="currentColor" stroke-width="6"/>
-        <g transform="translate(50,50) scale(1.15) translate(-50,-50)">
-            <rect x="30" y="32" width="40" height="36" rx="3" ry="3" fill="none" stroke="currentColor" stroke-width="4"/>
-            <line x1="30" y1="42" x2="70" y2="42" stroke="currentColor" stroke-width="4"/>
-            <line x1="40" y1="28" x2="40" y2="36" stroke="currentColor" stroke-width="4" stroke-linecap="round"/>
-            <line x1="50" y1="28" x2="50" y2="36" stroke="currentColor" stroke-width="4" stroke-linecap="round"/>
-            <line x1="60" y1="28" x2="60" y2="36" stroke="currentColor" stroke-width="4" stroke-linecap="round"/>
-            <text x="50" y="55" text-anchor="middle" dominant-baseline="central" font-family="Arial, Helvetica, sans-serif" font-size="16" font-weight="600" fill="currentColor">+7</text>
-        </g>
-    </svg>
-  );
-}
-
-// Right-pointing arrow inside a thin circle outline — Later
-function LaterFilterIcon({ className }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 24 24" className={className} fill="none" aria-hidden="true">
-      <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="1.5" />
-      <path
-        d="M8.5 12h7M13 9l3 3-3 3"
-        stroke="currentColor"
-        strokeWidth="1.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
-}
-
-// Three circle outlines in a triangular cluster: two at the bottom, one at the top center — All boxes
-function AllBoxesFilterIcon({ className }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 24 24" className={className} fill="none" aria-hidden="true">
-      <circle cx="12" cy="8" r="3.5" stroke="currentColor" strokeWidth="1.5" />
-      <circle cx="7.5" cy="16" r="3.5" stroke="currentColor" strokeWidth="1.5" />
-      <circle cx="16.5" cy="16" r="3.5" stroke="currentColor" strokeWidth="1.5" />
-    </svg>
-  );
-}
-
 const BOX_FILTER_ICONS: Record<TaskBoxFilter, React.FC<{ className?: string }>> = {
-  today: TodayFilterIcon,
-  week: WeekFilterIcon,
-  later: LaterFilterIcon,
-  all: AllBoxesFilterIcon,
+  today: TodayBoxIcon,
+  week: WeekBoxIcon,
+  later: LaterBoxIcon,
+  all: AllBoxesIcon,
 };
 
 // If activeBox is "inbox", display as "all" (inbox has its own page)

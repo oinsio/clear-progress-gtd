@@ -1,10 +1,11 @@
 import { useState, useCallback } from "react";
-import { FileText, Target, ArrowRightFromLine, Pencil } from "lucide-react";
+import { FileText, Target, Pencil } from "lucide-react";
 import type { Task } from "@/types/entities";
 import type { Goal } from "@/types/entities";
 import type { Box } from "@/types/common";
 import { cn } from "@/shared/lib/cn";
 import { BOX, BOX_FILTER_LABELS } from "@/constants";
+import { TodayBoxIcon, WeekBoxIcon, LaterBoxIcon, AllBoxesIcon } from "./BoxIcons";
 import * as React from "react";
 
 type QuickActionMode = "none" | "notes" | "goal" | "box";
@@ -18,6 +19,13 @@ interface TaskQuickActionsProps {
 }
 
 const BOX_OPTIONS: Box[] = [BOX.TODAY, BOX.WEEK, BOX.LATER];
+
+const BOX_ICONS: Record<Box, React.FC<{ className?: string }>> = {
+  [BOX.INBOX]: AllBoxesIcon,
+  [BOX.TODAY]: TodayBoxIcon,
+  [BOX.WEEK]: WeekBoxIcon,
+  [BOX.LATER]: LaterBoxIcon,
+};
 
 export function TaskQuickActions({
   task,
@@ -119,9 +127,14 @@ export function TaskQuickActions({
           aria-label="Move to box"
           aria-pressed={activeMode === "box"}
           onClick={() => handleModeToggle("box")}
-          className={actionButtonClass("box")}
+          className={cn(
+            "flex items-center justify-center w-9 h-9 rounded-lg transition-colors",
+            activeMode === "box"
+              ? "bg-accent/15 text-accent"
+              : "text-accent hover:bg-accent/10",
+          )}
         >
-          <ArrowRightFromLine size={17} />
+          {React.createElement(BOX_ICONS[task.box], { className: "w-5 h-5" })}
         </button>
         <button
           type="button"
@@ -188,23 +201,28 @@ export function TaskQuickActions({
 
       {/* Box picker */}
       {activeMode === "box" && (
-        <div className="px-3 pb-2 flex gap-2">
-          {BOX_OPTIONS.map((box) => (
-            <button
-              key={box}
-              type="button"
-              aria-label={BOX_FILTER_LABELS[box]}
-              onClick={() => handleBoxSelect(box)}
-              className={cn(
-                "flex-1 text-xs py-1.5 rounded-lg border transition-colors",
-                task.box === box
-                  ? "bg-accent text-white border-accent"
-                  : "border-gray-200 text-gray-600 hover:border-accent hover:text-accent",
-              )}
-            >
-              {BOX_FILTER_LABELS[box]}
-            </button>
-          ))}
+        <div className="px-3 pb-2 flex gap-1">
+          {BOX_OPTIONS.map((box) => {
+            const BoxIcon = BOX_ICONS[box];
+            const isCurrentBox = task.box === box;
+            return (
+              <button
+                key={box}
+                type="button"
+                aria-label={BOX_FILTER_LABELS[box]}
+                aria-pressed={isCurrentBox}
+                onClick={() => handleBoxSelect(box)}
+                className={cn(
+                  "flex items-center justify-center w-10 h-10 rounded-full transition-colors",
+                  isCurrentBox
+                    ? "text-accent"
+                    : "text-gray-400 hover:text-gray-600 hover:bg-gray-100",
+                )}
+              >
+                <BoxIcon className="w-7 h-7" />
+              </button>
+            );
+          })}
         </div>
       )}
     </div>
