@@ -40,6 +40,8 @@ export const BOX_FILTER_ORDER: BoxFilter[] = [
   "later",
 ];
 
+export const TASK_BOX_FILTER_ORDER: BoxFilter[] = ["today", "week", "later", "all"];
+
 export const DEFAULT_PANEL_SIDE: PanelSide = "right";
 
 export const PANEL_SIDES: PanelSide[] = ["left", "right"];

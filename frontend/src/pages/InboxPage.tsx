@@ -317,31 +317,10 @@ export default function InboxPage() {
           </header>
         )}
 
-        {/* Task area + right panel */}
-        <div className="flex flex-1 overflow-hidden">
           {/* Scrollable task list */}
-          <main className="flex-1 overflow-y-auto">
-            {renderContent()}
-          </main>
-
-          {/* Right quick filter panel */}
-          <RightFilterPanel
-            mode={filterMode}
-            isOpen={isPanelOpen}
-            goals={goals}
-            contexts={contexts}
-            categories={categories}
-            selectedGoalId={selectedGoalId}
-            selectedContextId={selectedContextId}
-            selectedCategoryId={selectedCategoryId}
-            side={panelSide}
-            onToggle={handlePanelToggle}
-            onModeChange={handleModeChange}
-            onGoalSelect={handleGoalSelect}
-            onContextSelect={handleContextSelect}
-            onCategorySelect={handleCategorySelect}
-          />
-        </div>
+        <main className="flex-1 overflow-y-auto">
+          {renderContent()}
+        </main>
 
         {/* Bottom box filter bar */}
         <BoxFilterBar
@@ -350,6 +329,24 @@ export default function InboxPage() {
           onAddTask={handleAddTask}
         />
       </div>
+
+      {/* Right quick filter panel — full height, outside main column */}
+      <RightFilterPanel
+        mode={filterMode}
+        isOpen={isPanelOpen}
+        goals={goals}
+        contexts={contexts}
+        categories={categories}
+        selectedGoalId={selectedGoalId}
+        selectedContextId={selectedContextId}
+        selectedCategoryId={selectedCategoryId}
+        side={panelSide}
+        onToggle={handlePanelToggle}
+        onModeChange={handleModeChange}
+        onGoalSelect={handleGoalSelect}
+        onContextSelect={handleContextSelect}
+        onCategorySelect={handleCategorySelect}
+      />
     </div>
   );
 }
