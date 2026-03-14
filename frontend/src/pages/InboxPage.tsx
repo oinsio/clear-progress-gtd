@@ -104,7 +104,7 @@ export default function InboxPage() {
   const { goals } = useGoals();
   const { contexts } = useContexts();
   const { categories } = useCategories();
-  const { completedTasks } = useCompletedTasks();
+  const { completedTasks, reload: reloadCompleted } = useCompletedTasks();
   const { results: searchResults, isSearching, search, clear: clearSearch } = useSearch();
   const { panelSide } = usePanelSide();
 
@@ -133,11 +133,12 @@ export default function InboxPage() {
         setSearchQuery("");
         clearSearch();
       }
+      if (newMode === "completed") void reloadCompleted();
       if (newMode !== "goals") setSelectedGoalId(null);
       if (newMode !== "contexts") setSelectedContextId(null);
       if (newMode !== "categories") setSelectedCategoryId(null);
     },
-    [clearSearch],
+    [clearSearch, reloadCompleted],
   );
 
   const handleGoalSelect = useCallback((goalId: string | null) => {
@@ -202,6 +203,14 @@ export default function InboxPage() {
     return BOX_FILTER_LABELS[targetBox];
   }, [activeBox]);
 
+  const handleToggleCompletedTask = useCallback(
+    async (id: string) => {
+      await completeToday(id);
+      await reloadCompleted();
+    },
+    [completeToday, reloadCompleted],
+  );
+
   const renderContent = () => {
     if (filterMode === "search") {
       return (
@@ -227,7 +236,7 @@ export default function InboxPage() {
       return (
         <TaskList
           tasks={completedTasks}
-          onComplete={completeToday}
+          onComplete={handleToggleCompletedTask}
           onDelete={deleteToday}
         />
       );

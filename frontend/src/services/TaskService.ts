@@ -74,6 +74,17 @@ export class TaskService {
     return this.create({ ...taskProps, is_completed: false, completed_at: "" });
   }
 
+  async noncomplete(id: string): Promise<Task> {
+    const existingTask = await this.taskRepository.getById(id);
+    if (!existingTask) {
+      throw new Error(`Task not found: ${id}`);
+    }
+    return this.update(id, {
+      is_completed: false,
+      completed_at: "",
+    });
+  }
+
   async softDelete(id: string): Promise<Task> {
     return this.update(id, { is_deleted: true });
   }

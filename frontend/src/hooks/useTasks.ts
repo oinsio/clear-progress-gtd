@@ -43,7 +43,13 @@ export function useTasks(
 
   const completeTask = useCallback(
     async (id: string) => {
-      await taskService.complete(id);
+      const task = await taskService.getById(id);
+      if (!task) return;
+      if (task.is_completed) {
+        await taskService.noncomplete(id);
+      } else {
+        await taskService.complete(id);
+      }
       await loadTasks();
     },
     [taskService, loadTasks],

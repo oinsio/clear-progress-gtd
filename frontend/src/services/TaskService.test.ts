@@ -283,6 +283,35 @@ describe("TaskService", () => {
     });
   });
 
+  describe("noncomplete", () => {
+    it("should set is_completed to false", async () => {
+      const task = buildTask({ is_completed: true });
+      mockTaskRepository = createMockTaskRepository({
+        getById: vi.fn().mockResolvedValue(task),
+      });
+      const taskService = new TaskService(mockTaskRepository);
+      const result = await taskService.noncomplete(task.id);
+      expect(result.is_completed).toBe(false);
+    });
+
+    it("should clear completed_at to empty string", async () => {
+      const task = buildTask({ is_completed: true, completed_at: "2025-01-01T10:00:00.000Z" });
+      mockTaskRepository = createMockTaskRepository({
+        getById: vi.fn().mockResolvedValue(task),
+      });
+      const taskService = new TaskService(mockTaskRepository);
+      const result = await taskService.noncomplete(task.id);
+      expect(result.completed_at).toBe("");
+    });
+
+    it("should throw when task not found", async () => {
+      const taskService = new TaskService(mockTaskRepository);
+      await expect(taskService.noncomplete("nonexistent")).rejects.toThrow(
+        "Task not found: nonexistent",
+      );
+    });
+  });
+
   describe("softDelete", () => {
     it("should set is_deleted to true", async () => {
       const task = buildTask({ is_deleted: false });

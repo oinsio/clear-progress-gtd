@@ -15,9 +15,14 @@ export function TaskItem({ task, onComplete, onDelete }: TaskItemProps) {
     >
       <button
         type="button"
-        aria-label="Complete task"
+        aria-label={task.is_completed ? "Noncomplete task" : "Complete task"}
         onClick={() => onComplete(task.id)}
-        className="w-5 h-5 rounded-full border-2 border-gray-300 flex-shrink-0 hover:border-accent transition-colors"
+        className={cn(
+          "w-5 h-5 rounded-full border-2 flex-shrink-0 transition-colors",
+          task.is_completed
+            ? "bg-accent border-accent"
+            : "border-gray-300 hover:border-accent",
+        )}
       />
       <span
         data-testid="task-item-title"

@@ -11,7 +11,9 @@ function createMockTaskService(
 ): TaskService {
   return {
     getByBox: vi.fn().mockResolvedValue([]),
+    getById: vi.fn().mockResolvedValue(undefined),
     complete: vi.fn().mockResolvedValue(undefined),
+    uncomplete: vi.fn().mockResolvedValue(undefined),
     softDelete: vi.fn().mockResolvedValue(undefined),
     moveToBox: vi.fn().mockResolvedValue(undefined),
     create: vi.fn().mockResolvedValue(undefined),
@@ -58,10 +60,13 @@ describe("useTasks", () => {
     expect(result.current.tasks).toEqual(tasks);
   });
 
-  it("should call complete and refresh when completeTask is called", async () => {
-    const task = buildTask({ box: "today" });
+  it("should call complete and refresh when completeTask is called on an incomplete task", async () => {
+    const task = buildTask({ box: "today", is_completed: false });
     const mockGetByBox = vi.fn().mockResolvedValue([task]);
-    mockTaskService = createMockTaskService({ getByBox: mockGetByBox });
+    mockTaskService = createMockTaskService({
+      getByBox: mockGetByBox,
+      getById: vi.fn().mockResolvedValue(task),
+    });
     const { result } = renderHook(() => useTasks(BOX.TODAY, mockTaskService));
     await waitFor(() => expect(result.current.isLoading).toBe(false));
 
@@ -70,6 +75,24 @@ describe("useTasks", () => {
     });
 
     expect(mockTaskService.complete).toHaveBeenCalledWith(task.id);
+    expect(mockGetByBox).toHaveBeenCalledTimes(2);
+  });
+
+  it("should call uncomplete and refresh when completeTask is called on a completed task", async () => {
+    const task = buildTask({ box: "today", is_completed: true });
+    const mockGetByBox = vi.fn().mockResolvedValue([task]);
+    mockTaskService = createMockTaskService({
+      getByBox: mockGetByBox,
+      getById: vi.fn().mockResolvedValue(task),
+    });
+    const { result } = renderHook(() => useTasks(BOX.TODAY, mockTaskService));
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    await act(async () => {
+      await result.current.completeTask(task.id);
+    });
+
+    expect(mockTaskService.noncomplete).toHaveBeenCalledWith(task.id);
     expect(mockGetByBox).toHaveBeenCalledTimes(2);
   });
 

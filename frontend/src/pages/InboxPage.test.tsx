@@ -126,10 +126,10 @@ describe("InboxPage", () => {
     expect(screen.getByTestId("inbox-page")).toBeInTheDocument();
   });
 
-  it("should render box filter bar", () => {
+  it("should render box filter bar with filter options when expanded", () => {
     renderPage();
+    fireEvent.click(screen.getByTestId("box-filter-toggle"));
     expect(screen.getByTestId("box-filter-all")).toBeInTheDocument();
-    expect(screen.getByTestId("box-filter-inbox")).toBeInTheDocument();
     expect(screen.getByTestId("box-filter-today")).toBeInTheDocument();
     expect(screen.getByTestId("box-filter-week")).toBeInTheDocument();
     expect(screen.getByTestId("box-filter-later")).toBeInTheDocument();
@@ -222,6 +222,17 @@ describe("InboxPage", () => {
     openRightPanel();
     fireEvent.click(screen.getByTestId("right-filter-inbox"));
     expect(screen.getByTestId("task-item")).toBeInTheDocument();
+  });
+
+  it("should reload completed tasks when switching to completed mode", () => {
+    const mockReload = vi.fn().mockResolvedValue(undefined);
+    mockUseCompletedTasks.mockReturnValue(
+      buildCompletedTasksHook({ reload: mockReload }),
+    );
+    renderPage();
+    openRightPanel();
+    fireEvent.click(screen.getByTestId("right-filter-completed"));
+    expect(mockReload).toHaveBeenCalledOnce();
   });
 
   it("should render account and settings buttons in open panel", () => {
