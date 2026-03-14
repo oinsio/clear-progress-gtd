@@ -75,9 +75,10 @@ interface TaskListProps {
   onMove: (id: string, box: Box) => Promise<void>;
   onDelete: (id: string) => void;
   onReorder?: (tasks: Task[]) => Promise<void>;
+  emptyMessage?: string;
 }
 
-export function TaskList({ tasks, goals, onComplete, onUpdate, onMove, onReorder }: TaskListProps) {
+export function TaskList({ tasks, goals, onComplete, onUpdate, onMove, onReorder, emptyMessage }: TaskListProps) {
   const pointerSensor = useSensor(PointerSensor, {
     activationConstraint: { distance: DRAG_ACTIVATION_DISTANCE_PX },
   });
@@ -93,9 +94,9 @@ export function TaskList({ tasks, goals, onComplete, onUpdate, onMove, onReorder
     return (
       <div
         data-testid="task-list-empty"
-        className="flex flex-col items-center justify-center py-16 text-gray-400"
+        className={`flex flex-col items-center justify-center text-gray-400 ${emptyMessage ? "py-3" : "py-16"}`}
       >
-        <p className="text-sm">{INBOX_EMPTY_MESSAGE}</p>
+        <p className="text-sm">{emptyMessage ?? INBOX_EMPTY_MESSAGE}</p>
       </div>
     );
   }

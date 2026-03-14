@@ -21,6 +21,9 @@ const WEEK_SECTION_LABEL = "Неделя";
 const LATER_SECTION_LABEL = "Позже";
 const COMPLETED_TODAY_SECTION_LABEL = "Выполненные сегодня";
 const COMPLETED_EARLIER_SECTION_LABEL = "Ранее";
+const TODAY_EMPTY_MESSAGE = "Задач на сегодня нет";
+const INBOX_SECTION_LABEL = "Входящие";
+const INBOX_EMPTY_MESSAGE = "Задач нет";
 
 function TaskSection({
   label,
@@ -31,6 +34,8 @@ function TaskSection({
   onMove,
   onDelete,
   onReorder,
+  emptyMessage,
+  hideEmptyState,
 }: {
   label: string;
   tasks: Task[];
@@ -40,21 +45,26 @@ function TaskSection({
   onMove: (id: string, box: Box) => Promise<void>;
   onDelete: (id: string) => Promise<void>;
   onReorder?: (tasks: Task[]) => Promise<void>;
+  emptyMessage?: string;
+  hideEmptyState?: boolean;
 }) {
   return (
     <section>
       <h2 className="px-4 py-2 text-sm font-semibold text-accent bg-gray-50 sticky top-0">
         {label} ({tasks.length})
       </h2>
-      <TaskList
-        tasks={tasks}
-        goals={goals}
-        onComplete={onComplete}
-        onUpdate={onUpdate}
-        onMove={onMove}
-        onDelete={onDelete}
-        onReorder={onReorder}
-      />
+      {(!hideEmptyState || tasks.length > 0) && (
+        <TaskList
+          tasks={tasks}
+          goals={goals}
+          onComplete={onComplete}
+          onUpdate={onUpdate}
+          onMove={onMove}
+          onDelete={onDelete}
+          onReorder={onReorder}
+          emptyMessage={emptyMessage}
+        />
+      )}
     </section>
   );
 }
@@ -324,7 +334,8 @@ export default function InboxPage() {
 
     if (filterMode === "inbox") {
       return (
-        <TaskList
+        <TaskSection
+          label={INBOX_SECTION_LABEL}
           tasks={applyFilters(inboxTasks)}
           goals={goals}
           onComplete={completeInbox}
@@ -332,6 +343,7 @@ export default function InboxPage() {
           onMove={handleMoveTask}
           onDelete={deleteInbox}
           onReorder={reorderInbox}
+          emptyMessage={INBOX_EMPTY_MESSAGE}
         />
       );
     }
@@ -397,6 +409,7 @@ export default function InboxPage() {
             onMove={handleMoveTask}
             onDelete={deleteToday}
             onReorder={reorderToday}
+            emptyMessage={TODAY_EMPTY_MESSAGE}
           />
           <TaskSection
             label={WEEK_SECTION_LABEL}
@@ -407,6 +420,7 @@ export default function InboxPage() {
             onMove={handleMoveTask}
             onDelete={deleteWeek}
             onReorder={reorderWeek}
+            hideEmptyState
           />
           <TaskSection
             label={LATER_SECTION_LABEL}
@@ -417,6 +431,7 @@ export default function InboxPage() {
             onMove={handleMoveTask}
             onDelete={deleteLater}
             onReorder={reorderLater}
+            hideEmptyState
           />
           {todayCompletedTasks.length > 0 && (
             <TaskSection
