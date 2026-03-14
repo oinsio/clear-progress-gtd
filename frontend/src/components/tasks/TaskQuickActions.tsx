@@ -83,6 +83,15 @@ export function TaskQuickActions({
         : "text-gray-400 hover:text-gray-600 hover:bg-gray-100",
     );
 
+  const notesButtonClass = cn(
+    "flex items-center justify-center w-9 h-9 rounded-lg transition-colors",
+    activeMode === "notes"
+      ? "bg-accent/15 text-accent"
+      : task.notes
+        ? "text-accent hover:bg-accent/10"
+        : "text-gray-400 hover:text-gray-600 hover:bg-gray-100",
+  );
+
   return (
     <div data-testid="task-quick-actions" className="border-t border-gray-100 bg-gray-50">
       {/* Action icons row */}
@@ -92,7 +101,7 @@ export function TaskQuickActions({
           aria-label="Edit notes"
           aria-pressed={activeMode === "notes"}
           onClick={handleNotesToggle}
-          className={actionButtonClass("notes")}
+          className={notesButtonClass}
         >
           <FileText size={17} />
         </button>
