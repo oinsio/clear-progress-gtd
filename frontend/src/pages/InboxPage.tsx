@@ -30,6 +30,7 @@ function TaskSection({
   onUpdate,
   onMove,
   onDelete,
+  onReorder,
 }: {
   label: string;
   tasks: Task[];
@@ -38,6 +39,7 @@ function TaskSection({
   onUpdate: (id: string, changes: Partial<Task>) => Promise<void>;
   onMove: (id: string, box: Box) => Promise<void>;
   onDelete: (id: string) => Promise<void>;
+  onReorder?: (tasks: Task[]) => Promise<void>;
 }) {
   return (
     <section>
@@ -51,6 +53,7 @@ function TaskSection({
         onUpdate={onUpdate}
         onMove={onMove}
         onDelete={onDelete}
+        onReorder={onReorder}
       />
     </section>
   );
@@ -112,10 +115,10 @@ export default function InboxPage() {
   const [isAddingTask, setIsAddingTask] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
 
-  const { tasks: inboxTasks, completeTask: completeInbox, deleteTask: deleteInbox, createTask: createInboxTask, updateTask: updateInbox, moveTask: moveInbox, reload: reloadInbox } = useTasks(BOX.INBOX);
-  const { tasks: todayTasks, completeTask: completeToday, deleteTask: deleteToday, createTask: createTodayTask, updateTask: updateToday, moveTask: moveToday, reload: reloadToday } = useTasks(BOX.TODAY);
-  const { tasks: weekTasks, completeTask: completeWeek, deleteTask: deleteWeek, createTask: createWeekTask, updateTask: updateWeek, moveTask: moveWeek, reload: reloadWeek } = useTasks(BOX.WEEK);
-  const { tasks: laterTasks, completeTask: completeLater, deleteTask: deleteLater, createTask: createLaterTask, updateTask: updateLater, moveTask: moveLater, reload: reloadLater } = useTasks(BOX.LATER);
+  const { tasks: inboxTasks, completeTask: completeInbox, deleteTask: deleteInbox, createTask: createInboxTask, updateTask: updateInbox, moveTask: moveInbox, reorderTasks: reorderInbox, reload: reloadInbox } = useTasks(BOX.INBOX);
+  const { tasks: todayTasks, completeTask: completeToday, deleteTask: deleteToday, createTask: createTodayTask, updateTask: updateToday, moveTask: moveToday, reorderTasks: reorderToday, reload: reloadToday } = useTasks(BOX.TODAY);
+  const { tasks: weekTasks, completeTask: completeWeek, deleteTask: deleteWeek, createTask: createWeekTask, updateTask: updateWeek, moveTask: moveWeek, reorderTasks: reorderWeek, reload: reloadWeek } = useTasks(BOX.WEEK);
+  const { tasks: laterTasks, completeTask: completeLater, deleteTask: deleteLater, createTask: createLaterTask, updateTask: updateLater, moveTask: moveLater, reorderTasks: reorderLater, reload: reloadLater } = useTasks(BOX.LATER);
   const { goals } = useGoals();
   const { contexts } = useContexts();
   const { categories } = useCategories();
@@ -328,6 +331,7 @@ export default function InboxPage() {
           onUpdate={handleUpdateTask}
           onMove={handleMoveTask}
           onDelete={deleteInbox}
+          onReorder={reorderInbox}
         />
       );
     }
@@ -392,6 +396,7 @@ export default function InboxPage() {
             onUpdate={handleUpdateTask}
             onMove={handleMoveTask}
             onDelete={deleteToday}
+            onReorder={reorderToday}
           />
           <TaskSection
             label={WEEK_SECTION_LABEL}
@@ -401,6 +406,7 @@ export default function InboxPage() {
             onUpdate={handleUpdateTask}
             onMove={handleMoveTask}
             onDelete={deleteWeek}
+            onReorder={reorderWeek}
           />
           <TaskSection
             label={LATER_SECTION_LABEL}
@@ -410,6 +416,7 @@ export default function InboxPage() {
             onUpdate={handleUpdateTask}
             onMove={handleMoveTask}
             onDelete={deleteLater}
+            onReorder={reorderLater}
           />
           {todayCompletedTasks.length > 0 && (
             <TaskSection
@@ -427,13 +434,13 @@ export default function InboxPage() {
     }
 
     const boxConfig = {
-      [BOX.INBOX]: { tasks: inboxTasks, onComplete: completeInbox, onDelete: deleteInbox },
-      [BOX.TODAY]: { tasks: todayTasks, onComplete: completeToday, onDelete: deleteToday },
-      [BOX.WEEK]: { tasks: weekTasks, onComplete: completeWeek, onDelete: deleteWeek },
-      [BOX.LATER]: { tasks: laterTasks, onComplete: completeLater, onDelete: deleteLater },
+      [BOX.INBOX]: { tasks: inboxTasks, onComplete: completeInbox, onDelete: deleteInbox, onReorder: reorderInbox },
+      [BOX.TODAY]: { tasks: todayTasks, onComplete: completeToday, onDelete: deleteToday, onReorder: reorderToday },
+      [BOX.WEEK]: { tasks: weekTasks, onComplete: completeWeek, onDelete: deleteWeek, onReorder: reorderWeek },
+      [BOX.LATER]: { tasks: laterTasks, onComplete: completeLater, onDelete: deleteLater, onReorder: reorderLater },
     };
 
-    const { tasks, onComplete, onDelete } = boxConfig[activeBox];
+    const { tasks, onComplete, onDelete, onReorder } = boxConfig[activeBox];
     const visibleTasks = applyFilters(tasks);
 
     return (
@@ -452,6 +459,7 @@ export default function InboxPage() {
           onUpdate={handleUpdateTask}
           onMove={handleMoveTask}
           onDelete={onDelete}
+          onReorder={onReorder}
         />
       </>
     );

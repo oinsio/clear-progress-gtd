@@ -1,5 +1,6 @@
 import { useState, useCallback, useEffect, useRef } from "react";
-import { FileText } from "lucide-react";
+import { FileText, GripVertical } from "lucide-react";
+import type { SyntheticListenerMap } from "@dnd-kit/core/dist/hooks/utilities";
 import type { Task } from "@/types/entities";
 import type { Goal } from "@/types/entities";
 import type { Box } from "@/types/common";
@@ -7,6 +8,13 @@ import { cn } from "@/shared/lib/cn";
 import { formatCompletedAt } from "@/shared/lib/utils";
 import { TaskQuickActions } from "./TaskQuickActions";
 import { TaskEditModal } from "./TaskEditModal";
+import * as React from "react";
+
+export interface DragHandleProps {
+  ref: (element: HTMLElement | null) => void;
+  attributes: React.HTMLAttributes<HTMLElement>;
+  listeners: SyntheticListenerMap | undefined;
+}
 
 interface TaskItemProps {
   task: Task;
@@ -14,9 +22,10 @@ interface TaskItemProps {
   onComplete: (id: string) => void;
   onUpdate: (id: string, changes: Partial<Task>) => Promise<void>;
   onMove: (id: string, box: Box) => Promise<void>;
+  dragHandleProps?: DragHandleProps;
 }
 
-export function TaskItem({ task, goals, onComplete, onUpdate, onMove }: TaskItemProps) {
+export function TaskItem({ task, goals, onComplete, onUpdate, onMove, dragHandleProps }: TaskItemProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isConfirmingRestore, setIsConfirmingRestore] = useState(false);
@@ -102,6 +111,18 @@ export function TaskItem({ task, goals, onComplete, onUpdate, onMove }: TaskItem
               <FileText size={12} className="text-gray-400 mt-0.5 flex-shrink-0" />
             )}
           </button>
+          {dragHandleProps && (
+            <button
+              type="button"
+              ref={dragHandleProps.ref}
+              aria-label="Перетащить задачу"
+              className="flex-shrink-0 text-gray-300 cursor-grab active:cursor-grabbing touch-none"
+              {...dragHandleProps.attributes}
+              {...dragHandleProps.listeners}
+            >
+              <GripVertical size={16} />
+            </button>
+          )}
         </div>
 
         {/* Restore confirmation panel */}

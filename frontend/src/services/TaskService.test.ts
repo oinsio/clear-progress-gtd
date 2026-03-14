@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { TaskService } from "./TaskService";
+import type { Task } from "@/types/entities";
 import type { TaskRepository } from "@/db/repositories/TaskRepository";
 import { buildTask } from "@/test/factories/taskFactory";
 import { BOX } from "@/constants";
@@ -333,6 +334,54 @@ describe("TaskService", () => {
       const taskService = new TaskService(mockTaskRepository);
       const moved = await taskService.moveToBox(task.id, BOX.TODAY);
       expect(moved.box).toBe("today");
+    });
+  });
+
+  describe("reorderTasks", () => {
+    it("should call bulkUpsert with tasks assigned sort_order by position", async () => {
+      const taskA = buildTask({ sort_order: 2 });
+      const taskB = buildTask({ sort_order: 0 });
+      const taskC = buildTask({ sort_order: 1 });
+      const taskService = new TaskService(mockTaskRepository);
+      await taskService.reorderTasks([taskA, taskB, taskC]);
+      const upserted = (mockTaskRepository.bulkUpsert as ReturnType<typeof vi.fn>).mock.calls[0][0] as Task[];
+      expect(upserted[0].sort_order).toBe(0);
+      expect(upserted[1].sort_order).toBe(1);
+      expect(upserted[2].sort_order).toBe(2);
+    });
+
+    it("should increment version for each reordered task", async () => {
+      const taskA = buildTask({ version: 3 });
+      const taskB = buildTask({ version: 5 });
+      const taskService = new TaskService(mockTaskRepository);
+      await taskService.reorderTasks([taskA, taskB]);
+      const upserted = (mockTaskRepository.bulkUpsert as ReturnType<typeof vi.fn>).mock.calls[0][0] as Task[];
+      expect(upserted[0].version).toBe(4);
+      expect(upserted[1].version).toBe(6);
+    });
+
+    it("should update updated_at for each reordered task", async () => {
+      const taskA = buildTask({ updated_at: "2025-01-01T00:00:00.000Z" });
+      const taskService = new TaskService(mockTaskRepository);
+      await taskService.reorderTasks([taskA]);
+      const upserted = (mockTaskRepository.bulkUpsert as ReturnType<typeof vi.fn>).mock.calls[0][0] as Task[];
+      expect(upserted[0].updated_at).not.toBe("2025-01-01T00:00:00.000Z");
+    });
+
+    it("should preserve task ids after reorder", async () => {
+      const taskA = buildTask();
+      const taskB = buildTask();
+      const taskService = new TaskService(mockTaskRepository);
+      await taskService.reorderTasks([taskA, taskB]);
+      const upserted = (mockTaskRepository.bulkUpsert as ReturnType<typeof vi.fn>).mock.calls[0][0] as Task[];
+      expect(upserted[0].id).toBe(taskA.id);
+      expect(upserted[1].id).toBe(taskB.id);
+    });
+
+    it("should not call bulkUpsert when given empty array", async () => {
+      const taskService = new TaskService(mockTaskRepository);
+      await taskService.reorderTasks([]);
+      expect(mockTaskRepository.bulkUpsert).not.toHaveBeenCalled();
     });
   });
 

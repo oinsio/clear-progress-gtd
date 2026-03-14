@@ -103,6 +103,18 @@ export class TaskService {
     });
   }
 
+  async reorderTasks(orderedTasks: Task[]): Promise<void> {
+    if (orderedTasks.length === 0) return;
+    const now = new Date().toISOString();
+    const updatedTasks = orderedTasks.map((task, index) => ({
+      ...task,
+      sort_order: index,
+      updated_at: now,
+      version: task.version + 1,
+    }));
+    await this.taskRepository.bulkUpsert(updatedTasks);
+  }
+
   async getByGoalId(goalId: string): Promise<Task[]> {
     const tasks = await this.taskRepository.getByGoalId(goalId);
     return tasks.sort((taskA, taskB) => taskA.sort_order - taskB.sort_order);

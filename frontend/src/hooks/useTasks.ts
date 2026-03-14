@@ -12,6 +12,7 @@ export interface UseTasksReturn {
   deleteTask: (id: string) => Promise<void>;
   moveTask: (id: string, box: Box) => Promise<void>;
   updateTask: (id: string, changes: Partial<Task>) => Promise<void>;
+  reorderTasks: (orderedTasks: Task[]) => Promise<void>;
   reload: () => Promise<void>;
 }
 
@@ -79,5 +80,13 @@ export function useTasks(
     [taskService, loadTasks],
   );
 
-  return { tasks, isLoading, createTask, completeTask, deleteTask, moveTask, updateTask, reload: loadTasks };
+  const reorderTasks = useCallback(
+    async (orderedTasks: Task[]) => {
+      setTasks(orderedTasks);
+      await taskService.reorderTasks(orderedTasks);
+    },
+    [taskService],
+  );
+
+  return { tasks, isLoading, createTask, completeTask, deleteTask, moveTask, updateTask, reorderTasks, reload: loadTasks };
 }
