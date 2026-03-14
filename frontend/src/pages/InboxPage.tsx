@@ -18,7 +18,9 @@ import * as React from "react";
 const SEARCH_DEBOUNCE_MS = 300;
 const TODAY_SECTION_LABEL = "Сегодня";
 const WEEK_SECTION_LABEL = "Неделя";
-const LATER_SECTION_LABEL = "Потом";
+const LATER_SECTION_LABEL = "Позже";
+const COMPLETED_TODAY_SECTION_LABEL = "Выполненные сегодня";
+const COMPLETED_EARLIER_SECTION_LABEL = "Ранее";
 
 function TaskSection({
   label,
@@ -203,13 +205,44 @@ export default function InboxPage() {
     return BOX_FILTER_LABELS[targetBox];
   }, [activeBox]);
 
-  const handleToggleCompletedTask = useCallback(
+  const handleCompleteTodayAndReload = useCallback(
     async (id: string) => {
       await completeToday(id);
       await reloadCompleted();
     },
     [completeToday, reloadCompleted],
   );
+
+  const handleCompleteWeekAndReload = useCallback(
+    async (id: string) => {
+      await completeWeek(id);
+      await reloadCompleted();
+    },
+    [completeWeek, reloadCompleted],
+  );
+
+  const handleCompleteLaterAndReload = useCallback(
+    async (id: string) => {
+      await completeLater(id);
+      await reloadCompleted();
+    },
+    [completeLater, reloadCompleted],
+  );
+
+  const { todayCompletedTasks, earlierCompletedTasks } = useMemo(() => {
+    const startOfToday = new Date();
+    startOfToday.setHours(0, 0, 0, 0);
+    const today: Task[] = [];
+    const earlier: Task[] = [];
+    for (const task of completedTasks) {
+      if (task.completed_at && new Date(task.completed_at) >= startOfToday) {
+        today.push(task);
+      } else {
+        earlier.push(task);
+      }
+    }
+    return { todayCompletedTasks: today, earlierCompletedTasks: earlier };
+  }, [completedTasks]);
 
   const renderContent = () => {
     if (filterMode === "search") {
@@ -234,11 +267,27 @@ export default function InboxPage() {
 
     if (filterMode === "completed") {
       return (
-        <TaskList
-          tasks={completedTasks}
-          onComplete={handleToggleCompletedTask}
-          onDelete={deleteToday}
-        />
+        <>
+          {todayCompletedTasks.length > 0 && (
+            <TaskSection
+              label={TODAY_SECTION_LABEL}
+              tasks={todayCompletedTasks}
+              onComplete={handleCompleteTodayAndReload}
+              onDelete={deleteToday}
+            />
+          )}
+          {earlierCompletedTasks.length > 0 && (
+            <TaskSection
+              label={COMPLETED_EARLIER_SECTION_LABEL}
+              tasks={earlierCompletedTasks}
+              onComplete={handleCompleteTodayAndReload}
+              onDelete={deleteToday}
+            />
+          )}
+          {completedTasks.length === 0 && (
+            <TaskList tasks={[]} onComplete={handleCompleteTodayAndReload} onDelete={deleteToday} />
+          )}
+        </>
       );
     }
 
@@ -258,21 +307,29 @@ export default function InboxPage() {
           <TaskSection
             label={TODAY_SECTION_LABEL}
             tasks={visibleTodayTasks}
-            onComplete={completeToday}
+            onComplete={handleCompleteTodayAndReload}
             onDelete={deleteToday}
           />
           <TaskSection
             label={WEEK_SECTION_LABEL}
             tasks={visibleWeekTasks}
-            onComplete={completeWeek}
+            onComplete={handleCompleteWeekAndReload}
             onDelete={deleteWeek}
           />
           <TaskSection
             label={LATER_SECTION_LABEL}
             tasks={visibleLaterTasks}
-            onComplete={completeLater}
+            onComplete={handleCompleteLaterAndReload}
             onDelete={deleteLater}
           />
+          {todayCompletedTasks.length > 0 && (
+            <TaskSection
+              label={COMPLETED_TODAY_SECTION_LABEL}
+              tasks={todayCompletedTasks}
+              onComplete={handleCompleteTodayAndReload}
+              onDelete={deleteToday}
+            />
+          )}
         </>
       );
     }

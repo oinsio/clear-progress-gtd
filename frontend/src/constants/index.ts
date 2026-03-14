@@ -29,7 +29,7 @@ export const BOX_FILTER_LABELS: Record<BoxFilter, string> = {
   inbox: "Входящие",
   today: "Сегодня",
   week: "Неделя",
-  later: "Потом",
+  later: "Позже",
 };
 
 export const BOX_FILTER_ORDER: BoxFilter[] = [
