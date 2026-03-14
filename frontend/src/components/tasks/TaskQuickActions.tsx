@@ -33,15 +33,19 @@ export function TaskQuickActions({
     setActiveMode((current) => (current === mode ? "none" : mode));
   }, []);
 
-  const handleNotesToggle = useCallback(() => {
-    setNotesValue(task.notes);
-    handleModeToggle("notes");
-  }, [task.notes, handleModeToggle]);
-
   const handleNotesSave = useCallback(async () => {
     await onUpdate(task.id, { notes: notesValue });
     setActiveMode("none");
   }, [task.id, notesValue, onUpdate]);
+
+  const handleNotesToggle = useCallback(async () => {
+    if (activeMode === "notes") {
+      await handleNotesSave();
+    } else {
+      setNotesValue(task.notes);
+      setActiveMode("notes");
+    }
+  }, [activeMode, task.notes, handleNotesSave]);
 
   const handleNotesKeyDown = useCallback(
     async (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
