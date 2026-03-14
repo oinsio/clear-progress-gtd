@@ -9,7 +9,7 @@ import { useCategories } from "@/hooks/useCategories";
 import { useCompletedTasks } from "@/hooks/useCompletedTasks";
 import { useSearch } from "@/hooks/useSearch";
 import { usePanelSide } from "@/hooks/usePanelSide";
-import type { BoxFilter } from "@/types/common";
+import type { BoxFilter, Box } from "@/types/common";
 import type { Task } from "@/types/entities";
 import { BOX_FILTER_ALL, BOX, BOX_FILTER_LABELS } from "@/constants";
 import { cn } from "@/shared/lib/cn";
@@ -25,12 +25,18 @@ const COMPLETED_EARLIER_SECTION_LABEL = "Ранее";
 function TaskSection({
   label,
   tasks,
+  goals,
   onComplete,
+  onUpdate,
+  onMove,
   onDelete,
 }: {
   label: string;
   tasks: Task[];
+  goals: ReturnType<typeof useGoals>["goals"];
   onComplete: (id: string) => Promise<void>;
+  onUpdate: (id: string, changes: Partial<Task>) => Promise<void>;
+  onMove: (id: string, box: Box) => Promise<void>;
   onDelete: (id: string) => Promise<void>;
 }) {
   return (
@@ -38,7 +44,14 @@ function TaskSection({
       <h2 className="px-4 py-2 text-sm font-semibold text-accent bg-gray-50 sticky top-0">
         {label} ({tasks.length})
       </h2>
-      <TaskList tasks={tasks} onComplete={onComplete} onDelete={onDelete} />
+      <TaskList
+        tasks={tasks}
+        goals={goals}
+        onComplete={onComplete}
+        onUpdate={onUpdate}
+        onMove={onMove}
+        onDelete={onDelete}
+      />
     </section>
   );
 }
@@ -99,10 +112,10 @@ export default function InboxPage() {
   const [isAddingTask, setIsAddingTask] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
 
-  const { tasks: inboxTasks, completeTask: completeInbox, deleteTask: deleteInbox, createTask: createInboxTask } = useTasks(BOX.INBOX);
-  const { tasks: todayTasks, completeTask: completeToday, deleteTask: deleteToday, createTask: createTodayTask } = useTasks(BOX.TODAY);
-  const { tasks: weekTasks, completeTask: completeWeek, deleteTask: deleteWeek, createTask: createWeekTask } = useTasks(BOX.WEEK);
-  const { tasks: laterTasks, completeTask: completeLater, deleteTask: deleteLater, createTask: createLaterTask } = useTasks(BOX.LATER);
+  const { tasks: inboxTasks, completeTask: completeInbox, deleteTask: deleteInbox, createTask: createInboxTask, updateTask: updateInbox, moveTask: moveInbox, reload: reloadInbox } = useTasks(BOX.INBOX);
+  const { tasks: todayTasks, completeTask: completeToday, deleteTask: deleteToday, createTask: createTodayTask, updateTask: updateToday, moveTask: moveToday, reload: reloadToday } = useTasks(BOX.TODAY);
+  const { tasks: weekTasks, completeTask: completeWeek, deleteTask: deleteWeek, createTask: createWeekTask, updateTask: updateWeek, moveTask: moveWeek, reload: reloadWeek } = useTasks(BOX.WEEK);
+  const { tasks: laterTasks, completeTask: completeLater, deleteTask: deleteLater, createTask: createLaterTask, updateTask: updateLater, moveTask: moveLater, reload: reloadLater } = useTasks(BOX.LATER);
   const { goals } = useGoals();
   const { contexts } = useContexts();
   const { categories } = useCategories();
@@ -111,6 +124,54 @@ export default function InboxPage() {
   const { panelSide } = usePanelSide();
 
   const searchDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const reloadAllBoxes = useCallback(async () => {
+    await Promise.all([reloadInbox(), reloadToday(), reloadWeek(), reloadLater()]);
+  }, [reloadInbox, reloadToday, reloadWeek, reloadLater]);
+
+  const handleMoveTask = useCallback(
+    async (id: string, targetBox: Box) => {
+      const allTasks = [...inboxTasks, ...todayTasks, ...weekTasks, ...laterTasks];
+      const task = allTasks.find((t) => t.id === id);
+      if (!task) return;
+
+      const moveByBox: Record<Box, (taskId: string, box: Box) => Promise<void>> = {
+        [BOX.INBOX]: moveInbox,
+        [BOX.TODAY]: moveToday,
+        [BOX.WEEK]: moveWeek,
+        [BOX.LATER]: moveLater,
+      };
+      await moveByBox[task.box](id, targetBox);
+      await reloadAllBoxes();
+    },
+    [inboxTasks, todayTasks, weekTasks, laterTasks, moveInbox, moveToday, moveWeek, moveLater, reloadAllBoxes],
+  );
+
+  const handleUpdateTask = useCallback(
+    async (id: string, changes: Partial<Task>) => {
+      const allTasks = [...inboxTasks, ...todayTasks, ...weekTasks, ...laterTasks];
+      const task = allTasks.find((t) => t.id === id);
+      if (!task) return;
+
+      const updateByBox: Record<Box, (taskId: string, taskChanges: Partial<Task>) => Promise<void>> = {
+        [BOX.INBOX]: updateInbox,
+        [BOX.TODAY]: updateToday,
+        [BOX.WEEK]: updateWeek,
+        [BOX.LATER]: updateLater,
+      };
+
+      const targetBox = (changes.box as Box) ?? task.box;
+      if (changes.box && changes.box !== task.box) {
+        await handleMoveTask(id, changes.box as Box);
+      } else {
+        await updateByBox[task.box](id, changes);
+        if (targetBox !== task.box) {
+          await reloadAllBoxes();
+        }
+      }
+    },
+    [inboxTasks, todayTasks, weekTasks, laterTasks, updateInbox, updateToday, updateWeek, updateLater, handleMoveTask, reloadAllBoxes],
+  );
 
   const handleSearchChange = useCallback(
     (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -249,7 +310,10 @@ export default function InboxPage() {
       return (
         <TaskList
           tasks={searchResults}
+          goals={goals}
           onComplete={completeToday}
+          onUpdate={handleUpdateTask}
+          onMove={handleMoveTask}
           onDelete={deleteToday}
         />
       );
@@ -259,7 +323,10 @@ export default function InboxPage() {
       return (
         <TaskList
           tasks={applyFilters(inboxTasks)}
+          goals={goals}
           onComplete={completeInbox}
+          onUpdate={handleUpdateTask}
+          onMove={handleMoveTask}
           onDelete={deleteInbox}
         />
       );
@@ -272,7 +339,10 @@ export default function InboxPage() {
             <TaskSection
               label={TODAY_SECTION_LABEL}
               tasks={todayCompletedTasks}
+              goals={goals}
               onComplete={handleCompleteTodayAndReload}
+              onUpdate={handleUpdateTask}
+              onMove={handleMoveTask}
               onDelete={deleteToday}
             />
           )}
@@ -280,12 +350,22 @@ export default function InboxPage() {
             <TaskSection
               label={COMPLETED_EARLIER_SECTION_LABEL}
               tasks={earlierCompletedTasks}
+              goals={goals}
               onComplete={handleCompleteTodayAndReload}
+              onUpdate={handleUpdateTask}
+              onMove={handleMoveTask}
               onDelete={deleteToday}
             />
           )}
           {completedTasks.length === 0 && (
-            <TaskList tasks={[]} onComplete={handleCompleteTodayAndReload} onDelete={deleteToday} />
+            <TaskList
+              tasks={[]}
+              goals={goals}
+              onComplete={handleCompleteTodayAndReload}
+              onUpdate={handleUpdateTask}
+              onMove={handleMoveTask}
+              onDelete={deleteToday}
+            />
           )}
         </>
       );
@@ -307,26 +387,38 @@ export default function InboxPage() {
           <TaskSection
             label={TODAY_SECTION_LABEL}
             tasks={visibleTodayTasks}
+            goals={goals}
             onComplete={handleCompleteTodayAndReload}
+            onUpdate={handleUpdateTask}
+            onMove={handleMoveTask}
             onDelete={deleteToday}
           />
           <TaskSection
             label={WEEK_SECTION_LABEL}
             tasks={visibleWeekTasks}
+            goals={goals}
             onComplete={handleCompleteWeekAndReload}
+            onUpdate={handleUpdateTask}
+            onMove={handleMoveTask}
             onDelete={deleteWeek}
           />
           <TaskSection
             label={LATER_SECTION_LABEL}
             tasks={visibleLaterTasks}
+            goals={goals}
             onComplete={handleCompleteLaterAndReload}
+            onUpdate={handleUpdateTask}
+            onMove={handleMoveTask}
             onDelete={deleteLater}
           />
           {todayCompletedTasks.length > 0 && (
             <TaskSection
               label={COMPLETED_TODAY_SECTION_LABEL}
               tasks={todayCompletedTasks}
+              goals={goals}
               onComplete={handleCompleteTodayAndReload}
+              onUpdate={handleUpdateTask}
+              onMove={handleMoveTask}
               onDelete={deleteToday}
             />
           )}
@@ -353,7 +445,14 @@ export default function InboxPage() {
             onCancel={handleAddTaskCancel}
           />
         )}
-        <TaskList tasks={visibleTasks} onComplete={onComplete} onDelete={onDelete} />
+        <TaskList
+          tasks={visibleTasks}
+          goals={goals}
+          onComplete={onComplete}
+          onUpdate={handleUpdateTask}
+          onMove={handleMoveTask}
+          onDelete={onDelete}
+        />
       </>
     );
   };

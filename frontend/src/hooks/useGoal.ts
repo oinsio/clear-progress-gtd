@@ -4,10 +4,9 @@ import type { GoalStatus } from "@/types/common";
 import { GoalService } from "@/services/GoalService";
 import { GoalRepository } from "@/db/repositories/GoalRepository";
 import { TaskService } from "@/services/TaskService";
-import { TaskRepository } from "@/db/repositories/TaskRepository";
+import { defaultTaskService } from "@/services/defaultServices";
 
 const defaultGoalService = new GoalService(new GoalRepository());
-const defaultTaskService = new TaskService(new TaskRepository());
 
 export interface UseGoalReturn {
   goal: Goal | undefined;

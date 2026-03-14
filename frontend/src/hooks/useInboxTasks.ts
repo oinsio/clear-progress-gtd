@@ -1,10 +1,8 @@
 import { useState, useEffect, useCallback } from "react";
 import type { Task } from "@/types/entities";
 import { TaskService } from "@/services/TaskService";
-import { TaskRepository } from "@/db/repositories/TaskRepository";
+import { defaultTaskService } from "@/services/defaultServices";
 import { BOX } from "@/constants";
-
-const defaultTaskService = new TaskService(new TaskRepository());
 
 export interface UseInboxTasksReturn {
   tasks: Task[];

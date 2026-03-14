@@ -1,15 +1,20 @@
 import type { Task } from "@/types/entities";
+import type { Goal } from "@/types/entities";
+import type { Box } from "@/types/common";
 import { TaskItem } from "./TaskItem";
 
 const INBOX_EMPTY_MESSAGE = "Inbox is empty";
 
 interface TaskListProps {
   tasks: Task[];
+  goals: Goal[];
   onComplete: (id: string) => void;
-  onDelete: (id: string) => void; // kept for API compatibility
+  onUpdate: (id: string, changes: Partial<Task>) => Promise<void>;
+  onMove: (id: string, box: Box) => Promise<void>;
+  onDelete: (id: string) => void;
 }
 
-export function TaskList({ tasks, onComplete }: TaskListProps) {
+export function TaskList({ tasks, goals, onComplete, onUpdate, onMove }: TaskListProps) {
   if (tasks.length === 0) {
     return (
       <div
@@ -25,7 +30,13 @@ export function TaskList({ tasks, onComplete }: TaskListProps) {
     <ul data-testid="task-list">
       {tasks.map((task) => (
         <li key={task.id}>
-          <TaskItem task={task} onComplete={onComplete} />
+          <TaskItem
+            task={task}
+            goals={goals}
+            onComplete={onComplete}
+            onUpdate={onUpdate}
+            onMove={onMove}
+          />
         </li>
       ))}
     </ul>

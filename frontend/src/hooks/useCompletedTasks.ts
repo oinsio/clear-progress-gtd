@@ -1,9 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import type { Task } from "@/types/entities";
 import { TaskService } from "@/services/TaskService";
-import { TaskRepository } from "@/db/repositories/TaskRepository";
-
-const defaultTaskService = new TaskService(new TaskRepository());
+import { defaultTaskService } from "@/services/defaultServices";
 
 export interface UseCompletedTasksReturn {
   completedTasks: Task[];

@@ -13,12 +13,25 @@ function createMockTaskService(
     getByBox: vi.fn().mockResolvedValue([]),
     getById: vi.fn().mockResolvedValue(undefined),
     complete: vi.fn().mockResolvedValue(undefined),
-    uncomplete: vi.fn().mockResolvedValue(undefined),
+    noncomplete: vi.fn().mockResolvedValue(undefined),
     softDelete: vi.fn().mockResolvedValue(undefined),
     moveToBox: vi.fn().mockResolvedValue(undefined),
     create: vi.fn().mockResolvedValue(undefined),
+    update: vi.fn().mockResolvedValue(undefined),
     ...overrides,
   } as unknown as TaskService;
+}
+
+async function setup(
+  taskOverrides: Parameters<typeof buildTask>[0] = {},
+  serviceOverrides: Parameters<typeof createMockTaskService>[0] = {},
+) {
+  const task = buildTask({ box: "today", ...taskOverrides });
+  const mockGetByBox = vi.fn().mockResolvedValue([task]);
+  const service = createMockTaskService({ getByBox: mockGetByBox, ...serviceOverrides });
+  const { result } = renderHook(() => useTasks(BOX.TODAY, service));
+  await waitFor(() => expect(result.current.isLoading).toBe(false));
+  return { task, mockGetByBox, service, result };
 }
 
 describe("useTasks", () => {
@@ -61,68 +74,61 @@ describe("useTasks", () => {
   });
 
   it("should call complete and refresh when completeTask is called on an incomplete task", async () => {
-    const task = buildTask({ box: "today", is_completed: false });
-    const mockGetByBox = vi.fn().mockResolvedValue([task]);
-    mockTaskService = createMockTaskService({
-      getByBox: mockGetByBox,
-      getById: vi.fn().mockResolvedValue(task),
+    const { task, mockGetByBox, service, result } = await setup({ is_completed: false }, {
+      getById: vi.fn().mockImplementation(async () => task),
     });
-    const { result } = renderHook(() => useTasks(BOX.TODAY, mockTaskService));
-    await waitFor(() => expect(result.current.isLoading).toBe(false));
 
     await act(async () => {
       await result.current.completeTask(task.id);
     });
 
-    expect(mockTaskService.complete).toHaveBeenCalledWith(task.id);
+    expect(service.complete).toHaveBeenCalledWith(task.id);
     expect(mockGetByBox).toHaveBeenCalledTimes(2);
   });
 
-  it("should call uncomplete and refresh when completeTask is called on a completed task", async () => {
-    const task = buildTask({ box: "today", is_completed: true });
-    const mockGetByBox = vi.fn().mockResolvedValue([task]);
-    mockTaskService = createMockTaskService({
-      getByBox: mockGetByBox,
-      getById: vi.fn().mockResolvedValue(task),
+  it("should call noncomplete and refresh when completeTask is called on a completed task", async () => {
+    const { task, mockGetByBox, service, result } = await setup({ is_completed: true }, {
+      getById: vi.fn().mockImplementation(async () => task),
     });
-    const { result } = renderHook(() => useTasks(BOX.TODAY, mockTaskService));
-    await waitFor(() => expect(result.current.isLoading).toBe(false));
 
     await act(async () => {
       await result.current.completeTask(task.id);
     });
 
-    expect(mockTaskService.noncomplete).toHaveBeenCalledWith(task.id);
+    expect(service.noncomplete).toHaveBeenCalledWith(task.id);
     expect(mockGetByBox).toHaveBeenCalledTimes(2);
   });
 
   it("should call softDelete and refresh when deleteTask is called", async () => {
-    const task = buildTask({ box: "today" });
-    const mockGetByBox = vi.fn().mockResolvedValue([task]);
-    mockTaskService = createMockTaskService({ getByBox: mockGetByBox });
-    const { result } = renderHook(() => useTasks(BOX.TODAY, mockTaskService));
-    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    const { task, mockGetByBox, service, result } = await setup();
 
     await act(async () => {
       await result.current.deleteTask(task.id);
     });
 
-    expect(mockTaskService.softDelete).toHaveBeenCalledWith(task.id);
+    expect(service.softDelete).toHaveBeenCalledWith(task.id);
     expect(mockGetByBox).toHaveBeenCalledTimes(2);
   });
 
   it("should call moveToBox and refresh when moveTask is called", async () => {
-    const task = buildTask({ box: "today" });
-    const mockGetByBox = vi.fn().mockResolvedValue([task]);
-    mockTaskService = createMockTaskService({ getByBox: mockGetByBox });
-    const { result } = renderHook(() => useTasks(BOX.TODAY, mockTaskService));
-    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    const { task, mockGetByBox, service, result } = await setup();
 
     await act(async () => {
       await result.current.moveTask(task.id, BOX.WEEK);
     });
 
-    expect(mockTaskService.moveToBox).toHaveBeenCalledWith(task.id, BOX.WEEK);
+    expect(service.moveToBox).toHaveBeenCalledWith(task.id, BOX.WEEK);
+    expect(mockGetByBox).toHaveBeenCalledTimes(2);
+  });
+
+  it("should call update and refresh when updateTask is called", async () => {
+    const { task, mockGetByBox, service, result } = await setup();
+
+    await act(async () => {
+      await result.current.updateTask(task.id, { notes: "updated notes" });
+    });
+
+    expect(service.update).toHaveBeenCalledWith(task.id, { notes: "updated notes" });
     expect(mockGetByBox).toHaveBeenCalledTimes(2);
   });
 

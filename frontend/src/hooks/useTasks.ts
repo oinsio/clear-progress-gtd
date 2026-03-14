@@ -2,9 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import type { Task } from "@/types/entities";
 import type { Box } from "@/types/common";
 import { TaskService } from "@/services/TaskService";
-import { TaskRepository } from "@/db/repositories/TaskRepository";
-
-const defaultTaskService = new TaskService(new TaskRepository());
+import { defaultTaskService } from "@/services/defaultServices";
 
 export interface UseTasksReturn {
   tasks: Task[];
@@ -13,6 +11,8 @@ export interface UseTasksReturn {
   completeTask: (id: string) => Promise<void>;
   deleteTask: (id: string) => Promise<void>;
   moveTask: (id: string, box: Box) => Promise<void>;
+  updateTask: (id: string, changes: Partial<Task>) => Promise<void>;
+  reload: () => Promise<void>;
 }
 
 export function useTasks(
@@ -71,5 +71,13 @@ export function useTasks(
     [taskService, loadTasks],
   );
 
-  return { tasks, isLoading, createTask, completeTask, deleteTask, moveTask };
+  const updateTask = useCallback(
+    async (id: string, changes: Partial<Task>) => {
+      await taskService.update(id, changes);
+      await loadTasks();
+    },
+    [taskService, loadTasks],
+  );
+
+  return { tasks, isLoading, createTask, completeTask, deleteTask, moveTask, updateTask, reload: loadTasks };
 }
