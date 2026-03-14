@@ -6,10 +6,10 @@ const INBOX_EMPTY_MESSAGE = "Inbox is empty";
 interface TaskListProps {
   tasks: Task[];
   onComplete: (id: string) => void;
-  onDelete: (id: string) => void;
+  onDelete: (id: string) => void; // kept for API compatibility
 }
 
-export function TaskList({ tasks, onComplete, onDelete }: TaskListProps) {
+export function TaskList({ tasks, onComplete }: TaskListProps) {
   if (tasks.length === 0) {
     return (
       <div
@@ -25,7 +25,7 @@ export function TaskList({ tasks, onComplete, onDelete }: TaskListProps) {
     <ul data-testid="task-list">
       {tasks.map((task) => (
         <li key={task.id}>
-          <TaskItem task={task} onComplete={onComplete} onDelete={onDelete} />
+          <TaskItem task={task} onComplete={onComplete} />
         </li>
       ))}
     </ul>
