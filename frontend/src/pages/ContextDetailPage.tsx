@@ -1,8 +1,8 @@
 import { useState, useCallback, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, Tag, Plus } from "lucide-react";
-import { useCategoryTasks } from "@/hooks/useCategoryTasks";
-import { useCategories } from "@/hooks/useCategories";
+import { ArrowLeft, MapPin, Plus } from "lucide-react";
+import { useContextTasks } from "@/hooks/useContextTasks";
+import { useContexts } from "@/hooks/useContexts";
 import { useGoals } from "@/hooks/useGoals";
 import { usePanelSide } from "@/hooks/usePanelSide";
 import { TaskCreateSheet } from "@/components/tasks/TaskCreateSheet";
@@ -12,28 +12,37 @@ import { RightFilterPanel, type RightPanelMode } from "@/components/tasks/RightF
 import { BOX, ROUTES } from "@/constants";
 import type { Task } from "@/types/entities";
 import type { Box } from "@/types/common";
+import { TodayBoxIcon, WeekBoxIcon, LaterBoxIcon } from "@/components/tasks/BoxIcons";
+import * as React from "react";
 
-const CATEGORY_NOT_FOUND_MESSAGE = "Категория не найдена";
+const CONTEXT_NOT_FOUND_MESSAGE = "Контекст не найден";
+
+const BOX_SECTION_ICONS: Record<Box, React.FC<{ className?: string }>> = {
+  [BOX.INBOX]: ({ className }) => <MapPin className={className} />,
+  [BOX.TODAY]: TodayBoxIcon,
+  [BOX.WEEK]: WeekBoxIcon,
+  [BOX.LATER]: LaterBoxIcon,
+};
 
 // ── Main page ─────────────────────────────────────────────────────────────────
 
-export default function CategoryDetailPage() {
+export default function ContextDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
 
-  const { categories, updateCategory, deleteCategory } = useCategories();
+  const { contexts, updateContext, deleteContext } = useContexts();
   const { goals } = useGoals();
   const { panelSide } = usePanelSide();
   const { tasks, isLoading, createTask, completeTask, updateTask, moveTask, deleteTask } =
-    useCategoryTasks(id ?? "");
+    useContextTasks(id ?? "");
 
   const [isPanelOpen, setIsPanelOpen] = useState(false);
   const [isEditSheetOpen, setIsEditSheetOpen] = useState(false);
   const [isCreateTaskSheetOpen, setIsCreateTaskSheetOpen] = useState(false);
 
-  const category = useMemo(
-    () => categories.find((c) => c.id === id && !c.is_deleted),
-    [categories, id],
+  const context = useMemo(
+    () => contexts.find((c) => c.id === id && !c.is_deleted),
+    [contexts, id],
   );
 
   const tasksByBox = useMemo(() => {
@@ -49,19 +58,19 @@ export default function CategoryDetailPage() {
     return grouped;
   }, [tasks]);
 
-  const handleSaveCategory = useCallback(
+  const handleSaveContext = useCallback(
     async (name: string) => {
       if (!id) return;
-      await updateCategory(id, name);
+      await updateContext(id, name);
     },
-    [id, updateCategory],
+    [id, updateContext],
   );
 
-  const handleDeleteCategory = useCallback(async () => {
+  const handleDeleteContext = useCallback(async () => {
     if (!id) return;
-    await deleteCategory(id);
-    navigate(ROUTES.CATEGORIES);
-  }, [id, deleteCategory, navigate]);
+    await deleteContext(id);
+    navigate(ROUTES.CONTEXTS);
+  }, [id, deleteContext, navigate]);
 
   const handleCreateTask = useCallback(
     async (title: string, box: Box, notes: string) => {
@@ -77,21 +86,22 @@ export default function CategoryDetailPage() {
   const handleModeChange = useCallback(
     (newMode: RightPanelMode) => {
       if (newMode === "goals") navigate(ROUTES.GOALS);
+      else if (newMode === "categories") navigate(ROUTES.CATEGORIES);
       else if (newMode === "inbox" || newMode === "tasks" || newMode === "completed") navigate(ROUTES.INBOX);
     },
     [navigate],
   );
 
-  if (!isLoading && !category) {
+  if (!isLoading && !context) {
     return (
       <div className="flex items-center justify-center h-screen">
-        <p className="text-gray-400 text-sm">{CATEGORY_NOT_FOUND_MESSAGE}</p>
+        <p className="text-gray-400 text-sm">{CONTEXT_NOT_FOUND_MESSAGE}</p>
       </div>
     );
   }
 
   return (
-    <div data-testid="category-detail-page" className="flex h-screen overflow-hidden bg-white">
+    <div data-testid="context-detail-page" className="flex h-screen overflow-hidden bg-white">
       {/* Main content column */}
       <div className="flex flex-1 flex-col overflow-hidden">
         {/* Header */}
@@ -99,28 +109,28 @@ export default function CategoryDetailPage() {
           <button
             type="button"
             aria-label="Назад"
-            onClick={() => navigate(ROUTES.CATEGORIES)}
+            onClick={() => navigate(ROUTES.CONTEXTS)}
             className="w-8 h-8 flex items-center justify-center rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
           >
             <ArrowLeft className="w-5 h-5" />
           </button>
-          <h1 className="text-lg font-semibold text-accent">Категория</h1>
+          <h1 className="text-lg font-semibold text-accent">Контекст</h1>
         </header>
 
         {/* Scrollable content */}
         <main className="flex-1 overflow-y-auto">
-          {/* Category card */}
-          {category && (
+          {/* Context card */}
+          {context && (
             <button
               type="button"
-              data-testid="category-card"
+              data-testid="context-card"
               onClick={() => setIsEditSheetOpen(true)}
               className="w-full flex items-center gap-3 px-4 py-4 hover:bg-gray-50 active:bg-gray-100 transition-colors border-b border-gray-100"
             >
               <div className="w-9 h-9 rounded-xl bg-accent/10 flex items-center justify-center flex-shrink-0">
-                <Tag className="w-5 h-5 text-accent" />
+                <MapPin className="w-5 h-5 text-accent" />
               </div>
-              <span className="text-gray-800 font-medium">{category.name}</span>
+              <span className="text-gray-800 font-medium">{context.name}</span>
             </button>
           )}
 
@@ -150,36 +160,36 @@ export default function CategoryDetailPage() {
           </button>
         </div>
 
-        {/* Category edit sheet */}
-        {isEditSheetOpen && category && (
+        {/* Context edit sheet */}
+        {isEditSheetOpen && context && (
           <EntityEditSheet
-            testId="category-edit-sheet"
-            title="Редактировать категорию"
-            initialName={category.name}
-            namePlaceholder="Название категории"
-            deleteLabel="Удалить категорию"
-            nameInputTestId="category-edit-name-input"
-            onSave={handleSaveCategory}
-            onDelete={handleDeleteCategory}
+            testId="context-edit-sheet"
+            title="Редактировать контекст"
+            initialName={context.name}
+            namePlaceholder="Название контекста"
+            deleteLabel="Удалить контекст"
+            nameInputTestId="context-edit-name-input"
+            onSave={handleSaveContext}
+            onDelete={handleDeleteContext}
             onClose={() => setIsEditSheetOpen(false)}
           />
         )}
 
         {/* Task create sheet */}
-        {isCreateTaskSheetOpen && category && (
+        {isCreateTaskSheetOpen && context && (
           <TaskCreateSheet
-            entityLabel="Категория"
-            entityName={category.name}
-            entityIcon={Tag}
+            entityLabel="Контекст"
+            entityName={context.name}
+            entityIcon={BOX_SECTION_ICONS[BOX.INBOX]}
             onSave={handleCreateTask}
             onClose={() => setIsCreateTaskSheetOpen(false)}
           />
         )}
       </div>
 
-      {/* Right filter panel — full height */}
+      {/* Right filter panel */}
       <RightFilterPanel
-        mode="categories"
+        mode="contexts"
         isOpen={isPanelOpen}
         goals={goals}
         selectedGoalId={null}

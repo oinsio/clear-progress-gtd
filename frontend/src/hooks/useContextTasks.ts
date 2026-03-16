@@ -7,7 +7,7 @@ import { useTaskMutations } from "./useTaskMutations";
 
 const defaultTaskService = new TaskService(new TaskRepository());
 
-export interface UseCategoryTasksReturn {
+export interface UseContextTasksReturn {
   tasks: Task[];
   isLoading: boolean;
   createTask: (title: string, box: Box, notes?: string) => Promise<void>;
@@ -17,18 +17,18 @@ export interface UseCategoryTasksReturn {
   deleteTask: (id: string) => Promise<void>;
 }
 
-export function useCategoryTasks(
-  categoryId: string,
+export function useContextTasks(
+  contextId: string,
   taskService: TaskService = defaultTaskService,
-): UseCategoryTasksReturn {
+): UseContextTasksReturn {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   const loadTasks = useCallback(async () => {
-    const categoryTasks = await taskService.getByCategoryId(categoryId);
-    setTasks(categoryTasks);
+    const contextTasks = await taskService.getByContextId(contextId);
+    setTasks(contextTasks);
     setIsLoading(false);
-  }, [taskService, categoryId]);
+  }, [taskService, contextId]);
 
   useEffect(() => {
     setIsLoading(true);
@@ -37,10 +37,10 @@ export function useCategoryTasks(
 
   const createTask = useCallback(
     async (title: string, box: Box, notes = "") => {
-      await taskService.create({ title, box, notes, category_id: categoryId });
+      await taskService.create({ title, box, notes, context_id: contextId });
       await loadTasks();
     },
-    [taskService, loadTasks, categoryId],
+    [taskService, loadTasks, contextId],
   );
 
   const mutations = useTaskMutations(taskService, loadTasks);

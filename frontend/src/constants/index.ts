@@ -9,6 +9,8 @@ export const ROUTES = {
   GOAL: "/goals/:id",
   CATEGORIES: "/categories",
   CATEGORY: "/categories/:id",
+  CONTEXTS: "/contexts",
+  CONTEXT: "/contexts/:id",
   SEARCH: "/search",
   SETTINGS: "/settings",
   SETUP: "/setup",

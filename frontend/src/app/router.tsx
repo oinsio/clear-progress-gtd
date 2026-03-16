@@ -9,6 +9,8 @@ import GoalsPage from "@/pages/GoalsPage";
 import GoalPage from "@/pages/GoalPage";
 import CategoriesPage from "@/pages/CategoriesPage";
 import CategoryDetailPage from "@/pages/CategoryDetailPage";
+import ContextsPage from "@/pages/ContextsPage";
+import ContextDetailPage from "@/pages/ContextDetailPage";
 import SearchPage from "@/pages/SearchPage";
 import SettingsPage from "@/pages/SettingsPage";
 import SetupPage from "@/pages/SetupPage";
@@ -42,6 +44,14 @@ export const router = createBrowserRouter([
   {
     path: ROUTES.CATEGORY,
     element: <CategoryDetailPage />,
+  },
+  {
+    path: ROUTES.CONTEXTS,
+    element: <ContextsPage />,
+  },
+  {
+    path: ROUTES.CONTEXT,
+    element: <ContextDetailPage />,
   },
   {
     path: ROUTES.SETTINGS,

@@ -45,6 +45,14 @@ export class TaskRepository {
       .toArray();
   }
 
+  async getByContextId(contextId: string): Promise<Task[]> {
+    return db.tasks
+      .where("context_id")
+      .equals(contextId)
+      .filter((task) => !task.is_deleted && !task.is_completed)
+      .toArray();
+  }
+
   async create(task: Task): Promise<void> {
     await db.tasks.add(task);
   }

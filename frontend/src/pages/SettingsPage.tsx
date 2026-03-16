@@ -151,14 +151,11 @@ export default function SettingsPage() {
         mode={filterMode}
         isOpen={isPanelOpen}
         goals={[]}
-        contexts={[]}
         selectedGoalId={null}
-        selectedContextId={null}
         side={panelSide}
         onToggle={handlePanelToggle}
         onModeChange={handleModeChange}
         onGoalSelect={() => undefined}
-        onContextSelect={() => undefined}
       />
     </div>
   );

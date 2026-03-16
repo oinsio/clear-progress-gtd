@@ -4,7 +4,6 @@ import { BoxFilterBar } from "@/components/tasks/BoxFilterBar";
 import { RightFilterPanel, type RightPanelMode } from "@/components/tasks/RightFilterPanel";
 import { useTasks } from "@/hooks/useTasks";
 import { useGoals } from "@/hooks/useGoals";
-import { useContexts } from "@/hooks/useContexts";
 import { useCompletedTasks } from "@/hooks/useCompletedTasks";
 import { useSearch } from "@/hooks/useSearch";
 import { usePanelSide } from "@/hooks/usePanelSide";
@@ -129,7 +128,6 @@ export default function InboxPage() {
   const { tasks: weekTasks, completeTask: completeWeek, deleteTask: deleteWeek, createTask: createWeekTask, updateTask: updateWeek, moveTask: moveWeek, reorderTasks: reorderWeek, reload: reloadWeek } = useTasks(BOX.WEEK);
   const { tasks: laterTasks, completeTask: completeLater, deleteTask: deleteLater, createTask: createLaterTask, updateTask: updateLater, moveTask: moveLater, reorderTasks: reorderLater, reload: reloadLater } = useTasks(BOX.LATER);
   const { goals } = useGoals();
-  const { contexts } = useContexts();
   const { completedTasks, reload: reloadCompleted } = useCompletedTasks();
   const { results: searchResults, isSearching, search, clear: clearSearch } = useSearch();
   const { panelSide } = usePanelSide();
@@ -217,10 +215,6 @@ export default function InboxPage() {
 
   const handleGoalSelect = useCallback((goalId: string | null) => {
     setSelectedGoalId(goalId);
-  }, []);
-
-  const handleContextSelect = useCallback((contextId: string | null) => {
-    setSelectedContextId(contextId);
   }, []);
 
   const handleBoxChange = useCallback((box: BoxFilter) => {
@@ -517,14 +511,11 @@ export default function InboxPage() {
         mode={filterMode}
         isOpen={isPanelOpen}
         goals={goals}
-        contexts={contexts}
         selectedGoalId={selectedGoalId}
-        selectedContextId={selectedContextId}
         side={panelSide}
         onToggle={handlePanelToggle}
         onModeChange={handleModeChange}
         onGoalSelect={handleGoalSelect}
-        onContextSelect={handleContextSelect}
       />
     </div>
   );

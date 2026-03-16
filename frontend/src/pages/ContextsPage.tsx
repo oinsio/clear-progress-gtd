@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect } from "react";
-import { Tag, Plus, GripVertical } from "lucide-react";
+import { MapPin, Plus, GripVertical } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import {
   DndContext,
@@ -14,7 +14,7 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { RightFilterPanel, type RightPanelMode } from "@/components/tasks/RightFilterPanel";
-import { useCategories } from "@/hooks/useCategories";
+import { useContexts } from "@/hooks/useContexts";
 import { useGoals } from "@/hooks/useGoals";
 import { useTasks } from "@/hooks/useTasks";
 import { usePanelSide } from "@/hooks/usePanelSide";
@@ -22,20 +22,23 @@ import { useDndSensors } from "@/hooks/useDndSensors";
 import { useInlineAdd } from "@/hooks/useInlineAdd";
 import { BOX, ROUTES } from "@/constants";
 import { cn } from "@/shared/lib/cn";
-import type { Category } from "@/types/entities";
+import type { Context } from "@/types/entities";
 import { TaskService } from "@/services/TaskService";
 import { TaskRepository } from "@/db/repositories/TaskRepository";
 
 const defaultTaskService = new TaskService(new TaskRepository());
 
+const EMPTY_CONTEXTS_MESSAGE = "Нет ни одного контекста";
+const ADD_CONTEXT_PLACEHOLDER = "Название контекста...";
+const ADD_TASK_PLACEHOLDER = "Название задачи...";
 const TASK_COUNT_LABEL = "Задач:";
 
-function SortableCategoryItem({
-  category,
+function SortableContextItem({
+  context,
   taskCount,
   onNavigate,
 }: {
-  category: Category;
+  context: Context;
   taskCount: number;
   onNavigate: (id: string) => void;
 }) {
@@ -47,7 +50,7 @@ function SortableCategoryItem({
     transform,
     transition,
     isDragging,
-  } = useSortable({ id: category.id });
+  } = useSortable({ id: context.id });
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -63,10 +66,10 @@ function SortableCategoryItem({
     >
       <button
         type="button"
-        onClick={() => onNavigate(category.id)}
+        onClick={() => onNavigate(context.id)}
         className="flex-1 text-left px-4 py-3 hover:bg-gray-50 transition-colors"
       >
-        <span className="text-gray-800 text-sm">{category.name}</span>
+        <span className="text-gray-800 text-sm">{context.name}</span>
         {taskCount > 0 && (
           <span className="block text-xs text-gray-400 mt-0.5">
             {TASK_COUNT_LABEL} {taskCount}
@@ -78,7 +81,7 @@ function SortableCategoryItem({
         ref={setActivatorNodeRef}
         {...attributes}
         {...listeners}
-        aria-label="Перетащить категорию"
+        aria-label="Перетащить контекст"
         className="flex-shrink-0 px-3 py-3 text-gray-300 hover:text-gray-400 touch-none cursor-grab active:cursor-grabbing"
       >
         <GripVertical className="w-4 h-4" aria-hidden="true" />
@@ -87,12 +90,8 @@ function SortableCategoryItem({
   );
 }
 
-const EMPTY_CATEGORIES_MESSAGE = "Нет ни одной категории";
-const ADD_CATEGORY_PLACEHOLDER = "Название категории...";
-const ADD_TASK_PLACEHOLDER = "Название задачи...";
-
-export default function CategoriesPage() {
-  const { categories, isLoading, createCategory, reorderCategories } = useCategories();
+export default function ContextsPage() {
+  const { contexts, isLoading, createContext, reorderContexts } = useContexts();
   const { goals } = useGoals();
   const { createTask } = useTasks(BOX.INBOX);
   const { panelSide } = usePanelSide();
@@ -100,17 +99,17 @@ export default function CategoriesPage() {
 
   const sensors = useDndSensors();
 
-  const [categoryTaskCounts, setCategoryTaskCounts] = useState<Record<string, number>>({});
+  const [contextTaskCounts, setContextTaskCounts] = useState<Record<string, number>>({});
   const [isPanelOpen, setIsPanelOpen] = useState(false);
 
   const {
-    isAdding: isAddingCategory,
-    setIsAdding: setIsAddingCategory,
-    value: newCategoryName,
-    setValue: setNewCategoryName,
-    handleKeyDown: handleAddCategoryKeyDown,
-    handleBlur: handleAddCategoryBlur,
-  } = useInlineAdd(createCategory);
+    isAdding: isAddingContext,
+    setIsAdding: setIsAddingContext,
+    value: newContextName,
+    setValue: setNewContextName,
+    handleKeyDown: handleAddContextKeyDown,
+    handleBlur: handleAddContextBlur,
+  } = useInlineAdd(createContext);
 
   const {
     isAdding: isAddingTask,
@@ -121,10 +120,10 @@ export default function CategoriesPage() {
     handleBlur: handleAddTaskBlur,
   } = useInlineAdd(createTask);
 
-  const activeCategories = categories.filter((category) => !category.is_deleted);
+  const activeContexts = contexts.filter((context) => !context.is_deleted);
 
   useEffect(() => {
-    void defaultTaskService.getCategoryTaskCounts().then(setCategoryTaskCounts);
+    void defaultTaskService.getContextTaskCounts().then(setContextTaskCounts);
   }, []);
 
   const handlePanelToggle = useCallback(() => {
@@ -135,36 +134,37 @@ export default function CategoriesPage() {
     (event: DragEndEvent) => {
       const { active, over } = event;
       if (!over || active.id === over.id) return;
-      const oldIndex = activeCategories.findIndex((c) => c.id === active.id);
-      const newIndex = activeCategories.findIndex((c) => c.id === over.id);
-      const reordered = arrayMove(activeCategories, oldIndex, newIndex);
-      void reorderCategories(reordered);
+      const oldIndex = activeContexts.findIndex((c) => c.id === active.id);
+      const newIndex = activeContexts.findIndex((c) => c.id === over.id);
+      const reordered = arrayMove(activeContexts, oldIndex, newIndex);
+      void reorderContexts(reordered);
     },
-    [activeCategories, reorderCategories],
+    [activeContexts, reorderContexts],
   );
 
   const handleModeChange = useCallback(
     (newMode: RightPanelMode) => {
       if (newMode === "goals") navigate(ROUTES.GOALS);
+      else if (newMode === "categories") navigate(ROUTES.CATEGORIES);
       else if (newMode === "inbox" || newMode === "tasks" || newMode === "completed") navigate(ROUTES.INBOX);
     },
     [navigate],
   );
 
   return (
-    <div data-testid="categories-page" className="flex h-screen overflow-hidden bg-white">
+    <div data-testid="contexts-page" className="flex h-screen overflow-hidden bg-white">
       {/* Main content column */}
       <div className="flex flex-1 flex-col overflow-hidden">
         {/* Header */}
         <header className="px-4 py-3 border-b border-gray-100">
-          <h1 className="text-lg font-semibold text-accent">Категории</h1>
+          <h1 className="text-lg font-semibold text-accent">Контексты</h1>
         </header>
 
-        {/* Scrollable category list */}
+        {/* Scrollable context list */}
         <main className="flex-1 overflow-y-auto">
-          {!isLoading && activeCategories.length === 0 && !isAddingCategory ? (
-            <div className="flex flex-col items-center py-3" data-testid="empty-categories-message">
-              <p className="text-gray-400 text-sm">{EMPTY_CATEGORIES_MESSAGE}</p>
+          {!isLoading && activeContexts.length === 0 && !isAddingContext ? (
+            <div className="flex flex-col items-center py-3" data-testid="empty-contexts-message">
+              <p className="text-gray-400 text-sm">{EMPTY_CONTEXTS_MESSAGE}</p>
             </div>
           ) : (
             <DndContext
@@ -173,32 +173,32 @@ export default function CategoriesPage() {
               onDragEnd={handleDragEnd}
             >
               <SortableContext
-                items={activeCategories.map((c) => c.id)}
+                items={activeContexts.map((c) => c.id)}
                 strategy={verticalListSortingStrategy}
               >
                 <ul>
-                  {activeCategories.map((category) => (
-                    <SortableCategoryItem
-                      key={category.id}
-                      category={category}
-                      taskCount={categoryTaskCounts[category.id] ?? 0}
-                      onNavigate={(id) => navigate(`/categories/${id}`)}
+                  {activeContexts.map((context) => (
+                    <SortableContextItem
+                      key={context.id}
+                      context={context}
+                      taskCount={contextTaskCounts[context.id] ?? 0}
+                      onNavigate={(id) => navigate(`/contexts/${id}`)}
                     />
                   ))}
 
-                  {/* Inline add category input */}
-                  {isAddingCategory && (
+                  {/* Inline add context input */}
+                  {isAddingContext && (
                     <li className="px-4 py-3 border-b border-gray-100">
                       <input
                         type="text"
                         autoFocus
-                        value={newCategoryName}
-                        onChange={(event) => setNewCategoryName(event.target.value)}
-                        onKeyDown={handleAddCategoryKeyDown}
-                        onBlur={handleAddCategoryBlur}
-                        placeholder={ADD_CATEGORY_PLACEHOLDER}
+                        value={newContextName}
+                        onChange={(event) => setNewContextName(event.target.value)}
+                        onKeyDown={handleAddContextKeyDown}
+                        onBlur={handleAddContextBlur}
+                        placeholder={ADD_CONTEXT_PLACEHOLDER}
                         className="w-full text-sm outline-none placeholder:text-gray-400"
-                        data-testid="add-category-input"
+                        data-testid="add-context-input"
                       />
                     </li>
                   )}
@@ -232,15 +232,15 @@ export default function CategoriesPage() {
             panelSide === "left" && "flex-row-reverse",
           )}
         >
-          {/* Add category button */}
+          {/* Add context button */}
           <button
             type="button"
-            aria-label="Добавить категорию"
-            data-testid="add-category-button"
-            onClick={() => setIsAddingCategory(true)}
+            aria-label="Добавить контекст"
+            data-testid="add-context-button"
+            onClick={() => setIsAddingContext(true)}
             className="relative flex items-center justify-center w-10 h-10 rounded-full text-accent hover:bg-accent/10 active:bg-accent/20 transition-colors"
           >
-            <Tag className="w-5 h-5" aria-hidden="true" />
+            <MapPin className="w-5 h-5" aria-hidden="true" />
             <Plus
               className="w-3 h-3 absolute bottom-1 right-1"
               aria-hidden="true"
@@ -260,9 +260,9 @@ export default function CategoriesPage() {
         </div>
       </div>
 
-      {/* Right filter panel — full height */}
+      {/* Right filter panel */}
       <RightFilterPanel
-        mode="categories"
+        mode="contexts"
         isOpen={isPanelOpen}
         goals={goals}
         selectedGoalId={null}

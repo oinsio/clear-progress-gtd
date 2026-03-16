@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/shared/lib/cn";
-import type { Goal, Context } from "@/types/entities";
+import type { Goal } from "@/types/entities";
 import type { PanelSide } from "@/types/common";
 import { ROUTES } from "@/constants";
 import * as React from "react";
@@ -37,7 +37,7 @@ interface FilterItem {
 
 const FILTER_ITEMS: FilterItem[] = [
   { mode: "inbox", label: "Входящие", Icon: Inbox },
-  { mode: "contexts", label: "Контексты", Icon: MapPin },
+  { mode: "contexts", label: "Контексты", Icon: MapPin, route: ROUTES.CONTEXTS },
   { mode: "categories", label: "Категории", Icon: Tag, route: ROUTES.CATEGORIES },
   { mode: "goals", label: "Цели", Icon: Target },
   { mode: "tasks", label: "Задачи", Icon: CheckSquare },
@@ -106,37 +106,28 @@ interface RightFilterPanelProps {
   mode: RightPanelMode;
   isOpen: boolean;
   goals: Goal[];
-  contexts: Context[];
   selectedGoalId: string | null;
-  selectedContextId: string | null;
   side?: PanelSide;
   onToggle: () => void;
   onModeChange: (mode: RightPanelMode) => void;
   onGoalSelect: (id: string | null) => void;
-  onContextSelect: (id: string | null) => void;
 }
 
 export function RightFilterPanel({
   mode,
   isOpen,
   goals,
-  contexts,
   selectedGoalId,
-  selectedContextId,
   side = "right",
   onToggle,
   onModeChange,
   onGoalSelect,
-  onContextSelect,
 }: RightFilterPanelProps) {
   const navigate = useNavigate();
 
   const activeGoals = goals.filter((goal) => !goal.is_deleted);
-  const activeContexts = contexts.filter((context) => !context.is_deleted);
 
-  const showSubList =
-    isOpen &&
-    (mode === "goals" || mode === "contexts");
+  const showSubList = isOpen && mode === "goals";
 
   const isLeft = side === "left";
   const panelBorder = isLeft ? "border-r border-accent/70" : "border-l border-accent/70";
@@ -150,26 +141,14 @@ export function RightFilterPanel({
         isLeft && "order-first flex-row-reverse",
       )}
     >
-      {/* Sub-list for goals / contexts / categories */}
-      {showSubList && mode === "goals" && (
+      {/* Sub-list for goals */}
+      {showSubList && (
         <SubListPanel
           items={activeGoals.map((goal) => ({ id: goal.id, label: goal.title }))}
           allLabel="Все цели"
           selectedId={selectedGoalId}
           side={side}
           onSelect={onGoalSelect}
-        />
-      )}
-      {showSubList && mode === "contexts" && (
-        <SubListPanel
-          items={activeContexts.map((context) => ({
-            id: context.id,
-            label: context.name,
-          }))}
-          allLabel="Все контексты"
-          selectedId={selectedContextId}
-          side={side}
-          onSelect={onContextSelect}
         />
       )}
       {/* Main panel */}

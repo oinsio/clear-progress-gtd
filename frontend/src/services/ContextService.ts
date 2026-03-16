@@ -38,6 +38,18 @@ export class ContextService {
     return this.applyChanges(id, { is_deleted: true });
   }
 
+  async reorderContexts(orderedContexts: Context[]): Promise<void> {
+    if (orderedContexts.length === 0) return;
+    const now = new Date().toISOString();
+    const updated = orderedContexts.map((context, index) => ({
+      ...context,
+      sort_order: index,
+      updated_at: now,
+      version: context.version + 1,
+    }));
+    await this.contextRepository.bulkUpsert(updated);
+  }
+
   private async applyChanges(
     id: string,
     changes: Partial<Context>,

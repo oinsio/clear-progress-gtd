@@ -11,6 +11,7 @@ export interface UseContextsReturn {
   createContext: (name: string) => Promise<void>;
   updateContext: (id: string, name: string) => Promise<void>;
   deleteContext: (id: string) => Promise<void>;
+  reorderContexts: (orderedContexts: Context[]) => Promise<void>;
 }
 
 export function useContexts(
@@ -53,5 +54,13 @@ export function useContexts(
     [contextService, loadContexts],
   );
 
-  return { contexts, isLoading, createContext, updateContext, deleteContext };
+  const reorderContexts = useCallback(
+    async (orderedContexts: Context[]) => {
+      await contextService.reorderContexts(orderedContexts);
+      await loadContexts();
+    },
+    [contextService, loadContexts],
+  );
+
+  return { contexts, isLoading, createContext, updateContext, deleteContext, reorderContexts };
 }
