@@ -7,6 +7,8 @@ import WeekPage from "@/pages/WeekPage";
 import LaterPage from "@/pages/LaterPage";
 import GoalsPage from "@/pages/GoalsPage";
 import GoalPage from "@/pages/GoalPage";
+import CategoriesPage from "@/pages/CategoriesPage";
+import CategoryDetailPage from "@/pages/CategoryDetailPage";
 import SearchPage from "@/pages/SearchPage";
 import SettingsPage from "@/pages/SettingsPage";
 import SetupPage from "@/pages/SetupPage";
@@ -32,6 +34,14 @@ export const router = createBrowserRouter([
   {
     path: ROUTES.INBOX,
     element: <InboxPage />,
+  },
+  {
+    path: ROUTES.CATEGORIES,
+    element: <CategoriesPage />,
+  },
+  {
+    path: ROUTES.CATEGORY,
+    element: <CategoryDetailPage />,
   },
   {
     path: ROUTES.SETTINGS,

@@ -7,6 +7,8 @@ export const ROUTES = {
   LATER: "/later",
   GOALS: "/goals",
   GOAL: "/goals/:id",
+  CATEGORIES: "/categories",
+  CATEGORY: "/categories/:id",
   SEARCH: "/search",
   SETTINGS: "/settings",
   SETUP: "/setup",
@@ -31,14 +33,6 @@ export const BOX_FILTER_LABELS: Record<BoxFilter, string> = {
   week: "Неделя",
   later: "Позже",
 };
-
-export const BOX_FILTER_ORDER: BoxFilter[] = [
-  "all",
-  "inbox",
-  "today",
-  "week",
-  "later",
-];
 
 export const TASK_BOX_FILTER_ORDER: BoxFilter[] = ["today", "week", "later", "all"];
 

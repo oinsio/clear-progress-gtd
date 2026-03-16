@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/shared/lib/cn";
-import type { Goal, Context, Category } from "@/types/entities";
+import type { Goal, Context } from "@/types/entities";
 import type { PanelSide } from "@/types/common";
 import { ROUTES } from "@/constants";
 import * as React from "react";
@@ -32,12 +32,13 @@ interface FilterItem {
   mode: Exclude<RightPanelMode, "search" | null>;
   label: string;
   Icon: React.ElementType;
+  route?: string;
 }
 
 const FILTER_ITEMS: FilterItem[] = [
   { mode: "inbox", label: "Входящие", Icon: Inbox },
   { mode: "contexts", label: "Контексты", Icon: MapPin },
-  { mode: "categories", label: "Категории", Icon: Tag },
+  { mode: "categories", label: "Категории", Icon: Tag, route: ROUTES.CATEGORIES },
   { mode: "goals", label: "Цели", Icon: Target },
   { mode: "tasks", label: "Задачи", Icon: CheckSquare },
   { mode: "completed", label: "Завершённые", Icon: CheckCheck },
@@ -106,16 +107,13 @@ interface RightFilterPanelProps {
   isOpen: boolean;
   goals: Goal[];
   contexts: Context[];
-  categories: Category[];
   selectedGoalId: string | null;
   selectedContextId: string | null;
-  selectedCategoryId: string | null;
   side?: PanelSide;
   onToggle: () => void;
   onModeChange: (mode: RightPanelMode) => void;
   onGoalSelect: (id: string | null) => void;
   onContextSelect: (id: string | null) => void;
-  onCategorySelect: (id: string | null) => void;
 }
 
 export function RightFilterPanel({
@@ -123,26 +121,22 @@ export function RightFilterPanel({
   isOpen,
   goals,
   contexts,
-  categories,
   selectedGoalId,
   selectedContextId,
-  selectedCategoryId,
   side = "right",
   onToggle,
   onModeChange,
   onGoalSelect,
   onContextSelect,
-  onCategorySelect,
 }: RightFilterPanelProps) {
   const navigate = useNavigate();
 
   const activeGoals = goals.filter((goal) => !goal.is_deleted);
   const activeContexts = contexts.filter((context) => !context.is_deleted);
-  const activeCategories = categories.filter((category) => !category.is_deleted);
 
   const showSubList =
     isOpen &&
-    (mode === "goals" || mode === "contexts" || mode === "categories");
+    (mode === "goals" || mode === "contexts");
 
   const isLeft = side === "left";
   const panelBorder = isLeft ? "border-r border-accent/70" : "border-l border-accent/70";
@@ -178,19 +172,6 @@ export function RightFilterPanel({
           onSelect={onContextSelect}
         />
       )}
-      {showSubList && mode === "categories" && (
-        <SubListPanel
-          items={activeCategories.map((category) => ({
-            id: category.id,
-            label: category.name,
-          }))}
-          allLabel="Все категории"
-          selectedId={selectedCategoryId}
-          side={side}
-          onSelect={onCategorySelect}
-        />
-      )}
-
       {/* Main panel */}
       {isOpen ? (
         <div className={cn("w-52 flex flex-col bg-accent overflow-hidden", panelBorder)}>
@@ -208,7 +189,7 @@ export function RightFilterPanel({
 
           {/* Filter items */}
           <nav className="flex-1 px-2 py-2 overflow-y-auto" aria-label="Фильтры задач">
-            {FILTER_ITEMS.map(({ mode: itemMode, label, Icon }) => {
+            {FILTER_ITEMS.map(({ mode: itemMode, label, Icon, route }) => {
               const isActive = mode === itemMode;
               return (
                 <button
@@ -217,7 +198,7 @@ export function RightFilterPanel({
                   aria-label={label}
                   aria-pressed={isActive}
                   data-testid={`right-filter-${itemMode}`}
-                  onClick={() => onModeChange(isActive ? null : itemMode)}
+                  onClick={() => (route ? navigate(route) : onModeChange(isActive ? null : itemMode))}
                   className={cn(
                     "w-full flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-medium transition-colors text-left",
                     isActive
@@ -289,7 +270,7 @@ export function RightFilterPanel({
 
           {/* All filter icons */}
           <nav className="flex-1 flex flex-col items-center gap-1 py-1 overflow-y-auto" aria-label="Фильтры задач">
-            {FILTER_ITEMS.map(({ mode: itemMode, label, Icon }) => {
+            {FILTER_ITEMS.map(({ mode: itemMode, label, Icon, route }) => {
               const isActive = mode === itemMode;
               return (
                 <button
@@ -298,7 +279,7 @@ export function RightFilterPanel({
                   aria-label={label}
                   aria-pressed={isActive}
                   data-testid={`right-filter-${itemMode}`}
-                  onClick={() => onModeChange(isActive ? null : itemMode)}
+                  onClick={() => (route ? navigate(route) : onModeChange(isActive ? null : itemMode))}
                   className={cn(
                     "w-10 h-10 rounded-xl flex items-center justify-center transition-colors flex-shrink-0",
                     isActive

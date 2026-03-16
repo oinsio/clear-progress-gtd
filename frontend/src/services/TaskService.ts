@@ -120,6 +120,22 @@ export class TaskService {
     return tasks.sort((taskA, taskB) => taskA.sort_order - taskB.sort_order);
   }
 
+  async getCategoryTaskCounts(): Promise<Record<string, number>> {
+    const tasks = await this.taskRepository.getActiveIncomplete();
+    const counts: Record<string, number> = {};
+    for (const task of tasks) {
+      if (task.category_id) {
+        counts[task.category_id] = (counts[task.category_id] ?? 0) + 1;
+      }
+    }
+    return counts;
+  }
+
+  async getByCategoryId(categoryId: string): Promise<Task[]> {
+    const tasks = await this.taskRepository.getByCategoryId(categoryId);
+    return tasks.sort((taskA, taskB) => taskA.sort_order - taskB.sort_order);
+  }
+
   async searchByTitle(query: string): Promise<Task[]> {
     const allTasks = await this.taskRepository.getActive();
     const lowerQuery = query.toLowerCase();

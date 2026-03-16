@@ -152,16 +152,13 @@ export default function SettingsPage() {
         isOpen={isPanelOpen}
         goals={[]}
         contexts={[]}
-        categories={[]}
         selectedGoalId={null}
         selectedContextId={null}
-        selectedCategoryId={null}
         side={panelSide}
         onToggle={handlePanelToggle}
         onModeChange={handleModeChange}
         onGoalSelect={() => undefined}
         onContextSelect={() => undefined}
-        onCategorySelect={() => undefined}
       />
     </div>
   );

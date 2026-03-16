@@ -38,6 +38,18 @@ export class CategoryService {
     return this.applyChanges(id, { is_deleted: true });
   }
 
+  async reorderCategories(orderedCategories: Category[]): Promise<void> {
+    if (orderedCategories.length === 0) return;
+    const now = new Date().toISOString();
+    const updated = orderedCategories.map((category, index) => ({
+      ...category,
+      sort_order: index,
+      updated_at: now,
+      version: category.version + 1,
+    }));
+    await this.categoryRepository.bulkUpsert(updated);
+  }
+
   private async applyChanges(
     id: string,
     changes: Partial<Category>,

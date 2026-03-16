@@ -31,6 +31,20 @@ export class TaskRepository {
       .toArray();
   }
 
+  async getActiveIncomplete(): Promise<Task[]> {
+    return db.tasks
+      .filter((task) => !task.is_deleted && !task.is_completed)
+      .toArray();
+  }
+
+  async getByCategoryId(categoryId: string): Promise<Task[]> {
+    return db.tasks
+      .where("category_id")
+      .equals(categoryId)
+      .filter((task) => !task.is_deleted && !task.is_completed)
+      .toArray();
+  }
+
   async create(task: Task): Promise<void> {
     await db.tasks.add(task);
   }

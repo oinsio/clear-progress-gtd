@@ -5,7 +5,6 @@ import { RightFilterPanel, type RightPanelMode } from "@/components/tasks/RightF
 import { useTasks } from "@/hooks/useTasks";
 import { useGoals } from "@/hooks/useGoals";
 import { useContexts } from "@/hooks/useContexts";
-import { useCategories } from "@/hooks/useCategories";
 import { useCompletedTasks } from "@/hooks/useCompletedTasks";
 import { useSearch } from "@/hooks/useSearch";
 import { usePanelSide } from "@/hooks/usePanelSide";
@@ -131,7 +130,6 @@ export default function InboxPage() {
   const { tasks: laterTasks, completeTask: completeLater, deleteTask: deleteLater, createTask: createLaterTask, updateTask: updateLater, moveTask: moveLater, reorderTasks: reorderLater, reload: reloadLater } = useTasks(BOX.LATER);
   const { goals } = useGoals();
   const { contexts } = useContexts();
-  const { categories } = useCategories();
   const { completedTasks, reload: reloadCompleted } = useCompletedTasks();
   const { results: searchResults, isSearching, search, clear: clearSearch } = useSearch();
   const { panelSide } = usePanelSide();
@@ -223,10 +221,6 @@ export default function InboxPage() {
 
   const handleContextSelect = useCallback((contextId: string | null) => {
     setSelectedContextId(contextId);
-  }, []);
-
-  const handleCategorySelect = useCallback((categoryId: string | null) => {
-    setSelectedCategoryId(categoryId);
   }, []);
 
   const handleBoxChange = useCallback((box: BoxFilter) => {
@@ -524,16 +518,13 @@ export default function InboxPage() {
         isOpen={isPanelOpen}
         goals={goals}
         contexts={contexts}
-        categories={categories}
         selectedGoalId={selectedGoalId}
         selectedContextId={selectedContextId}
-        selectedCategoryId={selectedCategoryId}
         side={panelSide}
         onToggle={handlePanelToggle}
         onModeChange={handleModeChange}
         onGoalSelect={handleGoalSelect}
         onContextSelect={handleContextSelect}
-        onCategorySelect={handleCategorySelect}
       />
     </div>
   );

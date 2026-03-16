@@ -11,6 +11,7 @@ export interface UseCategoriesReturn {
   createCategory: (name: string) => Promise<void>;
   updateCategory: (id: string, name: string) => Promise<void>;
   deleteCategory: (id: string) => Promise<void>;
+  reorderCategories: (orderedCategories: Category[]) => Promise<void>;
 }
 
 export function useCategories(
@@ -53,5 +54,13 @@ export function useCategories(
     [categoryService, loadCategories],
   );
 
-  return { categories, isLoading, createCategory, updateCategory, deleteCategory };
+  const reorderCategories = useCallback(
+    async (orderedCategories: Category[]) => {
+      await categoryService.reorderCategories(orderedCategories);
+      await loadCategories();
+    },
+    [categoryService, loadCategories],
+  );
+
+  return { categories, isLoading, createCategory, updateCategory, deleteCategory, reorderCategories };
 }
