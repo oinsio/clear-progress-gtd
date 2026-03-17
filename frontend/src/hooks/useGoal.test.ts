@@ -5,6 +5,7 @@ import type { GoalService } from "@/services/GoalService";
 import type { TaskService } from "@/services/TaskService";
 import { buildGoal } from "@/test/factories/goalFactory";
 import { buildTask } from "@/test/factories/taskFactory";
+import { createMockTaskService } from "@/test/mocks/taskServiceMock";
 
 function createMockGoalService(
   overrides: Partial<Record<keyof GoalService, unknown>> = {},
@@ -16,15 +17,6 @@ function createMockGoalService(
     softDelete: vi.fn().mockResolvedValue(undefined),
     ...overrides,
   } as unknown as GoalService;
-}
-
-function createMockTaskService(
-  overrides: Partial<Record<keyof TaskService, unknown>> = {},
-): TaskService {
-  return {
-    getByGoalId: vi.fn().mockResolvedValue([]),
-    ...overrides,
-  } as unknown as TaskService;
 }
 
 describe("useGoal", () => {

@@ -3,15 +3,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { useSearch } from "./useSearch";
 import type { TaskService } from "@/services/TaskService";
 import { buildTask } from "@/test/factories/taskFactory";
-
-function createMockTaskService(
-  overrides: Partial<Record<keyof TaskService, unknown>> = {},
-): TaskService {
-  return {
-    searchByTitle: vi.fn().mockResolvedValue([]),
-    ...overrides,
-  } as unknown as TaskService;
-}
+import { createMockTaskService } from "@/test/mocks/taskServiceMock";
 
 describe("useSearch", () => {
   let mockTaskService: TaskService;

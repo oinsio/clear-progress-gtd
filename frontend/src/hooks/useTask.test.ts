@@ -4,19 +4,7 @@ import { useTask } from "./useTask";
 import type { TaskService } from "@/services/TaskService";
 import { buildTask } from "@/test/factories/taskFactory";
 import { BOX } from "@/constants";
-
-function createMockTaskService(
-  overrides: Partial<Record<keyof TaskService, unknown>> = {},
-): TaskService {
-  return {
-    getById: vi.fn().mockResolvedValue(undefined),
-    update: vi.fn().mockResolvedValue(undefined),
-    complete: vi.fn().mockResolvedValue(undefined),
-    softDelete: vi.fn().mockResolvedValue(undefined),
-    moveToBox: vi.fn().mockResolvedValue(undefined),
-    ...overrides,
-  } as unknown as TaskService;
-}
+import { createMockTaskService } from "@/test/mocks/taskServiceMock";
 
 describe("useTask", () => {
   let mockTaskService: TaskService;

@@ -11,9 +11,13 @@ function createMockTaskRepository(
   return {
     getAll: vi.fn().mockResolvedValue([]),
     getActive: vi.fn().mockResolvedValue([]),
+    getActiveIncomplete: vi.fn().mockResolvedValue([]),
     getByBox: vi.fn().mockResolvedValue([]),
     getById: vi.fn().mockResolvedValue(undefined),
     getByGoalId: vi.fn().mockResolvedValue([]),
+    getCompleted: vi.fn().mockResolvedValue([]),
+    getByCategoryId: vi.fn().mockResolvedValue([]),
+    getByContextId: vi.fn().mockResolvedValue([]),
     create: vi.fn().mockResolvedValue(undefined),
     update: vi.fn().mockResolvedValue(undefined),
     bulkUpsert: vi.fn().mockResolvedValue(undefined),
@@ -129,6 +133,35 @@ describe("TaskService", () => {
       expect(task.id).toMatch(
         /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i,
       );
+    });
+
+    it("should create task with empty string defaults for optional fields", async () => {
+      const taskService = new TaskService(mockTaskRepository);
+      const task = await taskService.create({ title: "My task", box: "inbox" });
+      expect(task.notes).toBe("");
+      expect(task.goal_id).toBe("");
+      expect(task.context_id).toBe("");
+      expect(task.category_id).toBe("");
+      expect(task.completed_at).toBe("");
+      expect(task.repeat_rule).toBe("");
+    });
+
+    it("should create task with is_completed false", async () => {
+      const taskService = new TaskService(mockTaskRepository);
+      const task = await taskService.create({ title: "My task", box: "inbox" });
+      expect(task.is_completed).toBe(false);
+    });
+
+    it("should create task with sort_order 0 by default", async () => {
+      const taskService = new TaskService(mockTaskRepository);
+      const task = await taskService.create({ title: "My task", box: "inbox" });
+      expect(task.sort_order).toBe(0);
+    });
+
+    it("should call repository.create with the constructed task", async () => {
+      const taskService = new TaskService(mockTaskRepository);
+      const task = await taskService.create({ title: "My task", box: "inbox" });
+      expect(mockTaskRepository.create).toHaveBeenCalledWith(task);
     });
   });
 
@@ -253,6 +286,18 @@ describe("TaskService", () => {
       expect(createdTask.id).not.toBe(task.id);
     });
 
+    it("should not call repository.update when task not found", async () => {
+      const task = buildTask();
+      mockTaskRepository = createMockTaskRepository({
+        getById: vi.fn()
+          .mockResolvedValueOnce(undefined)
+          .mockResolvedValueOnce(task),
+      });
+      const taskService = new TaskService(mockTaskRepository);
+      await expect(taskService.complete("nonexistent")).rejects.toThrow();
+      expect(mockTaskRepository.update).not.toHaveBeenCalled();
+    });
+
     it("should create recurring copy with version 1", async () => {
       const task = buildTask({
         version: 5,
@@ -310,6 +355,18 @@ describe("TaskService", () => {
       await expect(taskService.noncomplete("nonexistent")).rejects.toThrow(
         "Task not found: nonexistent",
       );
+    });
+
+    it("should not call update when task not found in noncomplete", async () => {
+      const task = buildTask();
+      mockTaskRepository = createMockTaskRepository({
+        getById: vi.fn()
+          .mockResolvedValueOnce(undefined)
+          .mockResolvedValueOnce(task),
+      });
+      const taskService = new TaskService(mockTaskRepository);
+      await expect(taskService.noncomplete("nonexistent")).rejects.toThrow();
+      expect(mockTaskRepository.update).not.toHaveBeenCalled();
     });
   });
 
@@ -382,6 +439,170 @@ describe("TaskService", () => {
       const taskService = new TaskService(mockTaskRepository);
       await taskService.reorderTasks([]);
       expect(mockTaskRepository.bulkUpsert).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("getCompleted", () => {
+    it("should return empty array when no completed tasks exist", async () => {
+      const taskService = new TaskService(mockTaskRepository);
+      const tasks = await taskService.getCompleted();
+      expect(tasks).toEqual([]);
+    });
+
+    it("should sort completed tasks by completed_at descending", async () => {
+      const completedTasks = [
+        buildTask({ is_completed: true, completed_at: "2025-01-01T10:00:00.000Z" }),
+        buildTask({ is_completed: true, completed_at: "2025-01-03T10:00:00.000Z" }),
+        buildTask({ is_completed: true, completed_at: "2025-01-02T10:00:00.000Z" }),
+      ];
+      mockTaskRepository = createMockTaskRepository({
+        getCompleted: vi.fn().mockResolvedValue(completedTasks),
+      });
+      const taskService = new TaskService(mockTaskRepository);
+      const tasks = await taskService.getCompleted();
+      expect(tasks[0].completed_at).toBe("2025-01-03T10:00:00.000Z");
+      expect(tasks[1].completed_at).toBe("2025-01-02T10:00:00.000Z");
+      expect(tasks[2].completed_at).toBe("2025-01-01T10:00:00.000Z");
+    });
+
+    it("should sort by sort_order descending when completed_at is empty", async () => {
+      const completedTasks = [
+        buildTask({ is_completed: true, completed_at: "", sort_order: 1 }),
+        buildTask({ is_completed: true, completed_at: "", sort_order: 3 }),
+        buildTask({ is_completed: true, completed_at: "", sort_order: 2 }),
+      ];
+      mockTaskRepository = createMockTaskRepository({
+        getCompleted: vi.fn().mockResolvedValue(completedTasks),
+      });
+      const taskService = new TaskService(mockTaskRepository);
+      const tasks = await taskService.getCompleted();
+      expect(tasks[0].sort_order).toBe(3);
+      expect(tasks[1].sort_order).toBe(2);
+      expect(tasks[2].sort_order).toBe(1);
+    });
+
+    it("should sort by sort_order when only one task has completed_at", async () => {
+      const taskWithDate = buildTask({ is_completed: true, completed_at: "2025-01-01T10:00:00.000Z", sort_order: 1 });
+      const taskWithoutDate = buildTask({ is_completed: true, completed_at: "", sort_order: 10 });
+      mockTaskRepository = createMockTaskRepository({
+        getCompleted: vi.fn().mockResolvedValue([taskWithDate, taskWithoutDate]),
+      });
+      const taskService = new TaskService(mockTaskRepository);
+      const tasks = await taskService.getCompleted();
+      expect(tasks[0].sort_order).toBe(10);
+      expect(tasks[1].sort_order).toBe(1);
+    });
+  });
+
+  describe("getByCategoryId", () => {
+    it("should return empty array when no tasks for category", async () => {
+      const taskService = new TaskService(mockTaskRepository);
+      const tasks = await taskService.getByCategoryId("cat-1");
+      expect(tasks).toEqual([]);
+    });
+
+    it("should return tasks sorted by sort_order ascending", async () => {
+      const categoryId = "cat-1";
+      const unsortedTasks = [
+        buildTask({ category_id: categoryId, sort_order: 3 }),
+        buildTask({ category_id: categoryId, sort_order: 1 }),
+        buildTask({ category_id: categoryId, sort_order: 2 }),
+      ];
+      mockTaskRepository = createMockTaskRepository({
+        getByCategoryId: vi.fn().mockResolvedValue(unsortedTasks),
+      });
+      const taskService = new TaskService(mockTaskRepository);
+      const tasks = await taskService.getByCategoryId(categoryId);
+      expect(tasks[0].sort_order).toBe(1);
+      expect(tasks[1].sort_order).toBe(2);
+      expect(tasks[2].sort_order).toBe(3);
+    });
+
+    it("should call repository.getByCategoryId with the categoryId", async () => {
+      const taskService = new TaskService(mockTaskRepository);
+      await taskService.getByCategoryId("cat-abc");
+      expect(mockTaskRepository.getByCategoryId).toHaveBeenCalledWith("cat-abc");
+    });
+  });
+
+  describe("getByContextId", () => {
+    it("should return empty array when no tasks for context", async () => {
+      const taskService = new TaskService(mockTaskRepository);
+      const tasks = await taskService.getByContextId("ctx-1");
+      expect(tasks).toEqual([]);
+    });
+
+    it("should return tasks sorted by sort_order ascending", async () => {
+      const contextId = "ctx-1";
+      const unsortedTasks = [
+        buildTask({ context_id: contextId, sort_order: 3 }),
+        buildTask({ context_id: contextId, sort_order: 1 }),
+        buildTask({ context_id: contextId, sort_order: 2 }),
+      ];
+      mockTaskRepository = createMockTaskRepository({
+        getByContextId: vi.fn().mockResolvedValue(unsortedTasks),
+      });
+      const taskService = new TaskService(mockTaskRepository);
+      const tasks = await taskService.getByContextId(contextId);
+      expect(tasks[0].sort_order).toBe(1);
+      expect(tasks[1].sort_order).toBe(2);
+      expect(tasks[2].sort_order).toBe(3);
+    });
+
+    it("should call repository.getByContextId with the contextId", async () => {
+      const taskService = new TaskService(mockTaskRepository);
+      await taskService.getByContextId("ctx-abc");
+      expect(mockTaskRepository.getByContextId).toHaveBeenCalledWith("ctx-abc");
+    });
+  });
+
+  describe("getCategoryTaskCounts", () => {
+    it("should return empty object when no active incomplete tasks", async () => {
+      const taskService = new TaskService(mockTaskRepository);
+      const counts = await taskService.getCategoryTaskCounts();
+      expect(counts).toEqual({});
+    });
+
+    it("should count tasks per category_id", async () => {
+      const tasks = [
+        buildTask({ category_id: "cat-1" }),
+        buildTask({ category_id: "cat-1" }),
+        buildTask({ category_id: "cat-2" }),
+        buildTask({ category_id: "" }),
+      ];
+      mockTaskRepository = createMockTaskRepository({
+        getActiveIncomplete: vi.fn().mockResolvedValue(tasks),
+      });
+      const taskService = new TaskService(mockTaskRepository);
+      const counts = await taskService.getCategoryTaskCounts();
+      expect(counts["cat-1"]).toBe(2);
+      expect(counts["cat-2"]).toBe(1);
+      expect(counts[""]).toBeUndefined();
+    });
+  });
+
+  describe("getContextTaskCounts", () => {
+    it("should return empty object when no active incomplete tasks", async () => {
+      const taskService = new TaskService(mockTaskRepository);
+      const counts = await taskService.getContextTaskCounts();
+      expect(counts).toEqual({});
+    });
+
+    it("should count tasks per context_id", async () => {
+      const tasks = [
+        buildTask({ context_id: "ctx-1" }),
+        buildTask({ context_id: "ctx-1" }),
+        buildTask({ context_id: "ctx-2" }),
+        buildTask({ context_id: "" }),
+      ];
+      mockTaskRepository = createMockTaskRepository({
+        getActiveIncomplete: vi.fn().mockResolvedValue(tasks),
+      });
+      const taskService = new TaskService(mockTaskRepository);
+      const counts = await taskService.getContextTaskCounts();
+      expect(counts["ctx-1"]).toBe(2);
+      expect(counts["ctx-2"]).toBe(1);
+      expect(counts[""]).toBeUndefined();
     });
   });
 

@@ -5,22 +5,7 @@ import type { TaskService } from "@/services/TaskService";
 import { buildTask } from "@/test/factories/taskFactory";
 import { BOX } from "@/constants";
 import type { Box } from "@/types/common";
-
-function createMockTaskService(
-  overrides: Partial<Record<keyof TaskService, unknown>> = {},
-): TaskService {
-  return {
-    getByBox: vi.fn().mockResolvedValue([]),
-    getById: vi.fn().mockResolvedValue(undefined),
-    complete: vi.fn().mockResolvedValue(undefined),
-    noncomplete: vi.fn().mockResolvedValue(undefined),
-    softDelete: vi.fn().mockResolvedValue(undefined),
-    moveToBox: vi.fn().mockResolvedValue(undefined),
-    create: vi.fn().mockResolvedValue(undefined),
-    update: vi.fn().mockResolvedValue(undefined),
-    ...overrides,
-  } as unknown as TaskService;
-}
+import { createMockTaskService } from "@/test/mocks/taskServiceMock";
 
 async function setup(
   taskOverrides: Parameters<typeof buildTask>[0] = {},
@@ -130,6 +115,68 @@ describe("useTasks", () => {
 
     expect(service.update).toHaveBeenCalledWith(task.id, { notes: "updated notes" });
     expect(mockGetByBox).toHaveBeenCalledTimes(2);
+  });
+
+  it("should return empty array for tasks in loading state before fetch completes", () => {
+    mockTaskService = createMockTaskService({
+      getByBox: vi.fn().mockReturnValue(new Promise(() => {})),
+    });
+    const { result } = renderHook(() => useTasks(BOX.TODAY, mockTaskService));
+    expect(result.current.tasks).toEqual([]);
+  });
+
+  it("should call create and refresh when createTask is called", async () => {
+    const { mockGetByBox, service, result } = await setup();
+
+    await act(async () => {
+      await result.current.createTask("New task");
+    });
+
+    expect(service.create).toHaveBeenCalledWith({ title: "New task", box: BOX.TODAY });
+    expect(mockGetByBox).toHaveBeenCalledTimes(2);
+  });
+
+  it("should do nothing if task is not found when completeTask is called", async () => {
+    mockTaskService = createMockTaskService({
+      getById: vi.fn().mockResolvedValue(undefined),
+    });
+    const { result } = renderHook(() => useTasks(BOX.TODAY, mockTaskService));
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    await act(async () => {
+      await result.current.completeTask("nonexistent-id");
+    });
+
+    expect(mockTaskService.complete).not.toHaveBeenCalled();
+    expect(mockTaskService.noncomplete).not.toHaveBeenCalled();
+  });
+
+  describe("reorderTasks", () => {
+    let reorderResult: Awaited<ReturnType<typeof renderHook<ReturnType<typeof useTasks>, unknown>>>;
+    let reorderedTasks: ReturnType<typeof buildTask>[];
+
+    beforeEach(async () => {
+      const taskA = buildTask({ box: "today", sort_order: 2 });
+      const taskB = buildTask({ box: "today", sort_order: 1 });
+      reorderedTasks = [taskB, taskA];
+      mockTaskService = createMockTaskService({
+        getByBox: vi.fn().mockResolvedValue([taskA, taskB]),
+        reorderTasks: vi.fn().mockResolvedValue(undefined),
+      });
+      reorderResult = renderHook(() => useTasks(BOX.TODAY, mockTaskService));
+      await waitFor(() => expect(reorderResult.result.current.isLoading).toBe(false));
+      await act(async () => {
+        await reorderResult.result.current.reorderTasks(reorderedTasks);
+      });
+    });
+
+    it("should optimistically update tasks", () => {
+      expect(reorderResult.result.current.tasks).toEqual(reorderedTasks);
+    });
+
+    it("should call reorderTasks service", () => {
+      expect(mockTaskService.reorderTasks).toHaveBeenCalledWith(reorderedTasks);
+    });
   });
 
   it("should refetch when box changes", async () => {
