@@ -1,6 +1,5 @@
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { describe, it, expect, vi } from "vitest";
-import { MemoryRouter, Route, Routes } from "react-router-dom";
 import GoalPage from "./GoalPage";
 import { buildGoal } from "@/test/factories/goalFactory";
 import type { UseGoalReturn } from "@/hooks/useGoal";
@@ -23,15 +22,8 @@ function buildGoalHook(overrides: Partial<UseGoalReturn> = {}): UseGoalReturn {
   };
 }
 
-function renderGoalPage(id = "test-id") {
-  render(
-    <MemoryRouter initialEntries={[`/goals/${id}`]}>
-      <Routes>
-        <Route path="/goals/:id" element={<GoalPage />} />
-        <Route path="/goals" element={<div data-testid="goals-page" />} />
-      </Routes>
-    </MemoryRouter>,
-  );
+function renderGoalPage(id = "test-id", onClose = vi.fn()) {
+  render(<GoalPage goalId={id} onClose={onClose} />);
 }
 
 describe("GoalPage", () => {
@@ -47,11 +39,12 @@ describe("GoalPage", () => {
     expect(screen.getByRole("button", { name: "Назад" })).toBeInTheDocument();
   });
 
-  it("should navigate to goals list when back button is clicked", () => {
+  it("should call onClose when back button is clicked", () => {
     mockUseGoal.mockReturnValue(buildGoalHook({ goal: buildGoal() }));
-    renderGoalPage();
+    const onClose = vi.fn();
+    renderGoalPage("test-id", onClose);
     fireEvent.click(screen.getByRole("button", { name: "Назад" }));
-    expect(screen.getByTestId("goals-page")).toBeInTheDocument();
+    expect(onClose).toHaveBeenCalled();
   });
 
   it("should show goal title in input", () => {

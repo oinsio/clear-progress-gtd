@@ -5,6 +5,7 @@ import { RightFilterPanel, type RightPanelMode } from "@/components/tasks/RightF
 import { GoalItem } from "@/components/goals/GoalItem";
 import { GoalCreateSheet } from "@/components/goals/GoalCreateSheet";
 import type { GoalCreateData } from "@/components/goals/GoalCreateSheet";
+import GoalPage from "@/pages/GoalPage";
 import { useGoals } from "@/hooks/useGoals";
 import { useTasks } from "@/hooks/useTasks";
 import { usePanelSide } from "@/hooks/usePanelSide";
@@ -22,7 +23,7 @@ const EMPTY_GOALS_MESSAGE = "Нет ни одной цели";
 const ADD_TASK_PLACEHOLDER = "Название задачи...";
 
 export default function GoalsPage() {
-  const { goals, isLoading, createGoal } = useGoals();
+  const { goals, isLoading, createGoal, reloadGoals } = useGoals();
   const { createTask } = useTasks(BOX.INBOX);
   const { panelSide } = usePanelSide();
   const { isPanelOpen, togglePanelOpen } = usePanelOpen();
@@ -30,6 +31,7 @@ export default function GoalsPage() {
 
   const [goalTaskCounts, setGoalTaskCounts] = useState<Record<string, number>>({});
   const [isGoalSheetOpen, setIsGoalSheetOpen] = useState(false);
+  const [selectedGoalId, setSelectedGoalId] = useState<string | null>(null);
 
   const handleGoalCreate = useCallback(
     async (data: GoalCreateData) => {
@@ -66,12 +68,9 @@ export default function GoalsPage() {
     [navigate],
   );
 
-  const handleGoalNavigate = useCallback(
-    (id: string) => {
-      navigate(`/goals/${id}`);
-    },
-    [navigate],
-  );
+  const handleGoalNavigate = useCallback((id: string) => {
+    setSelectedGoalId(id);
+  }, []);
 
   return (
     <div data-testid="goals-page" className="flex h-screen overflow-hidden bg-white">
@@ -160,6 +159,17 @@ export default function GoalsPage() {
         <GoalCreateSheet
           onSave={handleGoalCreate}
           onClose={() => setIsGoalSheetOpen(false)}
+        />
+      )}
+
+      {/* Goal edit modal */}
+      {selectedGoalId !== null && (
+        <GoalPage
+          goalId={selectedGoalId}
+          onClose={() => {
+            setSelectedGoalId(null);
+            void reloadGoals();
+          }}
         />
       )}
 

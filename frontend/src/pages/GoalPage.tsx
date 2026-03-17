@@ -1,10 +1,8 @@
 import { useState, useCallback } from "react";
-import { useParams, useNavigate } from "react-router-dom";
 import { X, CircleMinus, Pause, Square, Play, Check } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { useGoal } from "@/hooks/useGoal";
 import { cn } from "@/shared/lib/cn";
-import { ROUTES } from "@/constants";
 import type { GoalStatus } from "@/types/common";
 
 const GOAL_NOT_FOUND_MESSAGE = "Цель не найдена";
@@ -31,10 +29,13 @@ const STATUS_OPTIONS: GoalStatusOption[] = [
   { status: "completed", icon: Check, label: "Завершена" },
 ];
 
-export default function GoalPage() {
-  const { id } = useParams<{ id: string }>();
-  const navigate = useNavigate();
-  const { goal, isLoading, updateGoal, updateGoalStatus } = useGoal(id ?? "");
+interface GoalPageProps {
+  goalId: string;
+  onClose: () => void;
+}
+
+export default function GoalPage({ goalId, onClose }: GoalPageProps) {
+  const { goal, isLoading, updateGoal, updateGoalStatus } = useGoal(goalId);
 
   const [title, setTitle] = useState<string | undefined>(undefined);
   const [description, setDescription] = useState<string | undefined>(undefined);
@@ -50,11 +51,11 @@ export default function GoalPage() {
     setIsSaving(true);
     try {
       await updateGoal({ title: currentTitle.trim(), description: currentDescription.trim() });
-      navigate(ROUTES.GOALS);
+      onClose();
     } finally {
       setIsSaving(false);
     }
-  }, [canSave, updateGoal, currentTitle, currentDescription, navigate]);
+  }, [canSave, updateGoal, currentTitle, currentDescription, onClose]);
 
   const handleStatusChange = useCallback(
     async (newStatus: GoalStatus) => {
@@ -62,10 +63,6 @@ export default function GoalPage() {
     },
     [updateGoalStatus],
   );
-
-  const handleClose = useCallback(() => {
-    navigate(ROUTES.GOALS);
-  }, [navigate]);
 
   if (!isLoading && !goal) {
     return (
@@ -82,7 +79,7 @@ export default function GoalPage() {
   return (
     <div data-testid="goal-page" className="fixed inset-0 z-50 flex flex-col justify-end">
       {/* Backdrop */}
-      <div className="absolute inset-0 bg-black/40" onClick={handleClose} />
+      <div className="absolute inset-0 bg-black/40" onClick={onClose} />
 
       {/* Bottom sheet */}
       <div className="relative bg-white rounded-t-2xl shadow-xl max-h-[90vh] overflow-y-auto">
@@ -91,7 +88,7 @@ export default function GoalPage() {
           <h2 className="text-base font-semibold text-gray-800">{PAGE_TITLE}</h2>
           <button
             type="button"
-            onClick={handleClose}
+            onClick={onClose}
             aria-label={CLOSE_LABEL}
             className="w-8 h-8 flex items-center justify-center rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
           >
@@ -168,7 +165,7 @@ export default function GoalPage() {
         <div className="flex gap-3 px-4 pb-6 pt-2">
           <button
             type="button"
-            onClick={handleClose}
+            onClick={onClose}
             aria-label={CANCEL_LABEL}
             className="flex-1 py-2.5 text-sm text-gray-600 border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors"
           >

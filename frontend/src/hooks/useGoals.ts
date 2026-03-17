@@ -9,6 +9,7 @@ const defaultGoalService = new GoalService(new GoalRepository());
 export interface UseGoalsReturn {
   goals: Goal[];
   isLoading: boolean;
+  reloadGoals: () => Promise<void>;
   createGoal: (data: Pick<Goal, "title"> & Partial<Goal>) => Promise<void>;
   updateGoal: (id: string, changes: Partial<Goal>) => Promise<void>;
   updateGoalStatus: (id: string, status: GoalStatus) => Promise<void>;
@@ -63,5 +64,5 @@ export function useGoals(
     [goalService, loadGoals],
   );
 
-  return { goals, isLoading, createGoal, updateGoal, updateGoalStatus, deleteGoal };
+  return { goals, isLoading, reloadGoals: loadGoals, createGoal, updateGoal, updateGoalStatus, deleteGoal };
 }

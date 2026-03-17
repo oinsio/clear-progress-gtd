@@ -6,7 +6,6 @@ import TodayPage from "@/pages/TodayPage";
 import WeekPage from "@/pages/WeekPage";
 import LaterPage from "@/pages/LaterPage";
 import GoalsPage from "@/pages/GoalsPage";
-import GoalPage from "@/pages/GoalPage";
 import CategoriesPage from "@/pages/CategoriesPage";
 import CategoryDetailPage from "@/pages/CategoryDetailPage";
 import ContextsPage from "@/pages/ContextsPage";
@@ -67,7 +66,6 @@ export const router = createBrowserRouter([
       { path: ROUTES.TODAY, element: <TodayPage /> },
       { path: ROUTES.WEEK, element: <WeekPage /> },
       { path: ROUTES.LATER, element: <LaterPage /> },
-      { path: ROUTES.GOAL, element: <GoalPage /> },
       { path: ROUTES.SEARCH, element: <SearchPage /> },
     ],
   },
