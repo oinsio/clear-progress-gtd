@@ -54,7 +54,7 @@ describe("GoalItem", () => {
     const goal = buildGoal();
     const onNavigate = vi.fn();
     renderGoalItem({ goal, onNavigate });
-    await userEvent.click(screen.getByTestId("goal-item"));
+    await userEvent.click(screen.getByTestId("goal-navigate-button"));
     expect(onNavigate).toHaveBeenCalledWith(goal.id);
   });
 

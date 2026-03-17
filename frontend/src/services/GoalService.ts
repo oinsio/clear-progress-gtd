@@ -57,4 +57,16 @@ export class GoalService {
   async softDelete(id: string): Promise<Goal> {
     return this.update(id, { is_deleted: true });
   }
+
+  async reorderGoals(orderedGoals: Goal[]): Promise<void> {
+    if (orderedGoals.length === 0) return;
+    const now = new Date().toISOString();
+    const updatedGoals = orderedGoals.map((goal, index) => ({
+      ...goal,
+      sort_order: index,
+      updated_at: now,
+      version: goal.version + 1,
+    }));
+    await this.goalRepository.bulkUpsert(updatedGoals);
+  }
 }

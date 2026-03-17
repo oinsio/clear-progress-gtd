@@ -1,6 +1,18 @@
 import { useState, useCallback, useEffect } from "react";
-import { Target, Plus } from "lucide-react";
+import { Target, Plus, GripVertical } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import {
+  DndContext,
+  closestCenter,
+  type DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  SortableContext,
+  useSortable,
+  verticalListSortingStrategy,
+  arrayMove,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import { RightFilterPanel, type RightPanelMode } from "@/components/tasks/RightFilterPanel";
 import { GoalItem } from "@/components/goals/GoalItem";
 import { GoalCreateSheet } from "@/components/goals/GoalCreateSheet";
@@ -10,11 +22,63 @@ import { useGoals } from "@/hooks/useGoals";
 import { useTasks } from "@/hooks/useTasks";
 import { usePanelSide } from "@/hooks/usePanelSide";
 import { usePanelOpen } from "@/hooks/usePanelOpen";
+import { useDndSensors } from "@/hooks/useDndSensors";
 import { useInlineAdd } from "@/hooks/useInlineAdd";
 import { BOX, ROUTES } from "@/constants";
 import { cn } from "@/shared/lib/cn";
 import { TaskService } from "@/services/TaskService";
 import { TaskRepository } from "@/db/repositories/TaskRepository";
+import type { Goal } from "@/types/entities";
+
+function SortableGoalItem({
+  goal,
+  taskCount,
+  onNavigate,
+}: {
+  goal: Goal;
+  taskCount: number;
+  onNavigate: (id: string) => void;
+}) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    setActivatorNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: goal.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.4 : 1,
+  };
+
+  const dragHandle = (
+    <button
+      type="button"
+      ref={setActivatorNodeRef}
+      {...attributes}
+      {...listeners}
+      aria-label="Перетащить цель"
+      className="flex-shrink-0 px-3 py-3 text-gray-300 hover:text-gray-400 touch-none cursor-grab active:cursor-grabbing"
+    >
+      <GripVertical className="w-4 h-4" aria-hidden="true" />
+    </button>
+  );
+
+  return (
+    <GoalItem
+      goal={goal}
+      taskCount={taskCount}
+      onNavigate={onNavigate}
+      nodeRef={setNodeRef}
+      style={style}
+      dragHandle={dragHandle}
+    />
+  );
+}
 
 const defaultTaskService = new TaskService(new TaskRepository());
 
@@ -23,11 +87,12 @@ const EMPTY_GOALS_MESSAGE = "Нет ни одной цели";
 const ADD_TASK_PLACEHOLDER = "Название задачи...";
 
 export default function GoalsPage() {
-  const { goals, isLoading, createGoal, reloadGoals } = useGoals();
+  const { goals, isLoading, createGoal, reloadGoals, reorderGoals } = useGoals();
   const { createTask } = useTasks(BOX.INBOX);
   const { panelSide } = usePanelSide();
   const { isPanelOpen, togglePanelOpen } = usePanelOpen();
   const navigate = useNavigate();
+  const sensors = useDndSensors();
 
   const [goalTaskCounts, setGoalTaskCounts] = useState<Record<string, number>>({});
   const [isGoalSheetOpen, setIsGoalSheetOpen] = useState(false);
@@ -72,6 +137,18 @@ export default function GoalsPage() {
     setSelectedGoalId(id);
   }, []);
 
+  const handleDragEnd = useCallback(
+    (event: DragEndEvent) => {
+      const { active, over } = event;
+      if (!over || active.id === over.id) return;
+      const oldIndex = activeGoals.findIndex((goal) => goal.id === active.id);
+      const newIndex = activeGoals.findIndex((goal) => goal.id === over.id);
+      const reordered = arrayMove(activeGoals, oldIndex, newIndex);
+      void reorderGoals(reordered);
+    },
+    [activeGoals, reorderGoals],
+  );
+
   return (
     <div data-testid="goals-page" className="flex h-screen overflow-hidden bg-white">
       {/* Main content */}
@@ -88,17 +165,27 @@ export default function GoalsPage() {
               <p className="text-gray-400 text-sm">{EMPTY_GOALS_MESSAGE}</p>
             </div>
           ) : (
-            <ul>
-              {activeGoals.map((goal) => (
-                <GoalItem
-                  key={goal.id}
-                  goal={goal}
-                  taskCount={goalTaskCounts[goal.id] ?? 0}
-                  onNavigate={handleGoalNavigate}
-                />
-              ))}
-
-            </ul>
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragEnd={handleDragEnd}
+            >
+              <SortableContext
+                items={activeGoals.map((goal) => goal.id)}
+                strategy={verticalListSortingStrategy}
+              >
+                <ul>
+                  {activeGoals.map((goal) => (
+                    <SortableGoalItem
+                      key={goal.id}
+                      goal={goal}
+                      taskCount={goalTaskCounts[goal.id] ?? 0}
+                      onNavigate={handleGoalNavigate}
+                    />
+                  ))}
+                </ul>
+              </SortableContext>
+            </DndContext>
           )}
 
           {/* Inline add task input */}
