@@ -7,7 +7,6 @@ import {
   CheckCheck,
   Inbox,
   CircleUser,
-  Settings,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/shared/lib/cn";
@@ -80,16 +79,26 @@ export function RightFilterPanel({
           onKeyDown={(e) => e.key === "Enter" && onToggle()}
         >
           {/* Account / login row */}
-          <button
-            type="button"
-            aria-label="Войти в аккаунт"
-            data-testid="right-panel-account"
-            onClick={(e) => { e.stopPropagation(); navigate(ROUTES.SETUP); }}
-            className="flex items-center justify-between px-4 py-4 text-white hover:bg-black/15 transition-colors border-b border-white/20"
-          >
-            <span className="text-base font-medium">Войдите</span>
-            <CircleUser className="w-8 h-8" aria-hidden="true" />
-          </button>
+          <div className="flex items-center justify-between border-b border-white/20">
+            <button
+              type="button"
+              aria-label="Войти в аккаунт"
+              data-testid="right-panel-login"
+              onClick={(e) => { e.stopPropagation(); navigate(ROUTES.SETUP); }}
+              className="flex-1 flex items-center px-4 py-4 text-white hover:bg-black/15 transition-colors"
+            >
+              <span className="text-base font-medium">Войдите</span>
+            </button>
+            <button
+              type="button"
+              aria-label="Настройки"
+              data-testid="right-panel-account"
+              onClick={(e) => { e.stopPropagation(); navigate(ROUTES.SETTINGS); }}
+              className="flex items-center justify-center px-4 py-4 text-white hover:bg-black/15 transition-colors"
+            >
+              <CircleUser className="w-8 h-8" aria-hidden="true" />
+            </button>
+          </div>
 
           {/* Filter items */}
           <nav className="flex-1 px-2 py-2 overflow-y-auto" aria-label="Фильтры задач">
@@ -120,8 +129,8 @@ export function RightFilterPanel({
             })}
           </nav>
 
-          {/* Bottom actions: Search + Settings */}
-          <div className="px-2 pb-3 border-t border-white/25 pt-2 space-y-0.5">
+          {/* Bottom actions: Search */}
+          <div className="px-2 pb-3 border-t border-white/25 pt-2">
             <button
               type="button"
               aria-label="Поиск по задачам"
@@ -137,17 +146,6 @@ export function RightFilterPanel({
             >
               <Search className="w-5 h-5 flex-shrink-0" aria-hidden="true" />
               <span>Поиск</span>
-            </button>
-
-            <button
-              type="button"
-              aria-label="Настройки"
-              data-testid="right-panel-settings"
-              onClick={(e) => { e.stopPropagation(); navigate(ROUTES.SETTINGS); }}
-              className="w-full flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-medium transition-colors text-left text-white/80 hover:bg-white/10 hover:text-white"
-            >
-              <Settings className="w-5 h-5 flex-shrink-0" aria-hidden="true" />
-              <span>Настройки</span>
             </button>
           </div>
         </div>
@@ -165,9 +163,9 @@ export function RightFilterPanel({
           {/* Account icon */}
           <button
             type="button"
-            aria-label="Войти в аккаунт"
+            aria-label="Настройки"
             data-testid="right-panel-account"
-            onClick={(e) => { e.stopPropagation(); navigate(ROUTES.SETUP); }}
+            onClick={(e) => { e.stopPropagation(); navigate(ROUTES.SETTINGS); }}
             className="w-10 h-10 flex items-center justify-center mt-3 mb-1 rounded-xl text-white/80 hover:bg-white/10 hover:text-white transition-colors"
           >
             <CircleUser className="w-6 h-6" aria-hidden="true" />
