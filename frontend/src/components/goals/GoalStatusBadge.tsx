@@ -2,7 +2,7 @@ import { cn } from "@/shared/lib/cn";
 import type { GoalStatus } from "@/types/common";
 
 const GOAL_STATUS_LABELS: Record<GoalStatus, string> = {
-  not_started: "Не начата",
+  planning: "Планирую",
   in_progress: "В процессе",
   paused: "На паузе",
   completed: "Завершена",
@@ -10,7 +10,7 @@ const GOAL_STATUS_LABELS: Record<GoalStatus, string> = {
 } as const;
 
 const GOAL_STATUS_CLASSES: Record<GoalStatus, string> = {
-  not_started: "text-gray-400",
+  planning: "text-gray-400",
   in_progress: "text-blue-500",
   paused: "text-orange-500",
   completed: "text-green-600",

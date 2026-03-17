@@ -51,7 +51,7 @@ function makeGoal(overrides: Partial<Goal> = {}): Goal {
     title: 'Test goal',
     description: '',
     cover_file_id: '',
-    status: 'not_started',
+    status: 'planning',
     sort_order: 0,
     is_deleted: false,
     created_at: '2025-01-01T00:00:00.000Z',

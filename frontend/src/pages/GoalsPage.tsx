@@ -3,6 +3,8 @@ import { Target, Plus } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { RightFilterPanel, type RightPanelMode } from "@/components/tasks/RightFilterPanel";
 import { GoalItem } from "@/components/goals/GoalItem";
+import { GoalCreateSheet } from "@/components/goals/GoalCreateSheet";
+import type { GoalCreateData } from "@/components/goals/GoalCreateSheet";
 import { useGoals } from "@/hooks/useGoals";
 import { useTasks } from "@/hooks/useTasks";
 import { usePanelSide } from "@/hooks/usePanelSide";
@@ -17,7 +19,6 @@ const defaultTaskService = new TaskService(new TaskRepository());
 
 const PAGE_TITLE = "Мои цели";
 const EMPTY_GOALS_MESSAGE = "Нет ни одной цели";
-const ADD_GOAL_PLACEHOLDER = "Название цели...";
 const ADD_TASK_PLACEHOLDER = "Название задачи...";
 
 export default function GoalsPage() {
@@ -28,15 +29,14 @@ export default function GoalsPage() {
   const navigate = useNavigate();
 
   const [goalTaskCounts, setGoalTaskCounts] = useState<Record<string, number>>({});
+  const [isGoalSheetOpen, setIsGoalSheetOpen] = useState(false);
 
-  const {
-    isAdding: isAddingGoal,
-    setIsAdding: setIsAddingGoal,
-    value: newGoalTitle,
-    setValue: setNewGoalTitle,
-    handleKeyDown: handleAddGoalKeyDown,
-    handleBlur: handleAddGoalBlur,
-  } = useInlineAdd(createGoal);
+  const handleGoalCreate = useCallback(
+    async (data: GoalCreateData) => {
+      await createGoal(data);
+    },
+    [createGoal],
+  );
 
   const {
     isAdding: isAddingTask,
@@ -84,7 +84,7 @@ export default function GoalsPage() {
 
         {/* Scrollable goal list */}
         <main className="flex-1 overflow-y-auto">
-          {!isLoading && activeGoals.length === 0 && !isAddingGoal ? (
+          {!isLoading && activeGoals.length === 0 ? (
             <div className="flex flex-col items-center py-3" data-testid="empty-goals-message">
               <p className="text-gray-400 text-sm">{EMPTY_GOALS_MESSAGE}</p>
             </div>
@@ -99,22 +99,6 @@ export default function GoalsPage() {
                 />
               ))}
 
-              {/* Inline add goal input */}
-              {isAddingGoal && (
-                <li className="px-4 py-3 border-b border-gray-100">
-                  <input
-                    type="text"
-                    autoFocus
-                    value={newGoalTitle}
-                    onChange={(event) => setNewGoalTitle(event.target.value)}
-                    onKeyDown={handleAddGoalKeyDown}
-                    onBlur={handleAddGoalBlur}
-                    placeholder={ADD_GOAL_PLACEHOLDER}
-                    className="w-full text-sm outline-none placeholder:text-gray-400"
-                    data-testid="add-goal-input"
-                  />
-                </li>
-              )}
             </ul>
           )}
 
@@ -148,7 +132,7 @@ export default function GoalsPage() {
             type="button"
             aria-label="Добавить цель"
             data-testid="add-goal-button"
-            onClick={() => setIsAddingGoal(true)}
+            onClick={() => setIsGoalSheetOpen(true)}
             className="relative flex items-center justify-center w-10 h-10 rounded-full text-accent hover:bg-accent/10 active:bg-accent/20 transition-colors"
           >
             <Target className="w-5 h-5" aria-hidden="true" />
@@ -170,6 +154,14 @@ export default function GoalsPage() {
           </button>
         </div>
       </div>
+
+      {/* Goal create sheet */}
+      {isGoalSheetOpen && (
+        <GoalCreateSheet
+          onSave={handleGoalCreate}
+          onClose={() => setIsGoalSheetOpen(false)}
+        />
+      )}
 
       {/* Right filter panel */}
       <RightFilterPanel

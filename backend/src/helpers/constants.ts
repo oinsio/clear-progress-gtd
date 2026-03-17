@@ -63,7 +63,7 @@ export const DEFAULT_SETTINGS = {
 } as const;
 
 export const VALID_BOXES = ['inbox', 'today', 'week', 'later'];
-export const VALID_GOAL_STATUSES = ['not_started', 'in_progress', 'paused', 'completed', 'cancelled'];
+export const VALID_GOAL_STATUSES = ['planning', 'in_progress', 'paused', 'completed', 'cancelled'];
 
 export const CONFLICT_RESOLUTION = {
   ACCEPT: 'accept',
@@ -87,7 +87,7 @@ export const MAX_COVER_SIZE_BYTES = 2 * 1024 * 1024; // 2 MB
 export const DEFAULT_COVER_EXTENSION = 'jpg';
 
 export const DEFAULT_TASK_BOX = 'inbox';
-export const DEFAULT_GOAL_STATUS = 'not_started';
+export const DEFAULT_GOAL_STATUS = 'planning';
 
 export const SHEET_BOOL_TRUE = 'TRUE';
 

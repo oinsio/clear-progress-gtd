@@ -5,7 +5,7 @@ import type { GoalStatus } from "@/types/common";
 
 describe("GoalStatusBadge", () => {
   it.each<[GoalStatus, string]>([
-    ["not_started", "Не начата"],
+    ["planning", "Планирую"],
     ["in_progress", "В процессе"],
     ["paused", "На паузе"],
     ["completed", "Завершена"],
@@ -16,7 +16,7 @@ describe("GoalStatusBadge", () => {
   });
 
   it("should have data-test-id='goal-status-badge'", () => {
-    render(<GoalStatusBadge status="not_started" />);
+    render(<GoalStatusBadge status="planning" />);
     expect(screen.getByTestId("goal-status-badge")).toBeInTheDocument();
   });
 
@@ -44,8 +44,8 @@ describe("GoalStatusBadge", () => {
     expect(badge.className).toMatch(/blue/);
   });
 
-  it("should apply gray color for not_started status", () => {
-    render(<GoalStatusBadge status="not_started" />);
+  it("should apply gray color for planning status", () => {
+    render(<GoalStatusBadge status="planning" />);
     const badge = screen.getByTestId("goal-status-badge");
     expect(badge.className).toMatch(/gray/);
   });

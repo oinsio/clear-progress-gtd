@@ -10,7 +10,7 @@ export function buildGoal(overrides: Partial<Goal> = {}): Goal {
     title: `Goal ${goalCounter}`,
     description: "",
     cover_file_id: "",
-    status: "not_started",
+    status: "planning",
     sort_order: goalCounter,
     is_deleted: false,
     created_at: now,

@@ -33,7 +33,7 @@ function buildGoalsHook(overrides: Partial<UseGoalsReturn> = {}): UseGoalsReturn
   return {
     goals: [],
     isLoading: false,
-    createGoal: vi.fn().mockResolvedValue(undefined),
+    createGoal: vi.fn<UseGoalsReturn["createGoal"]>().mockResolvedValue(undefined),
     updateGoal: vi.fn().mockResolvedValue(undefined),
     updateGoalStatus: vi.fn().mockResolvedValue(undefined),
     deleteGoal: vi.fn().mockResolvedValue(undefined),

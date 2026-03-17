@@ -1,7 +1,7 @@
 // Shared types for GAS backend
 
 export type Box = 'inbox' | 'today' | 'week' | 'later';
-export type GoalStatus = 'not_started' | 'in_progress' | 'paused' | 'completed' | 'cancelled';
+export type GoalStatus = 'planning' |'in_progress' | 'paused' | 'completed' | 'cancelled';
 
 export interface Task {
   id: string;

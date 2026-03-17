@@ -24,7 +24,7 @@ http:
               "title": "",
               "description": "",
               "cover_file_id": "",
-              "status": "not_started",
+              "status": "planning",
               "sort_order": 9999,
               "is_deleted": false,
               "created_at": "{{$isoTimestamp}}",

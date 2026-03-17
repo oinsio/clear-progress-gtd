@@ -20,7 +20,7 @@ function makeGoalRow(overrides: Partial<Record<string, unknown>> = {}): unknown[
     title: 'Test goal',
     description: '',
     cover_file_id: '',
-    status: 'not_started',
+    status: 'planning',
     sort_order: 0,
     is_deleted: false,
     created_at: '2025-01-01T00:00:00.000Z',
@@ -37,7 +37,7 @@ function makeGoal(overrides: Partial<Goal> = {}): Goal {
     title: 'Test goal',
     description: '',
     cover_file_id: '',
-    status: 'not_started',
+    status: 'planning',
     sort_order: 0,
     is_deleted: false,
     created_at: '2025-01-01T00:00:00.000Z',
@@ -173,17 +173,17 @@ describe('getAllGoals', () => {
     expect(getAllGoals()[0].is_deleted).toBe(false);
   });
 
-  it('should default status to "not_started" for invalid status value', () => {
+  it('should default status to "planning" for invalid status value', () => {
     vi.mocked(getSheet).mockReturnValue(makeSheetMock([
       GOAL_HEADERS,
       makeGoalRow({ status: 'invalid_status' }),
     ]) as never);
 
-    expect(getAllGoals()[0].status).toBe('not_started');
+    expect(getAllGoals()[0].status).toBe('planning');
   });
 
   it('should accept all valid goal status values', () => {
-    for (const status of ['not_started', 'in_progress', 'paused', 'completed', 'cancelled']) {
+    for (const status of ['planning', 'in_progress', 'paused', 'completed', 'cancelled']) {
       vi.mocked(getSheet).mockReturnValue(makeSheetMock([
         GOAL_HEADERS,
         makeGoalRow({ status }),

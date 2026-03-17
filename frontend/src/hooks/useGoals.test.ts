@@ -59,7 +59,7 @@ describe("useGoals", () => {
     await waitFor(() => expect(result.current.isLoading).toBe(false));
 
     await act(async () => {
-      await result.current.createGoal("New goal");
+      await result.current.createGoal({ title: "New goal" });
     });
 
     expect(mockGoalService.create).toHaveBeenCalledWith({ title: "New goal" });

@@ -9,7 +9,7 @@ const defaultGoalService = new GoalService(new GoalRepository());
 export interface UseGoalsReturn {
   goals: Goal[];
   isLoading: boolean;
-  createGoal: (title: string) => Promise<void>;
+  createGoal: (data: Pick<Goal, "title"> & Partial<Goal>) => Promise<void>;
   updateGoal: (id: string, changes: Partial<Goal>) => Promise<void>;
   updateGoalStatus: (id: string, status: GoalStatus) => Promise<void>;
   deleteGoal: (id: string) => Promise<void>;
@@ -32,8 +32,8 @@ export function useGoals(
   }, [loadGoals]);
 
   const createGoal = useCallback(
-    async (title: string) => {
-      await goalService.create({ title });
+    async (data: Pick<Goal, "title"> & Partial<Goal>) => {
+      await goalService.create(data);
       await loadGoals();
     },
     [goalService, loadGoals],

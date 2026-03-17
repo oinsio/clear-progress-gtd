@@ -21,7 +21,7 @@ export class GoalService {
     const goal: Goal = {
       description: "",
       cover_file_id: "",
-      status: "not_started",
+      status: "planning",
       sort_order: 0,
       ...partialGoal,
       id: crypto.randomUUID(),

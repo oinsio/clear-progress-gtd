@@ -1,7 +1,7 @@
 export type Box = "inbox" | "today" | "week" | "later";
 
 export type GoalStatus =
-  | "not_started"
+  | "planning"
   | "in_progress"
   | "paused"
   | "completed"
