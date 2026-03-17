@@ -53,8 +53,12 @@ export function useSettings(
       settingsService.getDefaultBox(),
       settingsService.getAccentColor(),
     ]);
-    localStorage.setItem(STORAGE_KEYS.DEFAULT_BOX, box);
-    localStorage.setItem(STORAGE_KEYS.ACCENT_COLOR, color);
+    try {
+      localStorage.setItem(STORAGE_KEYS.DEFAULT_BOX, box);
+      localStorage.setItem(STORAGE_KEYS.ACCENT_COLOR, color);
+    } catch {
+      // localStorage недоступен
+    }
     setDefaultBoxState(box);
     setAccentColorState(color);
     setIsLoading(false);
@@ -67,8 +71,7 @@ export function useSettings(
   const setDefaultBox = useCallback(
     async (box: Box) => {
       await settingsService.set(SETTING_KEYS.DEFAULT_BOX, box);
-      localStorage.setItem(STORAGE_KEYS.DEFAULT_BOX, box);
-      setDefaultBoxState(box);
+      await loadSettings();
     },
     [settingsService],
   );
@@ -76,8 +79,7 @@ export function useSettings(
   const setAccentColor = useCallback(
     async (color: AccentColor) => {
       await settingsService.set(SETTING_KEYS.ACCENT_COLOR, color);
-      localStorage.setItem(STORAGE_KEYS.ACCENT_COLOR, color);
-      setAccentColorState(color);
+      await loadSettings();
     },
     [settingsService],
   );
