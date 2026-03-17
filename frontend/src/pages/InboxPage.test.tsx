@@ -193,13 +193,13 @@ describe("InboxPage", () => {
     expect(screen.getByTestId("search-input")).toBeInTheDocument();
   });
 
-  it("should show goals sub-list when goals filter is clicked", () => {
+  it("should navigate to goals page when goals filter is clicked", () => {
     const goals = [buildGoal({ title: "My Goal" })];
     mockUseGoals.mockReturnValue(buildGoalsHook({ goals }));
     renderPage();
     openRightPanel();
     fireEvent.click(screen.getByTestId("right-filter-goals"));
-    expect(screen.getByText("My Goal")).toBeInTheDocument();
+    expect(screen.queryByText("My Goal")).not.toBeInTheDocument();
   });
 
   it("should show search results when in search mode", () => {

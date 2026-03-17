@@ -75,8 +75,7 @@ export default function CategoryDetailPage() {
 
   const handleModeChange = useCallback(
     (newMode: RightPanelMode) => {
-      if (newMode === "goals") navigate(ROUTES.GOALS);
-      else if (newMode === "inbox" || newMode === "tasks" || newMode === "completed") navigate(ROUTES.INBOX, { state: { filterMode: newMode } });
+      if (newMode === "inbox" || newMode === "tasks" || newMode === "completed") navigate(ROUTES.INBOX, { state: { filterMode: newMode } });
     },
     [navigate],
   );
@@ -180,12 +179,9 @@ export default function CategoryDetailPage() {
       <RightFilterPanel
         mode="categories"
         isOpen={isPanelOpen}
-        goals={goals}
-        selectedGoalId={null}
         side={panelSide}
         onToggle={handlePanelToggle}
         onModeChange={handleModeChange}
-        onGoalSelect={() => {}}
       />
     </div>
   );

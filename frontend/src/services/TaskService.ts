@@ -120,6 +120,17 @@ export class TaskService {
     return tasks.sort((taskA, taskB) => taskA.sort_order - taskB.sort_order);
   }
 
+  async getGoalTaskCounts(): Promise<Record<string, number>> {
+    const tasks = await this.taskRepository.getActiveIncomplete();
+    const counts: Record<string, number> = {};
+    for (const task of tasks) {
+      if (task.goal_id) {
+        counts[task.goal_id] = (counts[task.goal_id] ?? 0) + 1;
+      }
+    }
+    return counts;
+  }
+
   async getCategoryTaskCounts(): Promise<Record<string, number>> {
     const tasks = await this.taskRepository.getActiveIncomplete();
     const counts: Record<string, number> = {};

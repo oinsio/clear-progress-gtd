@@ -84,8 +84,7 @@ export default function ContextDetailPage() {
 
   const handleModeChange = useCallback(
     (newMode: RightPanelMode) => {
-      if (newMode === "goals") navigate(ROUTES.GOALS);
-      else if (newMode === "categories") navigate(ROUTES.CATEGORIES);
+      if (newMode === "categories") navigate(ROUTES.CATEGORIES);
       else if (newMode === "inbox" || newMode === "tasks" || newMode === "completed") navigate(ROUTES.INBOX, { state: { filterMode: newMode } });
     },
     [navigate],
@@ -190,12 +189,9 @@ export default function ContextDetailPage() {
       <RightFilterPanel
         mode="contexts"
         isOpen={isPanelOpen}
-        goals={goals}
-        selectedGoalId={null}
         side={panelSide}
         onToggle={handlePanelToggle}
         onModeChange={handleModeChange}
-        onGoalSelect={() => {}}
       />
     </div>
   );

@@ -15,7 +15,6 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 import { RightFilterPanel, type RightPanelMode } from "@/components/tasks/RightFilterPanel";
 import { useCategories } from "@/hooks/useCategories";
-import { useGoals } from "@/hooks/useGoals";
 import { useTasks } from "@/hooks/useTasks";
 import { usePanelSide } from "@/hooks/usePanelSide";
 import { usePanelOpen } from "@/hooks/usePanelOpen";
@@ -94,7 +93,6 @@ const ADD_TASK_PLACEHOLDER = "Название задачи...";
 
 export default function CategoriesPage() {
   const { categories, isLoading, createCategory, reorderCategories } = useCategories();
-  const { goals } = useGoals();
   const { createTask } = useTasks(BOX.INBOX);
   const { panelSide } = usePanelSide();
   const navigate = useNavigate();
@@ -144,8 +142,7 @@ export default function CategoriesPage() {
 
   const handleModeChange = useCallback(
     (newMode: RightPanelMode) => {
-      if (newMode === "goals") navigate(ROUTES.GOALS);
-      else if (newMode === "inbox" || newMode === "tasks" || newMode === "completed") navigate(ROUTES.INBOX, { state: { filterMode: newMode } });
+      if (newMode === "inbox" || newMode === "tasks" || newMode === "completed") navigate(ROUTES.INBOX, { state: { filterMode: newMode } });
     },
     [navigate],
   );
@@ -263,12 +260,9 @@ export default function CategoriesPage() {
       <RightFilterPanel
         mode="categories"
         isOpen={isPanelOpen}
-        goals={goals}
-        selectedGoalId={null}
         side={panelSide}
         onToggle={handlePanelToggle}
         onModeChange={handleModeChange}
-        onGoalSelect={() => {}}
       />
     </div>
   );

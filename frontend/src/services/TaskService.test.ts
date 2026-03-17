@@ -606,6 +606,44 @@ describe("TaskService", () => {
     });
   });
 
+  describe("getGoalTaskCounts", () => {
+    it("should return empty object when no active incomplete tasks", async () => {
+      const taskService = new TaskService(mockTaskRepository);
+      const counts = await taskService.getGoalTaskCounts();
+      expect(counts).toEqual({});
+    });
+
+    it("should count tasks per goal_id", async () => {
+      const tasks = [
+        buildTask({ goal_id: "goal-1" }),
+        buildTask({ goal_id: "goal-1" }),
+        buildTask({ goal_id: "goal-2" }),
+        buildTask({ goal_id: "" }),
+      ];
+      mockTaskRepository = createMockTaskRepository({
+        getActiveIncomplete: vi.fn().mockResolvedValue(tasks),
+      });
+      const taskService = new TaskService(mockTaskRepository);
+      const counts = await taskService.getGoalTaskCounts();
+      expect(counts["goal-1"]).toBe(2);
+      expect(counts["goal-2"]).toBe(1);
+      expect(counts[""]).toBeUndefined();
+    });
+
+    it("should not include tasks with empty goal_id in counts", async () => {
+      const tasks = [
+        buildTask({ goal_id: "" }),
+        buildTask({ goal_id: "" }),
+      ];
+      mockTaskRepository = createMockTaskRepository({
+        getActiveIncomplete: vi.fn().mockResolvedValue(tasks),
+      });
+      const taskService = new TaskService(mockTaskRepository);
+      const counts = await taskService.getGoalTaskCounts();
+      expect(Object.keys(counts)).toHaveLength(0);
+    });
+  });
+
   describe("searchByTitle", () => {
     it("should return empty array when no tasks match", async () => {
       const tasks = [buildTask({ title: "Buy groceries" })];

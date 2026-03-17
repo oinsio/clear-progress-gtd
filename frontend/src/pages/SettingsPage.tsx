@@ -149,12 +149,9 @@ export default function SettingsPage() {
       <RightFilterPanel
         mode={filterMode}
         isOpen={isPanelOpen}
-        goals={[]}
-        selectedGoalId={null}
         side={panelSide}
         onToggle={handlePanelToggle}
         onModeChange={handleModeChange}
-        onGoalSelect={() => undefined}
       />
     </div>
   );

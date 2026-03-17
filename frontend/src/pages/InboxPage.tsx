@@ -122,7 +122,6 @@ export default function InboxPage() {
   const [activeBox, setActiveBox] = useState<BoxFilter>(BOX_FILTER_ALL);
   const [filterMode, setFilterMode] = useState<RightPanelMode>(initialFilterMode);
   const { isPanelOpen, togglePanelOpen } = usePanelOpen();
-  const [selectedGoalId, setSelectedGoalId] = useState<string | null>(null);
   const [selectedContextId, setSelectedContextId] = useState<string | null>(null);
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
   const [isAddingTask, setIsAddingTask] = useState(false);
@@ -209,16 +208,11 @@ export default function InboxPage() {
         clearSearch();
       }
       if (newMode === "completed") void reloadCompleted();
-      if (newMode !== "goals") setSelectedGoalId(null);
       if (newMode !== "contexts") setSelectedContextId(null);
       if (newMode !== "categories") setSelectedCategoryId(null);
     },
     [clearSearch, reloadCompleted],
   );
-
-  const handleGoalSelect = useCallback((goalId: string | null) => {
-    setSelectedGoalId(goalId);
-  }, []);
 
   const handleBoxChange = useCallback((box: BoxFilter) => {
     setActiveBox(box);
@@ -251,9 +245,6 @@ export default function InboxPage() {
   const applyFilters = useCallback(
     (tasks: Task[]): Task[] => {
       let filtered = tasks.filter((task) => !task.is_completed);
-      if (selectedGoalId) {
-        filtered = filtered.filter((task) => task.goal_id === selectedGoalId);
-      }
       if (selectedContextId) {
         filtered = filtered.filter((task) => task.context_id === selectedContextId);
       }
@@ -262,7 +253,7 @@ export default function InboxPage() {
       }
       return filtered;
     },
-    [selectedGoalId, selectedContextId, selectedCategoryId],
+    [selectedContextId, selectedCategoryId],
   );
 
   const targetBoxLabel = useMemo(() => {
@@ -527,12 +518,9 @@ export default function InboxPage() {
       <RightFilterPanel
         mode={filterMode}
         isOpen={isPanelOpen}
-        goals={goals}
-        selectedGoalId={selectedGoalId}
         side={panelSide}
         onToggle={handlePanelToggle}
         onModeChange={handleModeChange}
-        onGoalSelect={handleGoalSelect}
       />
     </div>
   );

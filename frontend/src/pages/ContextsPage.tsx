@@ -15,7 +15,6 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 import { RightFilterPanel, type RightPanelMode } from "@/components/tasks/RightFilterPanel";
 import { useContexts } from "@/hooks/useContexts";
-import { useGoals } from "@/hooks/useGoals";
 import { useTasks } from "@/hooks/useTasks";
 import { usePanelSide } from "@/hooks/usePanelSide";
 import { usePanelOpen } from "@/hooks/usePanelOpen";
@@ -93,7 +92,6 @@ function SortableContextItem({
 
 export default function ContextsPage() {
   const { contexts, isLoading, createContext, reorderContexts } = useContexts();
-  const { goals } = useGoals();
   const { createTask } = useTasks(BOX.INBOX);
   const { panelSide } = usePanelSide();
   const navigate = useNavigate();
@@ -143,8 +141,7 @@ export default function ContextsPage() {
 
   const handleModeChange = useCallback(
     (newMode: RightPanelMode) => {
-      if (newMode === "goals") navigate(ROUTES.GOALS);
-      else if (newMode === "categories") navigate(ROUTES.CATEGORIES);
+      if (newMode === "categories") navigate(ROUTES.CATEGORIES);
       else if (newMode === "inbox" || newMode === "tasks" || newMode === "completed") navigate(ROUTES.INBOX, { state: { filterMode: newMode } });
     },
     [navigate],
@@ -263,12 +260,9 @@ export default function ContextsPage() {
       <RightFilterPanel
         mode="contexts"
         isOpen={isPanelOpen}
-        goals={goals}
-        selectedGoalId={null}
         side={panelSide}
         onToggle={handlePanelToggle}
         onModeChange={handleModeChange}
-        onGoalSelect={() => {}}
       />
     </div>
   );
