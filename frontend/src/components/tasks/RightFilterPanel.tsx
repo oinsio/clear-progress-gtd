@@ -5,8 +5,6 @@ import {
   Tag,
   CheckSquare,
   CheckCheck,
-  ChevronRight,
-  ChevronLeft,
   Inbox,
   CircleUser,
   Settings,
@@ -62,8 +60,6 @@ export function RightFilterPanel({
 
   const isLeft = side === "left";
   const panelBorder = isLeft ? "border-r border-accent/70" : "border-l border-accent/70";
-  const CloseIcon = isLeft ? ChevronLeft : ChevronRight;
-  const OpenIcon = isLeft ? ChevronRight : ChevronLeft;
 
   return (
     <div
@@ -74,13 +70,21 @@ export function RightFilterPanel({
     >
       {/* Main panel */}
       {isOpen ? (
-        <div className={cn("w-52 flex flex-col bg-accent overflow-hidden", panelBorder)}>
+        <div
+          className={cn("w-52 flex flex-col bg-accent overflow-hidden cursor-pointer", panelBorder)}
+          onClick={onToggle}
+          data-testid="right-panel-toggle"
+          aria-label="Закрыть панель"
+          role="button"
+          tabIndex={0}
+          onKeyDown={(e) => e.key === "Enter" && onToggle()}
+        >
           {/* Account / login row */}
           <button
             type="button"
             aria-label="Войти в аккаунт"
             data-testid="right-panel-account"
-            onClick={() => navigate(ROUTES.SETUP)}
+            onClick={(e) => { e.stopPropagation(); navigate(ROUTES.SETUP); }}
             className="flex items-center justify-between px-4 py-4 text-white hover:bg-black/15 transition-colors border-b border-white/20"
           >
             <span className="text-base font-medium">Войдите</span>
@@ -98,7 +102,10 @@ export function RightFilterPanel({
                   aria-label={label}
                   aria-pressed={isActive}
                   data-testid={`right-filter-${itemMode}`}
-                  onClick={() => (route ? navigate(route) : onModeChange(isActive ? null : itemMode))}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    route ? navigate(route) : onModeChange(isActive ? null : itemMode);
+                  }}
                   className={cn(
                     "w-full flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-medium transition-colors text-left",
                     isActive
@@ -113,14 +120,14 @@ export function RightFilterPanel({
             })}
           </nav>
 
-          {/* Bottom actions: Search + Settings + Close */}
+          {/* Bottom actions: Search + Settings */}
           <div className="px-2 pb-3 border-t border-white/25 pt-2 space-y-0.5">
             <button
               type="button"
               aria-label="Поиск по задачам"
               aria-pressed={mode === "search"}
               data-testid="right-filter-search"
-              onClick={() => onModeChange(mode === "search" ? null : "search")}
+              onClick={(e) => { e.stopPropagation(); onModeChange(mode === "search" ? null : "search"); }}
               className={cn(
                 "w-full flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-medium transition-colors text-left",
                 mode === "search"
@@ -136,33 +143,31 @@ export function RightFilterPanel({
               type="button"
               aria-label="Настройки"
               data-testid="right-panel-settings"
-              onClick={() => navigate(ROUTES.SETTINGS)}
+              onClick={(e) => { e.stopPropagation(); navigate(ROUTES.SETTINGS); }}
               className="w-full flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-medium transition-colors text-left text-white/80 hover:bg-white/10 hover:text-white"
             >
               <Settings className="w-5 h-5 flex-shrink-0" aria-hidden="true" />
               <span>Настройки</span>
             </button>
-
-            <button
-              type="button"
-              aria-label="Закрыть панель"
-              data-testid="right-panel-toggle"
-              onClick={onToggle}
-              className="w-full flex items-center justify-end px-3 py-2 text-white/50 hover:text-white transition-colors"
-            >
-              <CloseIcon className="w-5 h-5" aria-hidden="true" />
-            </button>
           </div>
         </div>
       ) : (
         /* Collapsed strip */
-        <div className={cn("w-14 flex flex-col items-center bg-accent overflow-hidden", panelBorder)}>
+        <div
+          className={cn("w-14 flex flex-col items-center bg-accent overflow-hidden cursor-pointer", panelBorder)}
+          onClick={onToggle}
+          data-testid="right-panel-toggle"
+          aria-label="Открыть панель"
+          role="button"
+          tabIndex={0}
+          onKeyDown={(e) => e.key === "Enter" && onToggle()}
+        >
           {/* Account icon */}
           <button
             type="button"
             aria-label="Войти в аккаунт"
             data-testid="right-panel-account"
-            onClick={() => navigate(ROUTES.SETUP)}
+            onClick={(e) => { e.stopPropagation(); navigate(ROUTES.SETUP); }}
             className="w-10 h-10 flex items-center justify-center mt-3 mb-1 rounded-xl text-white/80 hover:bg-white/10 hover:text-white transition-colors"
           >
             <CircleUser className="w-6 h-6" aria-hidden="true" />
@@ -179,7 +184,10 @@ export function RightFilterPanel({
                   aria-label={label}
                   aria-pressed={isActive}
                   data-testid={`right-filter-${itemMode}`}
-                  onClick={() => (route ? navigate(route) : onModeChange(isActive ? null : itemMode))}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    route ? navigate(route) : onModeChange(isActive ? null : itemMode);
+                  }}
                   className={cn(
                     "w-10 h-10 rounded-xl flex items-center justify-center transition-colors flex-shrink-0",
                     isActive
@@ -193,14 +201,14 @@ export function RightFilterPanel({
             })}
           </nav>
 
-          {/* Bottom: search + expand toggle */}
+          {/* Bottom: search */}
           <div className="flex flex-col items-center pb-3 gap-1 border-t border-white/25 pt-2">
             <button
               type="button"
               aria-label="Поиск по задачам"
               aria-pressed={mode === "search"}
               data-testid="right-filter-search"
-              onClick={() => onModeChange(mode === "search" ? null : "search")}
+              onClick={(e) => { e.stopPropagation(); onModeChange(mode === "search" ? null : "search"); }}
               className={cn(
                 "w-10 h-10 rounded-xl flex items-center justify-center transition-colors",
                 mode === "search"
@@ -209,15 +217,6 @@ export function RightFilterPanel({
               )}
             >
               <Search className="w-5 h-5" aria-hidden="true" />
-            </button>
-            <button
-              type="button"
-              aria-label="Открыть панель"
-              data-testid="right-panel-toggle"
-              onClick={onToggle}
-              className="w-10 h-8 rounded-xl flex items-center justify-center text-white/50 hover:text-white hover:bg-white/10 transition-colors"
-            >
-              <OpenIcon className="w-4 h-4" aria-hidden="true" />
             </button>
           </div>
         </div>
