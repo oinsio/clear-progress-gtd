@@ -18,6 +18,7 @@ import { useContexts } from "@/hooks/useContexts";
 import { useGoals } from "@/hooks/useGoals";
 import { useTasks } from "@/hooks/useTasks";
 import { usePanelSide } from "@/hooks/usePanelSide";
+import { usePanelOpen } from "@/hooks/usePanelOpen";
 import { useDndSensors } from "@/hooks/useDndSensors";
 import { useInlineAdd } from "@/hooks/useInlineAdd";
 import { BOX, ROUTES } from "@/constants";
@@ -100,7 +101,7 @@ export default function ContextsPage() {
   const sensors = useDndSensors();
 
   const [contextTaskCounts, setContextTaskCounts] = useState<Record<string, number>>({});
-  const [isPanelOpen, setIsPanelOpen] = useState(false);
+  const { isPanelOpen, togglePanelOpen } = usePanelOpen();
 
   const {
     isAdding: isAddingContext,
@@ -126,9 +127,7 @@ export default function ContextsPage() {
     void defaultTaskService.getContextTaskCounts().then(setContextTaskCounts);
   }, []);
 
-  const handlePanelToggle = useCallback(() => {
-    setIsPanelOpen((previous) => !previous);
-  }, []);
+  const handlePanelToggle = togglePanelOpen;
 
   const handleDragEnd = useCallback(
     (event: DragEndEvent) => {
@@ -146,7 +145,7 @@ export default function ContextsPage() {
     (newMode: RightPanelMode) => {
       if (newMode === "goals") navigate(ROUTES.GOALS);
       else if (newMode === "categories") navigate(ROUTES.CATEGORIES);
-      else if (newMode === "inbox" || newMode === "tasks" || newMode === "completed") navigate(ROUTES.INBOX);
+      else if (newMode === "inbox" || newMode === "tasks" || newMode === "completed") navigate(ROUTES.INBOX, { state: { filterMode: newMode } });
     },
     [navigate],
   );

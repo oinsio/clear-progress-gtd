@@ -88,6 +88,7 @@ export const STORAGE_KEYS = {
   ACCENT_COLOR: "accent_color",
   DEFAULT_BOX: "default_box",
   PANEL_SIDE: "panel_side",
+  PANEL_OPEN: "panel_open",
 } as const;
 
 export const SETTING_KEYS = {

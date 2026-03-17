@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useSettings } from "@/hooks/useSettings";
 import { useTheme } from "@/app/providers/ThemeProvider";
 import { usePanelSide } from "@/hooks/usePanelSide";
+import { usePanelOpen } from "@/hooks/usePanelOpen";
 import { RightFilterPanel, type RightPanelMode } from "@/components/tasks/RightFilterPanel";
 import { BOX_ORDER, BOX_FILTER_LABELS, ACCENT_COLORS, ACCENT_COLOR_VALUES, PANEL_SIDES, ROUTES } from "@/constants";
 import type { Box, AccentColor, PanelSide } from "@/types/common";
@@ -26,21 +27,19 @@ const ACCENT_COLOR_LABELS: Record<AccentColor, string> = {
 
 export default function SettingsPage() {
   const [filterMode, setFilterMode] = useState<RightPanelMode>(null);
-  const [isPanelOpen, setIsPanelOpen] = useState(false);
+  const { isPanelOpen, togglePanelOpen } = usePanelOpen();
 
   const navigate = useNavigate();
   const { defaultBox, setDefaultBox } = useSettings();
   const { accentColor, setAccentColor } = useTheme();
   const { panelSide, setPanelSide } = usePanelSide();
 
-  const handlePanelToggle = useCallback(() => {
-    setIsPanelOpen((previous) => !previous);
-  }, []);
+  const handlePanelToggle = togglePanelOpen;
 
   const handleModeChange = useCallback(
     (newMode: RightPanelMode) => {
       if (newMode !== null) {
-        navigate(ROUTES.INBOX);
+        navigate(ROUTES.INBOX, { state: { filterMode: newMode } });
       } else {
         setFilterMode(newMode);
       }

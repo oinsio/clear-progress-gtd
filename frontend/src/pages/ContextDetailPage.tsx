@@ -5,6 +5,7 @@ import { useContextTasks } from "@/hooks/useContextTasks";
 import { useContexts } from "@/hooks/useContexts";
 import { useGoals } from "@/hooks/useGoals";
 import { usePanelSide } from "@/hooks/usePanelSide";
+import { usePanelOpen } from "@/hooks/usePanelOpen";
 import { TaskCreateSheet } from "@/components/tasks/TaskCreateSheet";
 import { BoxSectionList } from "@/components/tasks/BoxSectionList";
 import { EntityEditSheet } from "@/components/EntityEditSheet";
@@ -36,7 +37,7 @@ export default function ContextDetailPage() {
   const { tasks, isLoading, createTask, completeTask, updateTask, moveTask, deleteTask } =
     useContextTasks(id ?? "");
 
-  const [isPanelOpen, setIsPanelOpen] = useState(false);
+  const { isPanelOpen, togglePanelOpen } = usePanelOpen();
   const [isEditSheetOpen, setIsEditSheetOpen] = useState(false);
   const [isCreateTaskSheetOpen, setIsCreateTaskSheetOpen] = useState(false);
 
@@ -79,15 +80,13 @@ export default function ContextDetailPage() {
     [createTask],
   );
 
-  const handlePanelToggle = useCallback(() => {
-    setIsPanelOpen((previous) => !previous);
-  }, []);
+  const handlePanelToggle = togglePanelOpen;
 
   const handleModeChange = useCallback(
     (newMode: RightPanelMode) => {
       if (newMode === "goals") navigate(ROUTES.GOALS);
       else if (newMode === "categories") navigate(ROUTES.CATEGORIES);
-      else if (newMode === "inbox" || newMode === "tasks" || newMode === "completed") navigate(ROUTES.INBOX);
+      else if (newMode === "inbox" || newMode === "tasks" || newMode === "completed") navigate(ROUTES.INBOX, { state: { filterMode: newMode } });
     },
     [navigate],
   );

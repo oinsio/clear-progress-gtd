@@ -1,4 +1,5 @@
 import { useState, useCallback, useRef, useEffect, useMemo } from "react";
+import { useLocation } from "react-router-dom";
 import { Plus } from "lucide-react";
 import { TaskList } from "@/components/tasks/TaskList";
 import { BoxFilterBar } from "@/components/tasks/BoxFilterBar";
@@ -8,6 +9,7 @@ import { useGoals } from "@/hooks/useGoals";
 import { useCompletedTasks } from "@/hooks/useCompletedTasks";
 import { useSearch } from "@/hooks/useSearch";
 import { usePanelSide } from "@/hooks/usePanelSide";
+import { usePanelOpen } from "@/hooks/usePanelOpen";
 import type { BoxFilter, Box } from "@/types/common";
 import type { Task } from "@/types/entities";
 import { BOX_FILTER_ALL, BOX, BOX_FILTER_LABELS } from "@/constants";
@@ -115,9 +117,11 @@ function AddTaskInput({
 }
 
 export default function InboxPage() {
+  const location = useLocation();
+  const initialFilterMode = (location.state as { filterMode?: RightPanelMode } | null)?.filterMode ?? "tasks";
   const [activeBox, setActiveBox] = useState<BoxFilter>(BOX_FILTER_ALL);
-  const [filterMode, setFilterMode] = useState<RightPanelMode>("tasks");
-  const [isPanelOpen, setIsPanelOpen] = useState(false);
+  const [filterMode, setFilterMode] = useState<RightPanelMode>(initialFilterMode);
+  const { isPanelOpen, togglePanelOpen } = usePanelOpen();
   const [selectedGoalId, setSelectedGoalId] = useState<string | null>(null);
   const [selectedContextId, setSelectedContextId] = useState<string | null>(null);
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
@@ -195,9 +199,7 @@ export default function InboxPage() {
     [search],
   );
 
-  const handlePanelToggle = useCallback(() => {
-    setIsPanelOpen((previous) => !previous);
-  }, []);
+  const handlePanelToggle = togglePanelOpen;
 
   const handleModeChange = useCallback(
     (newMode: RightPanelMode) => {
