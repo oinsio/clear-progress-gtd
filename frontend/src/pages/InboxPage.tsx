@@ -1,4 +1,5 @@
 import { useState, useCallback, useRef, useEffect, useMemo } from "react";
+import { Plus } from "lucide-react";
 import { TaskList } from "@/components/tasks/TaskList";
 import { BoxFilterBar } from "@/components/tasks/BoxFilterBar";
 import { RightFilterPanel, type RightPanelMode } from "@/components/tasks/RightFilterPanel";
@@ -498,12 +499,26 @@ export default function InboxPage() {
           {renderContent()}
         </main>
 
-        {/* Bottom box filter bar */}
-        <BoxFilterBar
-          activeBox={activeBox}
-          onBoxChange={handleBoxChange}
-          onAddTask={handleAddTask}
-        />
+        {/* Bottom box filter bar — hidden in inbox mode */}
+        {filterMode === "inbox" ? (
+          <div className="flex items-center justify-end border-t border-gray-200 bg-white px-3 py-2 safe-area-bottom">
+            <button
+              type="button"
+              aria-label="Добавить задачу"
+              data-testid="add-task-button"
+              onClick={handleAddTask}
+              className="w-10 h-10 bg-accent text-white rounded-full flex items-center justify-center shadow-md hover:bg-accent/80 active:bg-accent/70 transition-colors"
+            >
+              <Plus className="w-5 h-5" aria-hidden="true" />
+            </button>
+          </div>
+        ) : (
+          <BoxFilterBar
+            activeBox={activeBox}
+            onBoxChange={handleBoxChange}
+            onAddTask={handleAddTask}
+          />
+        )}
       </div>
 
       {/* Right quick filter panel — full height, outside main column */}

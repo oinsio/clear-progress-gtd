@@ -39,7 +39,10 @@ function buildTasksHook(overrides: Partial<UseTasksReturn> = {}): UseTasksReturn
     createTask: vi.fn(),
     completeTask: vi.fn(),
     deleteTask: vi.fn(),
+    updateTask: vi.fn(),
     moveTask: vi.fn(),
+    reorderTasks: vi.fn(),
+    reload: vi.fn(),
     ...overrides,
   };
 }
@@ -73,6 +76,7 @@ function buildContextsHook(overrides: Partial<UseContextsReturn> = {}): UseConte
     createContext: vi.fn(),
     updateContext: vi.fn(),
     deleteContext: vi.fn(),
+    reorderContexts: vi.fn(),
     ...overrides,
   };
 }
@@ -84,6 +88,7 @@ function buildCategoriesHook(overrides: Partial<UseCategoriesReturn> = {}): UseC
     createCategory: vi.fn(),
     updateCategory: vi.fn(),
     deleteCategory: vi.fn(),
+    reorderCategories: vi.fn(),
     ...overrides,
   };
 }
@@ -126,13 +131,17 @@ describe("InboxPage", () => {
     expect(screen.getByTestId("inbox-page")).toBeInTheDocument();
   });
 
-  it("should render box filter bar with filter options when expanded", () => {
+  it("should render box filter bar in tasks mode", () => {
     renderPage();
-    fireEvent.click(screen.getByTestId("box-filter-toggle"));
-    expect(screen.getByTestId("box-filter-all")).toBeInTheDocument();
-    expect(screen.getByTestId("box-filter-today")).toBeInTheDocument();
-    expect(screen.getByTestId("box-filter-week")).toBeInTheDocument();
-    expect(screen.getByTestId("box-filter-later")).toBeInTheDocument();
+    expect(screen.getByTestId("box-filter-toggle")).toBeInTheDocument();
+  });
+
+  it("should hide box filter bar and show only add button in inbox mode", () => {
+    renderPage();
+    openRightPanel();
+    fireEvent.click(screen.getByTestId("right-filter-inbox"));
+    expect(screen.queryByTestId("box-filter-toggle")).not.toBeInTheDocument();
+    expect(screen.getByTestId("add-task-button")).toBeInTheDocument();
   });
 
   it("should render add task button", () => {
