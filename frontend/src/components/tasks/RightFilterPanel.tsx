@@ -130,13 +130,13 @@ export function RightFilterPanel({
           </nav>
 
           {/* Bottom actions: Search */}
-          <div className="px-2 pb-3 border-t border-white/25 pt-2">
+          <div className="px-2 py-2 border-t border-white/25">
             <button
               type="button"
               aria-label="Поиск"
               data-testid="right-filter-search"
               onClick={(e) => { e.stopPropagation(); navigate(ROUTES.SEARCH); }}
-              className="w-full flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-medium transition-colors text-left text-white/80 hover:bg-white/10 hover:text-white"
+              className="w-full flex items-center gap-3 px-3 h-10 rounded-xl text-sm font-medium transition-colors text-left text-white/80 hover:bg-white/10 hover:text-white"
             >
               <Search className="w-5 h-5 flex-shrink-0" aria-hidden="true" />
               <span>Поиск</span>
@@ -194,7 +194,7 @@ export function RightFilterPanel({
           </nav>
 
           {/* Bottom: search */}
-          <div className="flex flex-col items-center pb-3 gap-1 border-t border-white/25 pt-2">
+          <div className="flex flex-col items-center py-2 border-t border-white/25">
             <button
               type="button"
               aria-label="Поиск"
