@@ -61,12 +61,15 @@ export const router = createBrowserRouter([
     element: <GoalsPage />,
   },
   {
+    path: ROUTES.SEARCH,
+    element: <SearchPage />,
+  },
+  {
     element: <RootLayout />,
     children: [
       { path: ROUTES.TODAY, element: <TodayPage /> },
       { path: ROUTES.WEEK, element: <WeekPage /> },
       { path: ROUTES.LATER, element: <LaterPage /> },
-      { path: ROUTES.SEARCH, element: <SearchPage /> },
     ],
   },
 ]);

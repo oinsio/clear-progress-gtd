@@ -1,10 +1,12 @@
 import { useState, useCallback } from "react";
-import type { Task } from "@/types/entities";
+import type { Task, Goal } from "@/types/entities";
 import { TaskService } from "@/services/TaskService";
-import { defaultTaskService } from "@/services/defaultServices";
+import { GoalService } from "@/services/GoalService";
+import { defaultTaskService, defaultGoalService } from "@/services/defaultServices";
 
 export interface UseSearchReturn {
-  results: Task[];
+  tasks: Task[];
+  goals: Goal[];
   isSearching: boolean;
   search: (query: string) => Promise<void>;
   clear: () => void;
@@ -12,27 +14,42 @@ export interface UseSearchReturn {
 
 export function useSearch(
   taskService: TaskService = defaultTaskService,
+  goalService: GoalService = defaultGoalService,
 ): UseSearchReturn {
-  const [results, setResults] = useState<Task[]>([]);
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [goals, setGoals] = useState<Goal[]>([]);
   const [isSearching, setIsSearching] = useState(false);
 
   const search = useCallback(
     async (query: string) => {
       if (!query) {
-        setResults([]);
+        setTasks([]);
+        setGoals([]);
         return;
       }
       setIsSearching(true);
-      const foundTasks = await taskService.searchByTitle(query);
-      setResults(foundTasks);
-      setIsSearching(false);
+      try {
+        const [foundTasks, foundGoals] = await Promise.all([
+          taskService.searchByTitle(query),
+          goalService.searchByTitle(query),
+        ]);
+        setTasks(foundTasks);
+        setGoals(foundGoals);
+      } catch (error) {
+        console.error("Search failed:", error);
+        setTasks([]);
+        setGoals([]);
+      } finally {
+        setIsSearching(false);
+      }
     },
-    [taskService],
+    [taskService, goalService],
   );
 
   const clear = useCallback(() => {
-    setResults([]);
+    setTasks([]);
+    setGoals([]);
   }, []);
 
-  return { results, isSearching, search, clear };
+  return { tasks, goals, isSearching, search, clear };
 }

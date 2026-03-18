@@ -58,6 +58,14 @@ export class GoalService {
     return this.update(id, { is_deleted: true });
   }
 
+  async searchByTitle(query: string): Promise<Goal[]> {
+    const allGoals = await this.goalRepository.getActive();
+    const lowerQuery = query.toLowerCase();
+    return allGoals.filter((goal) =>
+      goal.title.toLowerCase().includes(lowerQuery),
+    );
+  }
+
   async reorderGoals(orderedGoals: Goal[]): Promise<void> {
     if (orderedGoals.length === 0) return;
     const now = new Date().toISOString();

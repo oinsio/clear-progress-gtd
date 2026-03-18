@@ -1,4 +1,3 @@
-/// <reference types="vitest/config" />
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import { VitePWA } from "vite-plugin-pwa";
@@ -28,6 +27,8 @@ export default defineConfig({
     coverage: {
       provider: "v8",
       include: ["src/**/*.{ts,tsx}"],
+      reporter: ['lcov', 'text'],
+      reportsDirectory: './coverage',
       exclude: [
         "src/test/**",
         "src/main.tsx",

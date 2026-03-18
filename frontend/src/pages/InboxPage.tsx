@@ -133,7 +133,7 @@ export default function InboxPage() {
   const { tasks: laterTasks, completeTask: completeLater, deleteTask: deleteLater, createTask: createLaterTask, updateTask: updateLater, moveTask: moveLater, reorderTasks: reorderLater, reload: reloadLater } = useTasks(BOX.LATER);
   const { goals } = useGoals();
   const { completedTasks, reload: reloadCompleted } = useCompletedTasks();
-  const { results: searchResults, isSearching, search, clear: clearSearch } = useSearch();
+  const { tasks: searchResults, isSearching, search, clear: clearSearch } = useSearch();
   const { panelSide } = usePanelSide();
 
   const searchDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);

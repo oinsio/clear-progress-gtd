@@ -51,17 +51,20 @@ function buildGoalsHook(overrides: Partial<UseGoalsReturn> = {}): UseGoalsReturn
   return {
     goals: [],
     isLoading: false,
+    reloadGoals: vi.fn(),
     createGoal: vi.fn(),
     updateGoal: vi.fn(),
     updateGoalStatus: vi.fn(),
     deleteGoal: vi.fn(),
+    reorderGoals: vi.fn(),
     ...overrides,
   };
 }
 
 function buildSearchHook(overrides: Partial<UseSearchReturn> = {}): UseSearchReturn {
   return {
-    results: [],
+    tasks: [],
+    goals: [],
     isSearching: false,
     search: vi.fn(),
     clear: vi.fn(),
@@ -204,7 +207,7 @@ describe("InboxPage", () => {
 
   it("should show search results when in search mode", () => {
     const foundTasks = [buildTask({ title: "Found task" })];
-    mockUseSearch.mockReturnValue(buildSearchHook({ results: foundTasks }));
+    mockUseSearch.mockReturnValue(buildSearchHook({ tasks: foundTasks }));
     renderPage();
     openRightPanel();
     fireEvent.click(screen.getByTestId("right-filter-search"));
