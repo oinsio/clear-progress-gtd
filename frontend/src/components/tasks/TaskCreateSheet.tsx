@@ -4,11 +4,13 @@ import type * as React from "react";
 import { cn } from "@/shared/lib/cn";
 import { BOX, BOX_FILTER_LABELS } from "@/constants";
 import type { Box } from "@/types/common";
-import { TodayBoxIcon, WeekBoxIcon, LaterBoxIcon } from "@/components/tasks/BoxIcons";
+import { InboxBoxIcon, TodayBoxIcon, WeekBoxIcon, LaterBoxIcon } from "@/components/tasks/BoxIcons";
+import { useSettings } from "@/hooks/useSettings";
 
 const ADD_TASK_TITLE_PLACEHOLDER = "Название задачи...";
-const BOX_OPTIONS: Box[] = [BOX.TODAY, BOX.WEEK, BOX.LATER];
+const BOX_OPTIONS: Box[] = [BOX.INBOX, BOX.TODAY, BOX.WEEK, BOX.LATER];
 const BOX_PICKER_ICONS: Partial<Record<Box, React.FC<{ className?: string }>>> = {
+  [BOX.INBOX]: InboxBoxIcon,
   [BOX.TODAY]: TodayBoxIcon,
   [BOX.WEEK]: WeekBoxIcon,
   [BOX.LATER]: LaterBoxIcon,
@@ -29,9 +31,10 @@ export function TaskCreateSheet({
   onSave,
   onClose,
 }: TaskCreateSheetProps) {
+  const { defaultBox } = useSettings();
   const [title, setTitle] = useState("");
   const [notes, setNotes] = useState("");
-  const [selectedBox, setSelectedBox] = useState<Box>(BOX.TODAY);
+  const [selectedBox, setSelectedBox] = useState<Box>(() => defaultBox);
   const [isSaving, setIsSaving] = useState(false);
 
   const handleSave = useCallback(async () => {

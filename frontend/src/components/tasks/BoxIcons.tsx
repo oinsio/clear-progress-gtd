@@ -55,6 +55,26 @@ export function LaterBoxIcon({ className }: { className?: string }) {
   );
 }
 
+export function InboxBoxIcon({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} fill="none" aria-hidden="true">
+      <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="1.5" />
+      <path
+        d="M7.5 14h9l-1.5-4h-6L7.5 14z"
+        stroke="currentColor"
+        strokeWidth="1.25"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M9.5 14v.5a2.5 2.5 0 0 0 5 0V14"
+        stroke="currentColor"
+        strokeWidth="1.25"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
 export function AllBoxesIcon({ className }: { className?: string }) {
   return (
     <svg viewBox="0 0 24 24" className={className} fill="none" aria-hidden="true">
