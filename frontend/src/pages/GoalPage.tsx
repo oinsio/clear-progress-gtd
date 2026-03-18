@@ -11,6 +11,7 @@ const GOAL_DESCRIPTION_PLACEHOLDER = "Добавить описание";
 const CLOSE_LABEL = "Назад";
 const CANCEL_LABEL = "Отмена";
 const SAVE_LABEL = "Сохранить";
+const DELETE_LABEL = "Удалить";
 const PAGE_TITLE = "Редактировать цель";
 const TITLE_FIELD_LABEL = "Название";
 const DESCRIPTION_FIELD_LABEL = "Описание";
@@ -35,11 +36,12 @@ interface GoalPageProps {
 }
 
 export default function GoalPage({ goalId, onClose }: GoalPageProps) {
-  const { goal, isLoading, updateGoal, updateGoalStatus } = useGoal(goalId);
+  const { goal, isLoading, updateGoal, updateGoalStatus, deleteGoal } = useGoal(goalId);
 
   const [title, setTitle] = useState<string | undefined>(undefined);
   const [description, setDescription] = useState<string | undefined>(undefined);
   const [isSaving, setIsSaving] = useState(false);
+  const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
 
   const currentTitle = title ?? goal?.title ?? "";
   const currentDescription = description ?? goal?.description ?? "";
@@ -63,6 +65,19 @@ export default function GoalPage({ goalId, onClose }: GoalPageProps) {
     },
     [updateGoalStatus],
   );
+
+  const handleDeleteClick = useCallback(() => {
+    setIsConfirmingDelete(true);
+  }, []);
+
+  const handleDeleteConfirm = useCallback(async () => {
+    await deleteGoal();
+    onClose();
+  }, [deleteGoal, onClose]);
+
+  const handleDeleteCancel = useCallback(() => {
+    setIsConfirmingDelete(false);
+  }, []);
 
   if (!isLoading && !goal) {
     return (
@@ -162,7 +177,16 @@ export default function GoalPage({ goalId, onClose }: GoalPageProps) {
         </div>
 
         {/* Footer */}
-        <div className="flex gap-3 px-4 pb-6 pt-2">
+        <div className="flex gap-2 px-4 pb-6 pt-2">
+          <button
+            type="button"
+            onClick={handleDeleteClick}
+            aria-label={DELETE_LABEL}
+            data-testid="goal-delete-button"
+            className="flex-1 py-2.5 text-sm text-red-500 border border-red-200 rounded-xl hover:bg-red-50 transition-colors"
+          >
+            {DELETE_LABEL}
+          </button>
           <button
             type="button"
             onClick={onClose}
@@ -182,6 +206,37 @@ export default function GoalPage({ goalId, onClose }: GoalPageProps) {
             {SAVE_LABEL}
           </button>
         </div>
+
+        {/* Delete confirmation overlay */}
+        {isConfirmingDelete && (
+          <div
+            data-testid="goal-delete-confirm"
+            className="absolute inset-0 bg-white/95 rounded-t-2xl flex flex-col items-center justify-center gap-4 px-6"
+          >
+            <p className="text-base font-medium text-gray-800 text-center">Удалить цель?</p>
+            <p className="text-sm text-gray-500 text-center">{currentTitle}</p>
+            <div className="flex gap-3 w-full">
+              <button
+                type="button"
+                data-testid="goal-delete-cancel"
+                onClick={handleDeleteCancel}
+                aria-label={CANCEL_LABEL}
+                className="flex-1 py-2.5 text-sm text-gray-600 border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors"
+              >
+                {CANCEL_LABEL}
+              </button>
+              <button
+                type="button"
+                data-testid="goal-delete-confirm-btn"
+                onClick={() => void handleDeleteConfirm()}
+                aria-label={DELETE_LABEL}
+                className="flex-1 py-2.5 text-sm text-white bg-red-500 rounded-xl hover:bg-red-600 transition-colors"
+              >
+                {DELETE_LABEL}
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

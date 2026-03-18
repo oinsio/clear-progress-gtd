@@ -15,6 +15,7 @@ interface TaskEditModalProps {
   isOpen: boolean;
   onClose: () => void;
   onUpdate: (id: string, changes: Partial<Task>) => Promise<void>;
+  onDelete: (id: string) => void;
 }
 
 const BOX_OPTIONS: Box[] = [BOX.INBOX, BOX.TODAY, BOX.WEEK, BOX.LATER];
@@ -48,6 +49,7 @@ export function TaskEditModal({
   isOpen,
   onClose,
   onUpdate,
+  onDelete,
 }: TaskEditModalProps) {
   const [title, setTitle] = useState(task.title);
   const [notes, setNotes] = useState(task.notes);
@@ -57,6 +59,7 @@ export function TaskEditModal({
   const [selectedBox, setSelectedBox] = useState<Box>(task.box);
   const [isSaving, setIsSaving] = useState(false);
   const [openSelector, setOpenSelector] = useState<SelectorType | null>(null);
+  const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
@@ -67,8 +70,22 @@ export function TaskEditModal({
       setSelectedCategoryId(task.category_id);
       setSelectedBox(task.box);
       setOpenSelector(null);
+      setIsConfirmingDelete(false);
     }
   }, [isOpen, task]);
+
+  const handleDeleteClick = useCallback(() => {
+    setIsConfirmingDelete(true);
+  }, []);
+
+  const handleDeleteConfirm = useCallback(() => {
+    onDelete(task.id);
+    onClose();
+  }, [task.id, onDelete, onClose]);
+
+  const handleDeleteCancel = useCallback(() => {
+    setIsConfirmingDelete(false);
+  }, []);
 
   const handleSave = useCallback(async () => {
     if (!title.trim()) return;
@@ -237,7 +254,16 @@ export function TaskEditModal({
         </div>
 
         {/* Footer buttons */}
-        <div className="flex gap-3 px-4 pb-6 pt-2">
+        <div className="flex gap-2 px-4 pb-6 pt-2">
+          <button
+            type="button"
+            data-testid="task-edit-delete-btn"
+            onClick={handleDeleteClick}
+            aria-label="Удалить задачу"
+            className="flex-1 py-2.5 text-sm text-red-500 border border-red-200 rounded-xl hover:bg-red-50 transition-colors"
+          >
+            Удалить
+          </button>
           <button
             type="button"
             onClick={onClose}
@@ -256,6 +282,37 @@ export function TaskEditModal({
             Сохранить
           </button>
         </div>
+
+        {/* Delete confirmation overlay */}
+        {isConfirmingDelete && (
+          <div
+            data-testid="task-edit-delete-confirm"
+            className="absolute inset-0 bg-white/95 rounded-t-2xl flex flex-col items-center justify-center gap-4 px-6"
+          >
+            <p className="text-base font-medium text-gray-800 text-center">Удалить задачу?</p>
+            <p className="text-sm text-gray-500 text-center">{task.title}</p>
+            <div className="flex gap-3 w-full">
+              <button
+                type="button"
+                data-testid="task-edit-delete-cancel"
+                onClick={handleDeleteCancel}
+                aria-label="Отмена"
+                className="flex-1 py-2.5 text-sm text-gray-600 border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors"
+              >
+                Отмена
+              </button>
+              <button
+                type="button"
+                data-testid="task-edit-delete-confirm-btn"
+                onClick={handleDeleteConfirm}
+                aria-label="Удалить"
+                className="flex-1 py-2.5 text-sm text-white bg-red-500 rounded-xl hover:bg-red-600 transition-colors"
+              >
+                Удалить
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Selector sheet — overlays the main bottom sheet */}

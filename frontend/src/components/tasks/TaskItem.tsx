@@ -23,10 +23,11 @@ interface TaskItemProps {
   onComplete: (id: string) => void;
   onUpdate: (id: string, changes: Partial<Task>) => Promise<void>;
   onMove: (id: string, box: Box) => Promise<void>;
+  onDelete: (id: string) => void;
   dragHandleProps?: DragHandleProps;
 }
 
-export function TaskItem({ task, goals, contexts, categories, onComplete, onUpdate, onMove, dragHandleProps }: TaskItemProps) {
+export function TaskItem({ task, goals, contexts, categories, onComplete, onUpdate, onMove, onDelete, dragHandleProps }: TaskItemProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isConfirmingRestore, setIsConfirmingRestore] = useState(false);
@@ -177,6 +178,7 @@ export function TaskItem({ task, goals, contexts, categories, onComplete, onUpda
         isOpen={isEditModalOpen}
         onClose={handleCloseEdit}
         onUpdate={onUpdate}
+        onDelete={onDelete}
       />
     </>
   );

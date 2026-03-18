@@ -1,5 +1,5 @@
 import { useState, useCallback } from "react";
-import { X, Trash2 } from "lucide-react";
+import { X } from "lucide-react";
 
 interface EntityEditSheetProps {
   title: string;
@@ -27,6 +27,7 @@ export function EntityEditSheet({
   const [name, setName] = useState(initialName);
   const [isSaving, setIsSaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
 
   const handleSave = useCallback(async () => {
     const trimmedName = name.trim();
@@ -40,7 +41,11 @@ export function EntityEditSheet({
     }
   }, [name, onSave, onClose]);
 
-  const handleDelete = useCallback(async () => {
+  const handleDeleteClick = useCallback(() => {
+    setIsConfirmingDelete(true);
+  }, []);
+
+  const handleDeleteConfirm = useCallback(async () => {
     setIsDeleting(true);
     try {
       await onDelete();
@@ -48,6 +53,10 @@ export function EntityEditSheet({
       setIsDeleting(false);
     }
   }, [onDelete]);
+
+  const handleDeleteCancel = useCallback(() => {
+    setIsConfirmingDelete(false);
+  }, []);
 
   return (
     <div data-testid={testId} className="fixed inset-0 z-50 flex flex-col justify-end">
@@ -81,12 +90,10 @@ export function EntityEditSheet({
         <div className="flex gap-3 px-4 pb-6 pt-2">
           <button
             type="button"
-            onClick={handleDelete}
-            disabled={isDeleting}
+            onClick={handleDeleteClick}
             aria-label={deleteLabel}
-            className="flex items-center justify-center gap-2 px-4 py-2.5 text-sm text-red-500 border border-red-200 rounded-xl hover:bg-red-50 transition-colors disabled:opacity-50"
+            className="flex-1 py-2.5 text-sm text-red-500 border border-red-200 rounded-xl hover:bg-red-50 transition-colors"
           >
-            <Trash2 className="w-4 h-4" />
             Удалить
           </button>
           <button
@@ -107,6 +114,38 @@ export function EntityEditSheet({
             Сохранить
           </button>
         </div>
+
+        {/* Delete confirmation overlay */}
+        {isConfirmingDelete && (
+          <div
+            data-testid="entity-edit-delete-confirm"
+            className="absolute inset-0 bg-white/95 rounded-t-2xl flex flex-col items-center justify-center gap-4 px-6"
+          >
+            <p className="text-base font-medium text-gray-800 text-center">{deleteLabel}?</p>
+            <p className="text-sm text-gray-500 text-center">{name}</p>
+            <div className="flex gap-3 w-full">
+              <button
+                type="button"
+                data-testid="entity-edit-delete-cancel"
+                onClick={handleDeleteCancel}
+                aria-label="Отмена"
+                className="flex-1 py-2.5 text-sm text-gray-600 border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors"
+              >
+                Отмена
+              </button>
+              <button
+                type="button"
+                data-testid="entity-edit-delete-confirm-btn"
+                onClick={handleDeleteConfirm}
+                disabled={isDeleting}
+                aria-label="Удалить"
+                className="flex-1 py-2.5 text-sm text-white bg-red-500 rounded-xl hover:bg-red-600 transition-colors disabled:opacity-50"
+              >
+                Удалить
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

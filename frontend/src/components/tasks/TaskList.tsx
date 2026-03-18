@@ -31,9 +31,10 @@ interface SortableTaskItemProps {
   onComplete: (id: string) => void;
   onUpdate: (id: string, changes: Partial<Task>) => Promise<void>;
   onMove: (id: string, box: Box) => Promise<void>;
+  onDelete: (id: string) => void;
 }
 
-function SortableTaskItem({ task, goals, contexts, categories, onComplete, onUpdate, onMove }: SortableTaskItemProps) {
+function SortableTaskItem({ task, goals, contexts, categories, onComplete, onUpdate, onMove, onDelete }: SortableTaskItemProps) {
   const {
     attributes,
     listeners,
@@ -60,6 +61,7 @@ function SortableTaskItem({ task, goals, contexts, categories, onComplete, onUpd
         onComplete={onComplete}
         onUpdate={onUpdate}
         onMove={onMove}
+        onDelete={onDelete}
         dragHandleProps={{
           ref: setActivatorNodeRef,
           attributes,
@@ -83,7 +85,7 @@ interface TaskListProps {
   emptyMessage?: string;
 }
 
-export function TaskList({ tasks, goals, contexts, categories, onComplete, onUpdate, onMove, onReorder, emptyMessage }: TaskListProps) {
+export function TaskList({ tasks, goals, contexts, categories, onComplete, onUpdate, onMove, onDelete, onReorder, emptyMessage }: TaskListProps) {
   const pointerSensor = useSensor(PointerSensor, {
     activationConstraint: { distance: DRAG_ACTIVATION_DISTANCE_PX },
   });
@@ -128,6 +130,7 @@ export function TaskList({ tasks, goals, contexts, categories, onComplete, onUpd
               onComplete={onComplete}
               onUpdate={onUpdate}
               onMove={onMove}
+              onDelete={onDelete}
             />
           </li>
         ))}
@@ -149,6 +152,7 @@ export function TaskList({ tasks, goals, contexts, categories, onComplete, onUpd
               onComplete={onComplete}
               onUpdate={onUpdate}
               onMove={onMove}
+              onDelete={onDelete}
             />
           ))}
         </ul>
