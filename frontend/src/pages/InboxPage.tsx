@@ -511,8 +511,8 @@ export default function InboxPage() {
           {renderContent()}
         </main>
 
-        {/* Bottom box filter bar — hidden in inbox mode */}
-        {filterMode === "inbox" ? (
+        {/* Bottom box filter bar — hidden in inbox and completed modes */}
+        {filterMode === "completed" ? null : filterMode === "inbox" ? (
           <div className="flex items-center justify-end border-t border-gray-200 bg-white px-3 py-2 safe-area-bottom">
             <button
               type="button"
