@@ -98,12 +98,6 @@ describe("TaskEditModal", () => {
     expect(onClose).toHaveBeenCalled();
   });
 
-  it("should show goal selector with available goals", () => {
-    const goal = buildGoal({ title: "Reach the top" });
-    renderModal({ goals: [goal] });
-    expect(screen.getByText("Reach the top")).toBeInTheDocument();
-  });
-
   it("should show box selector with today, week, later options", () => {
     renderModal();
     expect(screen.getByRole("button", { name: /сегодня/i })).toBeInTheDocument();
@@ -125,12 +119,60 @@ describe("TaskEditModal", () => {
     );
   });
 
+  it("should show goal drill-down row when goals are available", () => {
+    const goal = buildGoal({ title: "Reach the top" });
+    renderModal({ goals: [goal] });
+    expect(screen.getByTestId("task-edit-goal-row")).toBeInTheDocument();
+  });
+
+  it("should show goal list inside selector sheet after clicking goal row", async () => {
+    const goal = buildGoal({ title: "Reach the top" });
+    renderModal({ goals: [goal] });
+    await userEvent.click(screen.getByTestId("task-edit-goal-row"));
+    expect(screen.getByText("Reach the top")).toBeInTheDocument();
+  });
+
+  it("should show context drill-down row when contexts are available", () => {
+    const context = buildContext({ name: "@Office" });
+    renderModal({ contexts: [context] });
+    expect(screen.getByTestId("task-edit-context-row")).toBeInTheDocument();
+  });
+
+  it("should show context list inside selector sheet after clicking context row", async () => {
+    const context = buildContext({ name: "@Office" });
+    renderModal({ contexts: [context] });
+    await userEvent.click(screen.getByTestId("task-edit-context-row"));
+    expect(screen.getByText("@Office")).toBeInTheDocument();
+  });
+
+  it("should show category drill-down row when categories are available", () => {
+    const category = buildCategory({ name: "Family" });
+    renderModal({ categories: [category] });
+    expect(screen.getByTestId("task-edit-category-row")).toBeInTheDocument();
+  });
+
+  it("should show category list inside selector sheet after clicking category row", async () => {
+    const category = buildCategory({ name: "Family" });
+    renderModal({ categories: [category] });
+    await userEvent.click(screen.getByTestId("task-edit-category-row"));
+    expect(screen.getByText("Family")).toBeInTheDocument();
+  });
+
+  it("should close selector sheet and return to main form after selecting a goal", async () => {
+    const goal = buildGoal({ title: "My goal" });
+    renderModal({ goals: [goal] });
+    await userEvent.click(screen.getByTestId("task-edit-goal-row"));
+    await userEvent.click(screen.getByText("My goal"));
+    expect(screen.queryByTestId("task-edit-selector-sheet")).not.toBeInTheDocument();
+  });
+
   it("should call onUpdate with selected goal when saved", async () => {
     const goal = buildGoal({ title: "My goal" });
     const task = buildTask({ goal_id: "" });
     const onUpdate = vi.fn().mockResolvedValue(undefined);
     renderModal({ task, goals: [goal], onUpdate });
 
+    await userEvent.click(screen.getByTestId("task-edit-goal-row"));
     await userEvent.click(screen.getByText("My goal"));
     await userEvent.click(screen.getByRole("button", { name: /сохранить/i }));
 
@@ -140,24 +182,13 @@ describe("TaskEditModal", () => {
     );
   });
 
-  it("should show context selector with available contexts", () => {
-    const context = buildContext({ name: "@Office" });
-    renderModal({ contexts: [context] });
-    expect(screen.getByText("@Office")).toBeInTheDocument();
-  });
-
-  it("should show category selector with available categories", () => {
-    const category = buildCategory({ name: "Family" });
-    renderModal({ categories: [category] });
-    expect(screen.getByText("Family")).toBeInTheDocument();
-  });
-
   it("should call onUpdate with selected context_id when saved", async () => {
     const context = buildContext({ name: "@Office" });
     const task = buildTask({ context_id: "" });
     const onUpdate = vi.fn().mockResolvedValue(undefined);
     renderModal({ task, contexts: [context], onUpdate });
 
+    await userEvent.click(screen.getByTestId("task-edit-context-row"));
     await userEvent.click(screen.getByText("@Office"));
     await userEvent.click(screen.getByRole("button", { name: /сохранить/i }));
 
@@ -173,6 +204,7 @@ describe("TaskEditModal", () => {
     const onUpdate = vi.fn().mockResolvedValue(undefined);
     renderModal({ task, categories: [category], onUpdate });
 
+    await userEvent.click(screen.getByTestId("task-edit-category-row"));
     await userEvent.click(screen.getByText("Family"));
     await userEvent.click(screen.getByRole("button", { name: /сохранить/i }));
 
@@ -180,5 +212,14 @@ describe("TaskEditModal", () => {
       task.id,
       expect.objectContaining({ category_id: category.id }),
     );
+  });
+
+  it("should close selector sheet when back button is clicked", async () => {
+    const goal = buildGoal({ title: "My goal" });
+    renderModal({ goals: [goal] });
+    await userEvent.click(screen.getByTestId("task-edit-goal-row"));
+    expect(screen.getByTestId("task-edit-selector-sheet")).toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: /назад/i }));
+    expect(screen.queryByTestId("task-edit-selector-sheet")).not.toBeInTheDocument();
   });
 });

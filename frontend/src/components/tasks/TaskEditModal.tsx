@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { X, Inbox } from "lucide-react";
+import { X, Inbox, ChevronRight, ArrowLeft } from "lucide-react";
 import type { Task, Goal, Context, Category } from "@/types/entities";
 import type { Box } from "@/types/common";
 import { cn } from "@/shared/lib/cn";
@@ -26,6 +26,20 @@ const BOX_ICONS: Record<Box, React.FC<{ className?: string }>> = {
   [BOX.LATER]: LaterBoxIcon,
 };
 
+const SELECTOR_TYPE = {
+  GOAL: "goal",
+  CONTEXT: "context",
+  CATEGORY: "category",
+} as const;
+
+type SelectorType = (typeof SELECTOR_TYPE)[keyof typeof SELECTOR_TYPE];
+
+const SELECTOR_TITLES: Record<SelectorType, string> = {
+  [SELECTOR_TYPE.GOAL]: "Цель",
+  [SELECTOR_TYPE.CONTEXT]: "Контекст",
+  [SELECTOR_TYPE.CATEGORY]: "Категория",
+};
+
 export function TaskEditModal({
   task,
   goals,
@@ -42,6 +56,7 @@ export function TaskEditModal({
   const [selectedCategoryId, setSelectedCategoryId] = useState(task.category_id);
   const [selectedBox, setSelectedBox] = useState<Box>(task.box);
   const [isSaving, setIsSaving] = useState(false);
+  const [openSelector, setOpenSelector] = useState<SelectorType | null>(null);
 
   useEffect(() => {
     if (isOpen) {
@@ -51,6 +66,7 @@ export function TaskEditModal({
       setSelectedContextId(task.context_id);
       setSelectedCategoryId(task.category_id);
       setSelectedBox(task.box);
+      setOpenSelector(null);
     }
   }, [isOpen, task]);
 
@@ -74,6 +90,18 @@ export function TaskEditModal({
 
   if (!isOpen) return null;
 
+  const selectedGoalTitle = selectedGoalId
+    ? (goals.find((goal) => goal.id === selectedGoalId)?.title ?? "Без цели")
+    : "Без цели";
+
+  const selectedContextName = selectedContextId
+    ? (contexts.find((context) => context.id === selectedContextId)?.name ?? "Без контекста")
+    : "Без контекста";
+
+  const selectedCategoryName = selectedCategoryId
+    ? (categories.find((category) => category.id === selectedCategoryId)?.name ?? "Без категории")
+    : "Без категории";
+
   return (
     <div data-testid="task-edit-modal" className="fixed inset-0 z-50 flex flex-col justify-end">
       {/* Backdrop */}
@@ -83,7 +111,7 @@ export function TaskEditModal({
         onClick={onClose}
       />
 
-      {/* Bottom sheet */}
+      {/* Main bottom sheet */}
       <div className="relative bg-white rounded-t-2xl shadow-xl max-h-[90vh] overflow-y-auto">
         {/* Header */}
         <div className="flex items-center justify-between px-4 pt-4 pb-2 border-b border-gray-100">
@@ -153,112 +181,58 @@ export function TaskEditModal({
             </div>
           </div>
 
-          {/* Goal selector */}
+          {/* Goal drill-down row */}
           {goals.length > 0 && (
-            <div>
-              <label className="text-xs font-medium text-gray-500 mb-2 block">Цель</label>
-              <div className="flex flex-col gap-1 max-h-32 overflow-y-auto">
-                <button
-                  type="button"
-                  onClick={() => setSelectedGoalId("")}
-                  className={cn(
-                    "text-left text-sm px-3 py-1.5 rounded-lg transition-colors",
-                    selectedGoalId === ""
-                      ? "bg-accent/10 text-accent font-medium"
-                      : "text-gray-500 hover:bg-gray-100",
-                  )}
-                >
-                  Без цели
-                </button>
-                {goals.map((goal) => (
-                  <button
-                    key={goal.id}
-                    type="button"
-                    onClick={() => setSelectedGoalId(goal.id)}
-                    className={cn(
-                      "text-left text-sm px-3 py-1.5 rounded-lg transition-colors",
-                      selectedGoalId === goal.id
-                        ? "bg-accent/10 text-accent font-medium"
-                        : "text-gray-700 hover:bg-gray-100",
-                    )}
-                  >
-                    {goal.title}
-                  </button>
-                ))}
+            <button
+              type="button"
+              data-testid="task-edit-goal-row"
+              onClick={() => setOpenSelector(SELECTOR_TYPE.GOAL)}
+              className="flex items-center justify-between w-full py-2.5 text-sm border-b border-gray-100"
+            >
+              <span className="text-gray-500 font-medium">Цель</span>
+              <div className="flex items-center gap-1">
+                <span className={cn(selectedGoalId ? "text-gray-800" : "text-gray-400")}>
+                  {selectedGoalTitle}
+                </span>
+                <ChevronRight size={16} className="text-gray-400" />
               </div>
-            </div>
+            </button>
           )}
 
-          {/* Context selector */}
+          {/* Context drill-down row */}
           {contexts.length > 0 && (
-            <div>
-              <label className="text-xs font-medium text-gray-500 mb-2 block">Контекст</label>
-              <div className="flex flex-col gap-1 max-h-32 overflow-y-auto">
-                <button
-                  type="button"
-                  onClick={() => setSelectedContextId("")}
-                  className={cn(
-                    "text-left text-sm px-3 py-1.5 rounded-lg transition-colors",
-                    selectedContextId === ""
-                      ? "bg-accent/10 text-accent font-medium"
-                      : "text-gray-500 hover:bg-gray-100",
-                  )}
-                >
-                  Без контекста
-                </button>
-                {contexts.map((context) => (
-                  <button
-                    key={context.id}
-                    type="button"
-                    onClick={() => setSelectedContextId(context.id)}
-                    className={cn(
-                      "text-left text-sm px-3 py-1.5 rounded-lg transition-colors",
-                      selectedContextId === context.id
-                        ? "bg-accent/10 text-accent font-medium"
-                        : "text-gray-700 hover:bg-gray-100",
-                    )}
-                  >
-                    {context.name}
-                  </button>
-                ))}
+            <button
+              type="button"
+              data-testid="task-edit-context-row"
+              onClick={() => setOpenSelector(SELECTOR_TYPE.CONTEXT)}
+              className="flex items-center justify-between w-full py-2.5 text-sm border-b border-gray-100"
+            >
+              <span className="text-gray-500 font-medium">Контекст</span>
+              <div className="flex items-center gap-1">
+                <span className={cn(selectedContextId ? "text-gray-800" : "text-gray-400")}>
+                  {selectedContextName}
+                </span>
+                <ChevronRight size={16} className="text-gray-400" />
               </div>
-            </div>
+            </button>
           )}
 
-          {/* Category selector */}
+          {/* Category drill-down row */}
           {categories.length > 0 && (
-            <div>
-              <label className="text-xs font-medium text-gray-500 mb-2 block">Категория</label>
-              <div className="flex flex-col gap-1 max-h-32 overflow-y-auto">
-                <button
-                  type="button"
-                  onClick={() => setSelectedCategoryId("")}
-                  className={cn(
-                    "text-left text-sm px-3 py-1.5 rounded-lg transition-colors",
-                    selectedCategoryId === ""
-                      ? "bg-accent/10 text-accent font-medium"
-                      : "text-gray-500 hover:bg-gray-100",
-                  )}
-                >
-                  Без категории
-                </button>
-                {categories.map((category) => (
-                  <button
-                    key={category.id}
-                    type="button"
-                    onClick={() => setSelectedCategoryId(category.id)}
-                    className={cn(
-                      "text-left text-sm px-3 py-1.5 rounded-lg transition-colors",
-                      selectedCategoryId === category.id
-                        ? "bg-accent/10 text-accent font-medium"
-                        : "text-gray-700 hover:bg-gray-100",
-                    )}
-                  >
-                    {category.name}
-                  </button>
-                ))}
+            <button
+              type="button"
+              data-testid="task-edit-category-row"
+              onClick={() => setOpenSelector(SELECTOR_TYPE.CATEGORY)}
+              className="flex items-center justify-between w-full py-2.5 text-sm border-b border-gray-100"
+            >
+              <span className="text-gray-500 font-medium">Категория</span>
+              <div className="flex items-center gap-1">
+                <span className={cn(selectedCategoryId ? "text-gray-800" : "text-gray-400")}>
+                  {selectedCategoryName}
+                </span>
+                <ChevronRight size={16} className="text-gray-400" />
               </div>
-            </div>
+            </button>
           )}
         </div>
 
@@ -283,6 +257,146 @@ export function TaskEditModal({
           </button>
         </div>
       </div>
+
+      {/* Selector sheet — overlays the main bottom sheet */}
+      {openSelector !== null && (
+        <div
+          data-testid="task-edit-selector-sheet"
+          className="absolute bottom-0 left-0 right-0 bg-white rounded-t-2xl shadow-xl max-h-[90vh] overflow-y-auto"
+        >
+          {/* Selector header */}
+          <div className="flex items-center gap-2 px-4 pt-4 pb-2 border-b border-gray-100">
+            <button
+              type="button"
+              onClick={() => setOpenSelector(null)}
+              aria-label="Назад"
+              className="w-8 h-8 flex items-center justify-center rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
+            >
+              <ArrowLeft size={18} />
+            </button>
+            <h2 className="text-base font-semibold text-gray-800">
+              {SELECTOR_TITLES[openSelector]}
+            </h2>
+          </div>
+
+          {/* Selector list */}
+          <div className="px-4 py-3 flex flex-col gap-1">
+            {openSelector === SELECTOR_TYPE.GOAL && (
+              <>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectedGoalId("");
+                    setOpenSelector(null);
+                  }}
+                  className={cn(
+                    "text-left text-sm px-3 py-2.5 rounded-lg transition-colors",
+                    selectedGoalId === ""
+                      ? "bg-accent/10 text-accent font-medium"
+                      : "text-gray-500 hover:bg-gray-100",
+                  )}
+                >
+                  Без цели
+                </button>
+                {goals.map((goal) => (
+                  <button
+                    key={goal.id}
+                    type="button"
+                    onClick={() => {
+                      setSelectedGoalId(goal.id);
+                      setOpenSelector(null);
+                    }}
+                    className={cn(
+                      "text-left text-sm px-3 py-2.5 rounded-lg transition-colors",
+                      selectedGoalId === goal.id
+                        ? "bg-accent/10 text-accent font-medium"
+                        : "text-gray-700 hover:bg-gray-100",
+                    )}
+                  >
+                    {goal.title}
+                  </button>
+                ))}
+              </>
+            )}
+
+            {openSelector === SELECTOR_TYPE.CONTEXT && (
+              <>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectedContextId("");
+                    setOpenSelector(null);
+                  }}
+                  className={cn(
+                    "text-left text-sm px-3 py-2.5 rounded-lg transition-colors",
+                    selectedContextId === ""
+                      ? "bg-accent/10 text-accent font-medium"
+                      : "text-gray-500 hover:bg-gray-100",
+                  )}
+                >
+                  Без контекста
+                </button>
+                {contexts.map((context) => (
+                  <button
+                    key={context.id}
+                    type="button"
+                    onClick={() => {
+                      setSelectedContextId(context.id);
+                      setOpenSelector(null);
+                    }}
+                    className={cn(
+                      "text-left text-sm px-3 py-2.5 rounded-lg transition-colors",
+                      selectedContextId === context.id
+                        ? "bg-accent/10 text-accent font-medium"
+                        : "text-gray-700 hover:bg-gray-100",
+                    )}
+                  >
+                    {context.name}
+                  </button>
+                ))}
+              </>
+            )}
+
+            {openSelector === SELECTOR_TYPE.CATEGORY && (
+              <>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectedCategoryId("");
+                    setOpenSelector(null);
+                  }}
+                  className={cn(
+                    "text-left text-sm px-3 py-2.5 rounded-lg transition-colors",
+                    selectedCategoryId === ""
+                      ? "bg-accent/10 text-accent font-medium"
+                      : "text-gray-500 hover:bg-gray-100",
+                  )}
+                >
+                  Без категории
+                </button>
+                {categories.map((category) => (
+                  <button
+                    key={category.id}
+                    type="button"
+                    onClick={() => {
+                      setSelectedCategoryId(category.id);
+                      setOpenSelector(null);
+                    }}
+                    className={cn(
+                      "text-left text-sm px-3 py-2.5 rounded-lg transition-colors",
+                      selectedCategoryId === category.id
+                        ? "bg-accent/10 text-accent font-medium"
+                        : "text-gray-700 hover:bg-gray-100",
+                    )}
+                  >
+                    {category.name}
+                  </button>
+                ))}
+              </>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
