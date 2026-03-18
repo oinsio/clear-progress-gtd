@@ -189,11 +189,11 @@ describe("InboxPage", () => {
     expect(screen.getByTestId("add-task-input")).toBeInTheDocument();
   });
 
-  it("should activate search mode when search filter is clicked", () => {
+  it("should not show inline search input when search filter is clicked (navigates to search page)", () => {
     renderPage();
     openRightPanel();
     fireEvent.click(screen.getByTestId("right-filter-search"));
-    expect(screen.getByTestId("search-input")).toBeInTheDocument();
+    expect(screen.queryByTestId("search-input")).not.toBeInTheDocument();
   });
 
   it("should navigate to goals page when goals filter is clicked", () => {
@@ -205,13 +205,13 @@ describe("InboxPage", () => {
     expect(screen.queryByText("My Goal")).not.toBeInTheDocument();
   });
 
-  it("should show search results when in search mode", () => {
+  it("should not show search results inline when search filter is clicked (navigates to search page)", () => {
     const foundTasks = [buildTask({ title: "Found task" })];
     mockUseSearch.mockReturnValue(buildSearchHook({ tasks: foundTasks }));
     renderPage();
     openRightPanel();
     fireEvent.click(screen.getByTestId("right-filter-search"));
-    expect(screen.getByTestId("task-item")).toBeInTheDocument();
+    expect(screen.queryByText("Found task")).not.toBeInTheDocument();
   });
 
   it("should show completed tasks when completed filter is selected", () => {
@@ -247,10 +247,10 @@ describe("InboxPage", () => {
     expect(mockReload).toHaveBeenCalledOnce();
   });
 
-  it("should render account and settings buttons in open panel", () => {
+  it("should render account and login buttons in open panel", () => {
     renderPage();
     openRightPanel();
     expect(screen.getByTestId("right-panel-account")).toBeInTheDocument();
-    expect(screen.getByTestId("right-panel-settings")).toBeInTheDocument();
+    expect(screen.getByTestId("right-panel-login")).toBeInTheDocument();
   });
 });

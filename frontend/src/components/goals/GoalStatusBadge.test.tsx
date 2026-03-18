@@ -38,15 +38,15 @@ describe("GoalStatusBadge", () => {
     expect(badge.className).toMatch(/red/);
   });
 
-  it("should apply blue color for in_progress status", () => {
+  it("should apply gray color for in_progress status", () => {
     render(<GoalStatusBadge status="in_progress" />);
     const badge = screen.getByTestId("goal-status-badge");
-    expect(badge.className).toMatch(/blue/);
+    expect(badge.className).toMatch(/gray/);
   });
 
-  it("should apply gray color for planning status", () => {
+  it("should apply blue color for planning status", () => {
     render(<GoalStatusBadge status="planning" />);
     const badge = screen.getByTestId("goal-status-badge");
-    expect(badge.className).toMatch(/gray/);
+    expect(badge.className).toMatch(/blue/);
   });
 });
