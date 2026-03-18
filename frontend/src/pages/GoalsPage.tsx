@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect } from "react";
 import { Target, Plus, GripVertical } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import {
   DndContext,
   closestCenter,
@@ -92,11 +92,20 @@ export default function GoalsPage() {
   const { panelSide } = usePanelSide();
   const { isPanelOpen, togglePanelOpen } = usePanelOpen();
   const navigate = useNavigate();
+  const location = useLocation();
   const sensors = useDndSensors();
 
   const [goalTaskCounts, setGoalTaskCounts] = useState<Record<string, number>>({});
   const [isGoalSheetOpen, setIsGoalSheetOpen] = useState(false);
   const [selectedGoalId, setSelectedGoalId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const locationState = location.state as { openGoalId?: string } | null;
+    if (locationState?.openGoalId) {
+      setSelectedGoalId(locationState.openGoalId);
+      navigate(location.pathname, { replace: true, state: null });
+    }
+  }, [location.state, location.pathname, navigate]);
 
   const handleGoalCreate = useCallback(
     async (data: GoalCreateData) => {

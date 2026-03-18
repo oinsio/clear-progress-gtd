@@ -81,7 +81,7 @@ export default function SearchPage() {
 
   const handleNavigateToGoal = useCallback(
     (id: string) => {
-      navigate(ROUTES.GOAL.replace(":id", id));
+      navigate(ROUTES.GOALS, { state: { openGoalId: id } });
     },
     [navigate],
   );
