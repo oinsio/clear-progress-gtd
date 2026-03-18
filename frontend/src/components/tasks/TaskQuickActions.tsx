@@ -1,18 +1,19 @@
 import { useState, useCallback } from "react";
-import { FileText, Target, Pencil, Inbox } from "lucide-react";
-import type { Task } from "@/types/entities";
-import type { Goal } from "@/types/entities";
+import { FileText, Target, Pencil, Inbox, MapPin, Tag } from "lucide-react";
+import type { Task, Goal, Context, Category } from "@/types/entities";
 import type { Box } from "@/types/common";
 import { cn } from "@/shared/lib/cn";
 import { BOX, BOX_FILTER_LABELS } from "@/constants";
 import { TodayBoxIcon, WeekBoxIcon, LaterBoxIcon } from "./BoxIcons";
 import * as React from "react";
 
-type QuickActionMode = "none" | "notes" | "goal" | "box";
+type QuickActionMode = "none" | "notes" | "goal" | "box" | "context" | "category";
 
 interface TaskQuickActionsProps {
   task: Task;
   goals: Goal[];
+  contexts: Context[];
+  categories: Category[];
   onUpdate: (id: string, changes: Partial<Task>) => Promise<void>;
   onMove: (id: string, box: Box) => Promise<void>;
   onOpenEdit: () => void;
@@ -31,6 +32,8 @@ const BOX_ICONS: Record<Box, React.FC<{ className?: string }>> = {
 export function TaskQuickActions({
   task,
   goals,
+  contexts,
+  categories,
   onUpdate,
   onMove,
   onOpenEdit,
@@ -76,6 +79,22 @@ export function TaskQuickActions({
     [task.id, onUpdate],
   );
 
+  const handleContextSelect = useCallback(
+    async (contextId: string) => {
+      await onUpdate(task.id, { context_id: contextId });
+      setActiveMode("none");
+    },
+    [task.id, onUpdate],
+  );
+
+  const handleCategorySelect = useCallback(
+    async (categoryId: string) => {
+      await onUpdate(task.id, { category_id: categoryId });
+      setActiveMode("none");
+    },
+    [task.id, onUpdate],
+  );
+
   const handleBoxSelect = useCallback(
     async (box: Box) => {
       await onMove(task.id, box);
@@ -97,6 +116,24 @@ export function TaskQuickActions({
     activeMode === "notes"
       ? "bg-accent/15 text-accent"
       : task.notes
+        ? "text-accent hover:bg-accent/10"
+        : "text-gray-400 hover:text-gray-600 hover:bg-gray-100",
+  );
+
+  const contextButtonClass = cn(
+    "flex items-center justify-center w-9 h-9 rounded-lg transition-colors",
+    activeMode === "context"
+      ? "bg-accent/15 text-accent"
+      : task.context_id
+        ? "text-accent hover:bg-accent/10"
+        : "text-gray-400 hover:text-gray-600 hover:bg-gray-100",
+  );
+
+  const categoryButtonClass = cn(
+    "flex items-center justify-center w-9 h-9 rounded-lg transition-colors",
+    activeMode === "category"
+      ? "bg-accent/15 text-accent"
+      : task.category_id
         ? "text-accent hover:bg-accent/10"
         : "text-gray-400 hover:text-gray-600 hover:bg-gray-100",
   );
@@ -136,6 +173,24 @@ export function TaskQuickActions({
           )}
         >
           {React.createElement(BOX_ICONS[task.box], { className: "w-5 h-5" })}
+        </button>
+        <button
+          type="button"
+          aria-label="Select context"
+          aria-pressed={activeMode === "context"}
+          onClick={() => handleModeToggle("context")}
+          className={contextButtonClass}
+        >
+          <MapPin size={17} />
+        </button>
+        <button
+          type="button"
+          aria-label="Select category"
+          aria-pressed={activeMode === "category"}
+          onClick={() => handleModeToggle("category")}
+          className={categoryButtonClass}
+        >
+          <Tag size={17} />
         </button>
         <button
           type="button"
@@ -195,6 +250,74 @@ export function TaskQuickActions({
               )}
             >
               {goal.title}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* Context picker */}
+      {activeMode === "context" && (
+        <div className="px-3 pb-2 flex flex-col gap-0.5 max-h-40 overflow-y-auto">
+          <button
+            type="button"
+            aria-label="Без контекста"
+            onClick={() => handleContextSelect("")}
+            className={cn(
+              "text-left text-sm px-3 py-1.5 rounded-lg transition-colors",
+              task.context_id === ""
+                ? "bg-accent/10 text-accent font-medium"
+                : "text-gray-500 hover:bg-gray-100",
+            )}
+          >
+            Без контекста
+          </button>
+          {contexts.map((context) => (
+            <button
+              key={context.id}
+              type="button"
+              onClick={() => handleContextSelect(context.id)}
+              className={cn(
+                "text-left text-sm px-3 py-1.5 rounded-lg transition-colors",
+                task.context_id === context.id
+                  ? "bg-accent/10 text-accent font-medium"
+                  : "text-gray-700 hover:bg-gray-100",
+              )}
+            >
+              {context.name}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* Category picker */}
+      {activeMode === "category" && (
+        <div className="px-3 pb-2 flex flex-col gap-0.5 max-h-40 overflow-y-auto">
+          <button
+            type="button"
+            aria-label="Без категории"
+            onClick={() => handleCategorySelect("")}
+            className={cn(
+              "text-left text-sm px-3 py-1.5 rounded-lg transition-colors",
+              task.category_id === ""
+                ? "bg-accent/10 text-accent font-medium"
+                : "text-gray-500 hover:bg-gray-100",
+            )}
+          >
+            Без категории
+          </button>
+          {categories.map((category) => (
+            <button
+              key={category.id}
+              type="button"
+              onClick={() => handleCategorySelect(category.id)}
+              className={cn(
+                "text-left text-sm px-3 py-1.5 rounded-lg transition-colors",
+                task.category_id === category.id
+                  ? "bg-accent/10 text-accent font-medium"
+                  : "text-gray-700 hover:bg-gray-100",
+              )}
+            >
+              {category.name}
             </button>
           ))}
         </div>

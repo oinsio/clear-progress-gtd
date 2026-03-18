@@ -14,8 +14,7 @@ import {
   arrayMove,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import type { Task } from "@/types/entities";
-import type { Goal } from "@/types/entities";
+import type { Task, Goal, Context, Category } from "@/types/entities";
 import type { Box } from "@/types/common";
 import { TaskItem } from "./TaskItem";
 
@@ -27,12 +26,14 @@ const TOUCH_ACTIVATION_TOLERANCE_PX = 5;
 interface SortableTaskItemProps {
   task: Task;
   goals: Goal[];
+  contexts: Context[];
+  categories: Category[];
   onComplete: (id: string) => void;
   onUpdate: (id: string, changes: Partial<Task>) => Promise<void>;
   onMove: (id: string, box: Box) => Promise<void>;
 }
 
-function SortableTaskItem({ task, goals, onComplete, onUpdate, onMove }: SortableTaskItemProps) {
+function SortableTaskItem({ task, goals, contexts, categories, onComplete, onUpdate, onMove }: SortableTaskItemProps) {
   const {
     attributes,
     listeners,
@@ -54,6 +55,8 @@ function SortableTaskItem({ task, goals, onComplete, onUpdate, onMove }: Sortabl
       <TaskItem
         task={task}
         goals={goals}
+        contexts={contexts}
+        categories={categories}
         onComplete={onComplete}
         onUpdate={onUpdate}
         onMove={onMove}
@@ -70,6 +73,8 @@ function SortableTaskItem({ task, goals, onComplete, onUpdate, onMove }: Sortabl
 interface TaskListProps {
   tasks: Task[];
   goals: Goal[];
+  contexts: Context[];
+  categories: Category[];
   onComplete: (id: string) => void;
   onUpdate: (id: string, changes: Partial<Task>) => Promise<void>;
   onMove: (id: string, box: Box) => Promise<void>;
@@ -78,7 +83,7 @@ interface TaskListProps {
   emptyMessage?: string;
 }
 
-export function TaskList({ tasks, goals, onComplete, onUpdate, onMove, onReorder, emptyMessage }: TaskListProps) {
+export function TaskList({ tasks, goals, contexts, categories, onComplete, onUpdate, onMove, onReorder, emptyMessage }: TaskListProps) {
   const pointerSensor = useSensor(PointerSensor, {
     activationConstraint: { distance: DRAG_ACTIVATION_DISTANCE_PX },
   });
@@ -118,6 +123,8 @@ export function TaskList({ tasks, goals, onComplete, onUpdate, onMove, onReorder
             <TaskItem
               task={task}
               goals={goals}
+              contexts={contexts}
+              categories={categories}
               onComplete={onComplete}
               onUpdate={onUpdate}
               onMove={onMove}
@@ -137,6 +144,8 @@ export function TaskList({ tasks, goals, onComplete, onUpdate, onMove, onReorder
               key={task.id}
               task={task}
               goals={goals}
+              contexts={contexts}
+              categories={categories}
               onComplete={onComplete}
               onUpdate={onUpdate}
               onMove={onMove}

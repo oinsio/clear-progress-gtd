@@ -4,6 +4,8 @@ import { describe, it, expect, vi } from "vitest";
 import { TaskEditModal } from "./TaskEditModal";
 import { buildTask } from "@/test/factories/taskFactory";
 import { buildGoal } from "@/test/factories/goalFactory";
+import { buildContext } from "@/test/factories/contextFactory";
+import { buildCategory } from "@/test/factories/categoryFactory";
 import { BOX } from "@/constants";
 
 function renderModal(overrides = {}) {
@@ -11,6 +13,8 @@ function renderModal(overrides = {}) {
   const props = {
     task,
     goals: [],
+    contexts: [],
+    categories: [],
     isOpen: true,
     onClose: vi.fn(),
     onUpdate: vi.fn().mockResolvedValue(undefined),
@@ -25,12 +29,13 @@ describe("TaskEditModal", () => {
     const task = buildTask();
     render(
       <TaskEditModal
-        task={task}
-        goals={[]}
-        isOpen={false}
-        onClose={vi.fn()}
-        onUpdate={vi.fn()}
-      />,
+          task={task}
+          goals={[]}
+          contexts={[]}
+          categories={[]}
+          isOpen={false}
+          onClose={vi.fn()}
+          onUpdate={vi.fn()} />,
     );
     expect(screen.queryByTestId("task-edit-modal")).not.toBeInTheDocument();
   });
@@ -132,6 +137,48 @@ describe("TaskEditModal", () => {
     expect(onUpdate).toHaveBeenCalledWith(
       task.id,
       expect.objectContaining({ goal_id: goal.id }),
+    );
+  });
+
+  it("should show context selector with available contexts", () => {
+    const context = buildContext({ name: "@Office" });
+    renderModal({ contexts: [context] });
+    expect(screen.getByText("@Office")).toBeInTheDocument();
+  });
+
+  it("should show category selector with available categories", () => {
+    const category = buildCategory({ name: "Family" });
+    renderModal({ categories: [category] });
+    expect(screen.getByText("Family")).toBeInTheDocument();
+  });
+
+  it("should call onUpdate with selected context_id when saved", async () => {
+    const context = buildContext({ name: "@Office" });
+    const task = buildTask({ context_id: "" });
+    const onUpdate = vi.fn().mockResolvedValue(undefined);
+    renderModal({ task, contexts: [context], onUpdate });
+
+    await userEvent.click(screen.getByText("@Office"));
+    await userEvent.click(screen.getByRole("button", { name: /сохранить/i }));
+
+    expect(onUpdate).toHaveBeenCalledWith(
+      task.id,
+      expect.objectContaining({ context_id: context.id }),
+    );
+  });
+
+  it("should call onUpdate with selected category_id when saved", async () => {
+    const category = buildCategory({ name: "Family" });
+    const task = buildTask({ category_id: "" });
+    const onUpdate = vi.fn().mockResolvedValue(undefined);
+    renderModal({ task, categories: [category], onUpdate });
+
+    await userEvent.click(screen.getByText("Family"));
+    await userEvent.click(screen.getByRole("button", { name: /сохранить/i }));
+
+    expect(onUpdate).toHaveBeenCalledWith(
+      task.id,
+      expect.objectContaining({ category_id: category.id }),
     );
   });
 });

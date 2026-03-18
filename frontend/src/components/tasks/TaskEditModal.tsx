@@ -1,7 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { X, Inbox } from "lucide-react";
-import type { Task } from "@/types/entities";
-import type { Goal } from "@/types/entities";
+import type { Task, Goal, Context, Category } from "@/types/entities";
 import type { Box } from "@/types/common";
 import { cn } from "@/shared/lib/cn";
 import { BOX, BOX_FILTER_LABELS } from "@/constants";
@@ -11,6 +10,8 @@ import * as React from "react";
 interface TaskEditModalProps {
   task: Task;
   goals: Goal[];
+  contexts: Context[];
+  categories: Category[];
   isOpen: boolean;
   onClose: () => void;
   onUpdate: (id: string, changes: Partial<Task>) => Promise<void>;
@@ -28,6 +29,8 @@ const BOX_ICONS: Record<Box, React.FC<{ className?: string }>> = {
 export function TaskEditModal({
   task,
   goals,
+  contexts,
+  categories,
   isOpen,
   onClose,
   onUpdate,
@@ -35,6 +38,8 @@ export function TaskEditModal({
   const [title, setTitle] = useState(task.title);
   const [notes, setNotes] = useState(task.notes);
   const [selectedGoalId, setSelectedGoalId] = useState(task.goal_id);
+  const [selectedContextId, setSelectedContextId] = useState(task.context_id);
+  const [selectedCategoryId, setSelectedCategoryId] = useState(task.category_id);
   const [selectedBox, setSelectedBox] = useState<Box>(task.box);
   const [isSaving, setIsSaving] = useState(false);
 
@@ -43,6 +48,8 @@ export function TaskEditModal({
       setTitle(task.title);
       setNotes(task.notes);
       setSelectedGoalId(task.goal_id);
+      setSelectedContextId(task.context_id);
+      setSelectedCategoryId(task.category_id);
       setSelectedBox(task.box);
     }
   }, [isOpen, task]);
@@ -55,13 +62,15 @@ export function TaskEditModal({
         title: title.trim(),
         notes,
         goal_id: selectedGoalId,
+        context_id: selectedContextId,
+        category_id: selectedCategoryId,
         box: selectedBox,
       });
       onClose();
     } finally {
       setIsSaving(false);
     }
-  }, [task.id, title, notes, selectedGoalId, selectedBox, onUpdate, onClose]);
+  }, [task.id, title, notes, selectedGoalId, selectedContextId, selectedCategoryId, selectedBox, onUpdate, onClose]);
 
   if (!isOpen) return null;
 
@@ -174,6 +183,78 @@ export function TaskEditModal({
                     )}
                   >
                     {goal.title}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Context selector */}
+          {contexts.length > 0 && (
+            <div>
+              <label className="text-xs font-medium text-gray-500 mb-2 block">Контекст</label>
+              <div className="flex flex-col gap-1 max-h-32 overflow-y-auto">
+                <button
+                  type="button"
+                  onClick={() => setSelectedContextId("")}
+                  className={cn(
+                    "text-left text-sm px-3 py-1.5 rounded-lg transition-colors",
+                    selectedContextId === ""
+                      ? "bg-accent/10 text-accent font-medium"
+                      : "text-gray-500 hover:bg-gray-100",
+                  )}
+                >
+                  Без контекста
+                </button>
+                {contexts.map((context) => (
+                  <button
+                    key={context.id}
+                    type="button"
+                    onClick={() => setSelectedContextId(context.id)}
+                    className={cn(
+                      "text-left text-sm px-3 py-1.5 rounded-lg transition-colors",
+                      selectedContextId === context.id
+                        ? "bg-accent/10 text-accent font-medium"
+                        : "text-gray-700 hover:bg-gray-100",
+                    )}
+                  >
+                    {context.name}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Category selector */}
+          {categories.length > 0 && (
+            <div>
+              <label className="text-xs font-medium text-gray-500 mb-2 block">Категория</label>
+              <div className="flex flex-col gap-1 max-h-32 overflow-y-auto">
+                <button
+                  type="button"
+                  onClick={() => setSelectedCategoryId("")}
+                  className={cn(
+                    "text-left text-sm px-3 py-1.5 rounded-lg transition-colors",
+                    selectedCategoryId === ""
+                      ? "bg-accent/10 text-accent font-medium"
+                      : "text-gray-500 hover:bg-gray-100",
+                  )}
+                >
+                  Без категории
+                </button>
+                {categories.map((category) => (
+                  <button
+                    key={category.id}
+                    type="button"
+                    onClick={() => setSelectedCategoryId(category.id)}
+                    className={cn(
+                      "text-left text-sm px-3 py-1.5 rounded-lg transition-colors",
+                      selectedCategoryId === category.id
+                        ? "bg-accent/10 text-accent font-medium"
+                        : "text-gray-700 hover:bg-gray-100",
+                    )}
+                  >
+                    {category.name}
                   </button>
                 ))}
               </div>

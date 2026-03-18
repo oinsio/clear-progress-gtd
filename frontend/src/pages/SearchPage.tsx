@@ -6,6 +6,8 @@ import { GoalItem } from "@/components/goals/GoalItem";
 import { RightFilterPanel, type RightPanelMode } from "@/components/tasks/RightFilterPanel";
 import { useSearch } from "@/hooks/useSearch";
 import { useGoals } from "@/hooks/useGoals";
+import { useContexts } from "@/hooks/useContexts";
+import { useCategories } from "@/hooks/useCategories";
 import { usePanelSide } from "@/hooks/usePanelSide";
 import { usePanelOpen } from "@/hooks/usePanelOpen";
 import { defaultTaskService } from "@/services/defaultServices";
@@ -25,6 +27,8 @@ export default function SearchPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const { tasks, goals, isSearching, search, clear } = useSearch();
   const { goals: allGoals } = useGoals();
+  const { contexts } = useContexts();
+  const { categories } = useCategories();
   const { panelSide } = usePanelSide();
   const { isPanelOpen, togglePanelOpen } = usePanelOpen();
   const navigate = useNavigate();
@@ -144,6 +148,8 @@ export default function SearchPage() {
               <TaskList
                 tasks={tasks}
                 goals={allGoals}
+                contexts={contexts}
+                categories={categories}
                 onComplete={handleCompleteTask}
                 onUpdate={handleUpdateTask}
                 onMove={handleMoveTask}

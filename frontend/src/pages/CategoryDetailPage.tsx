@@ -4,6 +4,7 @@ import { ArrowLeft, Tag, Plus } from "lucide-react";
 import { useCategoryTasks } from "@/hooks/useCategoryTasks";
 import { useCategories } from "@/hooks/useCategories";
 import { useGoals } from "@/hooks/useGoals";
+import { useContexts } from "@/hooks/useContexts";
 import { usePanelSide } from "@/hooks/usePanelSide";
 import { usePanelOpen } from "@/hooks/usePanelOpen";
 import { TaskCreateSheet } from "@/components/tasks/TaskCreateSheet";
@@ -24,6 +25,7 @@ export default function CategoryDetailPage() {
 
   const { categories, updateCategory, deleteCategory } = useCategories();
   const { goals } = useGoals();
+  const { contexts } = useContexts();
   const { panelSide } = usePanelSide();
   const { tasks, isLoading, createTask, completeTask, updateTask, moveTask, deleteTask } =
     useCategoryTasks(id ?? "");
@@ -127,6 +129,8 @@ export default function CategoryDetailPage() {
             isLoading={isLoading}
             tasksByBox={tasksByBox}
             goals={goals}
+            contexts={contexts}
+            categories={categories}
             onAddPromptClick={() => setIsCreateTaskSheetOpen(true)}
             onComplete={completeTask}
             onUpdate={updateTask}

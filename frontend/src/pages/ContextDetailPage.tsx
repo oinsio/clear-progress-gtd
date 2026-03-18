@@ -4,6 +4,7 @@ import { ArrowLeft, MapPin, Plus } from "lucide-react";
 import { useContextTasks } from "@/hooks/useContextTasks";
 import { useContexts } from "@/hooks/useContexts";
 import { useGoals } from "@/hooks/useGoals";
+import { useCategories } from "@/hooks/useCategories";
 import { usePanelSide } from "@/hooks/usePanelSide";
 import { usePanelOpen } from "@/hooks/usePanelOpen";
 import { TaskCreateSheet } from "@/components/tasks/TaskCreateSheet";
@@ -33,6 +34,7 @@ export default function ContextDetailPage() {
 
   const { contexts, updateContext, deleteContext } = useContexts();
   const { goals } = useGoals();
+  const { categories } = useCategories();
   const { panelSide } = usePanelSide();
   const { tasks, isLoading, createTask, completeTask, updateTask, moveTask, deleteTask } =
     useContextTasks(id ?? "");
@@ -137,6 +139,8 @@ export default function ContextDetailPage() {
             isLoading={isLoading}
             tasksByBox={tasksByBox}
             goals={goals}
+            contexts={contexts}
+            categories={categories}
             onAddPromptClick={() => setIsCreateTaskSheetOpen(true)}
             onComplete={completeTask}
             onUpdate={updateTask}

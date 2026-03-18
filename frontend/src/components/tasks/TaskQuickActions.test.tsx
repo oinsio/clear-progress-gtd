@@ -4,6 +4,8 @@ import { describe, it, expect, vi } from "vitest";
 import { TaskQuickActions } from "./TaskQuickActions";
 import { buildTask } from "@/test/factories/taskFactory";
 import { buildGoal } from "@/test/factories/goalFactory";
+import { buildContext } from "@/test/factories/contextFactory";
+import { buildCategory } from "@/test/factories/categoryFactory";
 import { BOX } from "@/constants";
 
 function renderQuickActions(overrides = {}) {
@@ -11,6 +13,8 @@ function renderQuickActions(overrides = {}) {
   const props = {
     task,
     goals: [],
+    contexts: [],
+    categories: [],
     onUpdate: vi.fn().mockResolvedValue(undefined),
     onMove: vi.fn().mockResolvedValue(undefined),
     onOpenEdit: vi.fn(),
@@ -153,5 +157,83 @@ describe("TaskQuickActions", () => {
     await userEvent.click(screen.getByRole("button", { name: /select goal/i }));
     await userEvent.click(screen.getByRole("button", { name: /без цели/i }));
     expect(onUpdate).toHaveBeenCalledWith(task.id, { goal_id: "" });
+  });
+
+  it("should render context button", () => {
+    renderQuickActions();
+    expect(screen.getByRole("button", { name: /select context/i })).toBeInTheDocument();
+  });
+
+  it("should render category button", () => {
+    renderQuickActions();
+    expect(screen.getByRole("button", { name: /select category/i })).toBeInTheDocument();
+  });
+
+  it("should show context list when context button is clicked", async () => {
+    const context = buildContext({ name: "@Home" });
+    renderQuickActions({ contexts: [context] });
+    await userEvent.click(screen.getByRole("button", { name: /select context/i }));
+    expect(screen.getByText("@Home")).toBeInTheDocument();
+  });
+
+  it("should hide context list when context button is clicked again", async () => {
+    const context = buildContext({ name: "@Home" });
+    renderQuickActions({ contexts: [context] });
+    await userEvent.click(screen.getByRole("button", { name: /select context/i }));
+    await userEvent.click(screen.getByRole("button", { name: /select context/i }));
+    expect(screen.queryByText("@Home")).not.toBeInTheDocument();
+  });
+
+  it("should call onUpdate with context_id when context selected", async () => {
+    const context = buildContext({ name: "@Home" });
+    const task = buildTask({ context_id: "" });
+    const onUpdate = vi.fn().mockResolvedValue(undefined);
+    renderQuickActions({ task, contexts: [context], onUpdate });
+    await userEvent.click(screen.getByRole("button", { name: /select context/i }));
+    await userEvent.click(screen.getByText("@Home"));
+    expect(onUpdate).toHaveBeenCalledWith(task.id, { context_id: context.id });
+  });
+
+  it("should call onUpdate with empty context_id when no context selected", async () => {
+    const task = buildTask({ context_id: "some-context-id" });
+    const onUpdate = vi.fn().mockResolvedValue(undefined);
+    renderQuickActions({ task, contexts: [buildContext()], onUpdate });
+    await userEvent.click(screen.getByRole("button", { name: /select context/i }));
+    await userEvent.click(screen.getByRole("button", { name: /без контекста/i }));
+    expect(onUpdate).toHaveBeenCalledWith(task.id, { context_id: "" });
+  });
+
+  it("should show category list when category button is clicked", async () => {
+    const category = buildCategory({ name: "Work" });
+    renderQuickActions({ categories: [category] });
+    await userEvent.click(screen.getByRole("button", { name: /select category/i }));
+    expect(screen.getByText("Work")).toBeInTheDocument();
+  });
+
+  it("should hide category list when category button is clicked again", async () => {
+    const category = buildCategory({ name: "Work" });
+    renderQuickActions({ categories: [category] });
+    await userEvent.click(screen.getByRole("button", { name: /select category/i }));
+    await userEvent.click(screen.getByRole("button", { name: /select category/i }));
+    expect(screen.queryByText("Work")).not.toBeInTheDocument();
+  });
+
+  it("should call onUpdate with category_id when category selected", async () => {
+    const category = buildCategory({ name: "Work" });
+    const task = buildTask({ category_id: "" });
+    const onUpdate = vi.fn().mockResolvedValue(undefined);
+    renderQuickActions({ task, categories: [category], onUpdate });
+    await userEvent.click(screen.getByRole("button", { name: /select category/i }));
+    await userEvent.click(screen.getByText("Work"));
+    expect(onUpdate).toHaveBeenCalledWith(task.id, { category_id: category.id });
+  });
+
+  it("should call onUpdate with empty category_id when no category selected", async () => {
+    const task = buildTask({ category_id: "some-category-id" });
+    const onUpdate = vi.fn().mockResolvedValue(undefined);
+    renderQuickActions({ task, categories: [buildCategory()], onUpdate });
+    await userEvent.click(screen.getByRole("button", { name: /select category/i }));
+    await userEvent.click(screen.getByRole("button", { name: /без категории/i }));
+    expect(onUpdate).toHaveBeenCalledWith(task.id, { category_id: "" });
   });
 });

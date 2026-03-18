@@ -1,8 +1,7 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import { FileText, GripVertical } from "lucide-react";
 import type { SyntheticListenerMap } from "@dnd-kit/core/dist/hooks/utilities";
-import type { Task } from "@/types/entities";
-import type { Goal } from "@/types/entities";
+import type { Task, Goal, Context, Category } from "@/types/entities";
 import type { Box } from "@/types/common";
 import { cn } from "@/shared/lib/cn";
 import { formatCompletedAt } from "@/shared/lib/utils";
@@ -19,13 +18,15 @@ export interface DragHandleProps {
 interface TaskItemProps {
   task: Task;
   goals: Goal[];
+  contexts: Context[];
+  categories: Category[];
   onComplete: (id: string) => void;
   onUpdate: (id: string, changes: Partial<Task>) => Promise<void>;
   onMove: (id: string, box: Box) => Promise<void>;
   dragHandleProps?: DragHandleProps;
 }
 
-export function TaskItem({ task, goals, onComplete, onUpdate, onMove, dragHandleProps }: TaskItemProps) {
+export function TaskItem({ task, goals, contexts, categories, onComplete, onUpdate, onMove, dragHandleProps }: TaskItemProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isConfirmingRestore, setIsConfirmingRestore] = useState(false);
@@ -158,6 +159,8 @@ export function TaskItem({ task, goals, onComplete, onUpdate, onMove, dragHandle
           <TaskQuickActions
             task={task}
             goals={goals}
+            contexts={contexts}
+            categories={categories}
             onUpdate={onUpdate}
             onMove={onMove}
             onOpenEdit={handleOpenEdit}
@@ -169,6 +172,8 @@ export function TaskItem({ task, goals, onComplete, onUpdate, onMove, dragHandle
       <TaskEditModal
         task={task}
         goals={goals}
+        contexts={contexts}
+        categories={categories}
         isOpen={isEditModalOpen}
         onClose={handleCloseEdit}
         onUpdate={onUpdate}

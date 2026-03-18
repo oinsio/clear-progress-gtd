@@ -6,6 +6,8 @@ import { BoxFilterBar } from "@/components/tasks/BoxFilterBar";
 import { RightFilterPanel, type RightPanelMode } from "@/components/tasks/RightFilterPanel";
 import { useTasks } from "@/hooks/useTasks";
 import { useGoals } from "@/hooks/useGoals";
+import { useContexts } from "@/hooks/useContexts";
+import { useCategories } from "@/hooks/useCategories";
 import { useCompletedTasks } from "@/hooks/useCompletedTasks";
 import { useSearch } from "@/hooks/useSearch";
 import { usePanelSide } from "@/hooks/usePanelSide";
@@ -31,6 +33,8 @@ function TaskSection({
   label,
   tasks,
   goals,
+  contexts,
+  categories,
   onComplete,
   onUpdate,
   onMove,
@@ -42,6 +46,8 @@ function TaskSection({
   label: string;
   tasks: Task[];
   goals: ReturnType<typeof useGoals>["goals"];
+  contexts: ReturnType<typeof useContexts>["contexts"];
+  categories: ReturnType<typeof useCategories>["categories"];
   onComplete: (id: string) => Promise<void>;
   onUpdate: (id: string, changes: Partial<Task>) => Promise<void>;
   onMove: (id: string, box: Box) => Promise<void>;
@@ -59,6 +65,8 @@ function TaskSection({
         <TaskList
           tasks={tasks}
           goals={goals}
+          contexts={contexts}
+          categories={categories}
           onComplete={onComplete}
           onUpdate={onUpdate}
           onMove={onMove}
@@ -133,6 +141,8 @@ export default function InboxPage() {
   const { tasks: weekTasks, completeTask: completeWeek, deleteTask: deleteWeek, createTask: createWeekTask, updateTask: updateWeek, moveTask: moveWeek, reorderTasks: reorderWeek, reload: reloadWeek } = useTasks(BOX.WEEK);
   const { tasks: laterTasks, completeTask: completeLater, deleteTask: deleteLater, createTask: createLaterTask, updateTask: updateLater, moveTask: moveLater, reorderTasks: reorderLater, reload: reloadLater } = useTasks(BOX.LATER);
   const { goals } = useGoals();
+  const { contexts } = useContexts();
+  const { categories } = useCategories();
   const { completedTasks, reload: reloadCompleted } = useCompletedTasks();
   const { tasks: searchResults, isSearching, search, clear: clearSearch } = useSearch();
   const { panelSide } = usePanelSide();
@@ -314,6 +324,8 @@ export default function InboxPage() {
         <TaskList
           tasks={searchResults}
           goals={goals}
+          contexts={contexts}
+          categories={categories}
           onComplete={completeToday}
           onUpdate={handleUpdateTask}
           onMove={handleMoveTask}
@@ -328,6 +340,8 @@ export default function InboxPage() {
           label={INBOX_SECTION_LABEL}
           tasks={applyFilters(inboxTasks)}
           goals={goals}
+          contexts={contexts}
+          categories={categories}
           onComplete={completeInbox}
           onUpdate={handleUpdateTask}
           onMove={handleMoveTask}
@@ -346,6 +360,8 @@ export default function InboxPage() {
               label={TODAY_SECTION_LABEL}
               tasks={todayCompletedTasks}
               goals={goals}
+              contexts={contexts}
+              categories={categories}
               onComplete={handleCompleteTodayAndReload}
               onUpdate={handleUpdateTask}
               onMove={handleMoveTask}
@@ -357,6 +373,8 @@ export default function InboxPage() {
               label={COMPLETED_WEEK_SECTION_LABEL}
               tasks={weekCompletedTasks}
               goals={goals}
+              contexts={contexts}
+              categories={categories}
               onComplete={handleCompleteTodayAndReload}
               onUpdate={handleUpdateTask}
               onMove={handleMoveTask}
@@ -368,6 +386,8 @@ export default function InboxPage() {
               label={COMPLETED_EARLIER_SECTION_LABEL}
               tasks={earlierCompletedTasks}
               goals={goals}
+              contexts={contexts}
+              categories={categories}
               onComplete={handleCompleteTodayAndReload}
               onUpdate={handleUpdateTask}
               onMove={handleMoveTask}
@@ -378,6 +398,8 @@ export default function InboxPage() {
             <TaskList
               tasks={[]}
               goals={goals}
+              contexts={contexts}
+              categories={categories}
               onComplete={handleCompleteTodayAndReload}
               onUpdate={handleUpdateTask}
               onMove={handleMoveTask}
@@ -405,6 +427,8 @@ export default function InboxPage() {
             label={TODAY_SECTION_LABEL}
             tasks={visibleTodayTasks}
             goals={goals}
+            contexts={contexts}
+            categories={categories}
             onComplete={handleCompleteTodayAndReload}
             onUpdate={handleUpdateTask}
             onMove={handleMoveTask}
@@ -416,6 +440,8 @@ export default function InboxPage() {
             label={WEEK_SECTION_LABEL}
             tasks={visibleWeekTasks}
             goals={goals}
+            contexts={contexts}
+            categories={categories}
             onComplete={handleCompleteWeekAndReload}
             onUpdate={handleUpdateTask}
             onMove={handleMoveTask}
@@ -427,6 +453,8 @@ export default function InboxPage() {
             label={LATER_SECTION_LABEL}
             tasks={visibleLaterTasks}
             goals={goals}
+            contexts={contexts}
+            categories={categories}
             onComplete={handleCompleteLaterAndReload}
             onUpdate={handleUpdateTask}
             onMove={handleMoveTask}
@@ -439,6 +467,8 @@ export default function InboxPage() {
               label={COMPLETED_TODAY_SECTION_LABEL}
               tasks={todayCompletedTasks}
               goals={goals}
+              contexts={contexts}
+              categories={categories}
               onComplete={handleCompleteTodayAndReload}
               onUpdate={handleUpdateTask}
               onMove={handleMoveTask}
@@ -471,6 +501,8 @@ export default function InboxPage() {
         <TaskList
           tasks={visibleTasks}
           goals={goals}
+          contexts={contexts}
+          categories={categories}
           onComplete={onComplete}
           onUpdate={handleUpdateTask}
           onMove={handleMoveTask}

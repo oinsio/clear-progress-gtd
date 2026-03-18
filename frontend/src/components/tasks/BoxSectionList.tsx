@@ -1,6 +1,6 @@
 import { TaskList } from "@/components/tasks/TaskList";
 import { BOX, BOX_FILTER_LABELS } from "@/constants";
-import type { Task, Goal } from "@/types/entities";
+import type { Task, Goal, Context, Category } from "@/types/entities";
 import type { Box } from "@/types/common";
 
 const NO_TASKS_MESSAGE = "Задач нет. Нажмите сюда, чтобы добавить.";
@@ -18,6 +18,8 @@ interface BoxSectionListProps {
   isLoading: boolean;
   tasksByBox: Record<Box, Task[]>;
   goals: Goal[];
+  contexts: Context[];
+  categories: Category[];
   onAddPromptClick: () => void;
   onComplete: (id: string) => void;
   onUpdate: (id: string, changes: Partial<Task>) => Promise<void>;
@@ -29,6 +31,8 @@ export function BoxSectionList({
   isLoading,
   tasksByBox,
   goals,
+  contexts,
+  categories,
   onAddPromptClick,
   onComplete,
   onUpdate,
@@ -63,6 +67,8 @@ export function BoxSectionList({
             <TaskList
               tasks={boxTasks}
               goals={goals}
+              contexts={contexts}
+              categories={categories}
               onComplete={onComplete}
               onUpdate={onUpdate}
               onMove={onMove}
