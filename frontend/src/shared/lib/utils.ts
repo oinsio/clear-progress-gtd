@@ -25,20 +25,29 @@ export function formatCompletedAt(isoString: string): string {
   return `Завершено: ${dateString} ${timeString}`;
 }
 
-export function formatDate(isoString: string): string {
+export function formatShortDateTime(isoString: string): string {
   if (!isoString) return "";
-  return new Date(isoString).toLocaleDateString();
-}
+  const date = new Date(isoString);
+  const now = new Date();
 
-export function formatDateTime(isoString: string): string {
-  if (!isoString) return "";
-  return new Date(isoString).toLocaleString();
-}
+  const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const startOfYesterday = new Date(startOfToday.getTime() - 24 * 60 * 60 * 1000);
 
-export function generateId(): string {
-  return crypto.randomUUID();
-}
+  const timeString = date.toLocaleTimeString("ru-RU", {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 
-export function getCurrentISOString(): string {
-  return new Date().toISOString();
+  if (date >= startOfToday) {
+    return `Сегодня ${timeString}`;
+  }
+  if (date >= startOfYesterday) {
+    return `Вчера ${timeString}`;
+  }
+
+  const dateString = date.toLocaleDateString("ru-RU", {
+    day: "numeric",
+    month: "short",
+  });
+  return `${dateString} ${timeString}`;
 }

@@ -2,8 +2,11 @@ import type React from "react";
 import { Target } from "lucide-react";
 import { GoalStatusBadge } from "./GoalStatusBadge";
 import type { Goal } from "@/types/entities";
+import type { GoalStatus } from "@/types/common";
+import { formatShortDateTime } from "@/shared/lib/utils";
 
 const TASK_COUNT_LABEL = "Задач:";
+const FINISHED_GOAL_STATUSES = new Set<GoalStatus>(["completed", "cancelled"]);
 
 interface GoalItemProps {
   goal: Goal;
@@ -15,6 +18,7 @@ interface GoalItemProps {
 }
 
 export function GoalItem({ goal, taskCount, onNavigate, nodeRef, style, dragHandle }: GoalItemProps) {
+  const isFinished = FINISHED_GOAL_STATUSES.has(goal.status);
   return (
     <li
       ref={nodeRef}
@@ -57,6 +61,14 @@ export function GoalItem({ goal, taskCount, onNavigate, nodeRef, style, dragHand
               className="text-xs text-gray-400 mt-0.5 block"
             >
               {TASK_COUNT_LABEL} {taskCount}
+            </span>
+          )}
+          {isFinished && goal.updated_at && (
+            <span
+              data-testid="goal-item-finished-at"
+              className="text-xs text-gray-400 mt-0.5 block"
+            >
+              {formatShortDateTime(goal.updated_at)}
             </span>
           )}
         </div>

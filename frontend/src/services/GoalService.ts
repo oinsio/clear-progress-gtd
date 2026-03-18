@@ -2,6 +2,8 @@ import type { Goal } from "@/types/entities";
 import type { GoalStatus } from "@/types/common";
 import { GoalRepository } from "@/db/repositories/GoalRepository";
 
+const FINISHED_GOAL_STATUSES = new Set<GoalStatus>(["completed", "cancelled"]);
+
 export class GoalService {
   constructor(private readonly goalRepository: GoalRepository) {}
 
@@ -61,9 +63,15 @@ export class GoalService {
   async searchByTitle(query: string): Promise<Goal[]> {
     const allGoals = await this.goalRepository.getActive();
     const lowerQuery = query.toLowerCase();
-    return allGoals.filter((goal) =>
+    const matchingGoals = allGoals.filter((goal) =>
       goal.title.toLowerCase().includes(lowerQuery),
     );
+    return matchingGoals.sort((goalA, goalB) => {
+      const aIsFinished = FINISHED_GOAL_STATUSES.has(goalA.status);
+      const bIsFinished = FINISHED_GOAL_STATUSES.has(goalB.status);
+      if (aIsFinished === bIsFinished) return 0;
+      return aIsFinished ? 1 : -1;
+    });
   }
 
   async reorderGoals(orderedGoals: Goal[]): Promise<void> {

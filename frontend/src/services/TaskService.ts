@@ -166,8 +166,12 @@ export class TaskService {
   async searchByTitle(query: string): Promise<Task[]> {
     const allTasks = await this.taskRepository.getActive();
     const lowerQuery = query.toLowerCase();
-    return allTasks.filter((task) =>
+    const matchingTasks = allTasks.filter((task) =>
       task.title.toLowerCase().includes(lowerQuery),
     );
+    return matchingTasks.sort((taskA, taskB) => {
+      if (taskA.is_completed === taskB.is_completed) return 0;
+      return taskA.is_completed ? 1 : -1;
+    });
   }
 }
