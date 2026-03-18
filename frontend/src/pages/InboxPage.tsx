@@ -21,6 +21,7 @@ const TODAY_SECTION_LABEL = "Сегодня";
 const WEEK_SECTION_LABEL = "Неделя";
 const LATER_SECTION_LABEL = "Позже";
 const COMPLETED_TODAY_SECTION_LABEL = "Выполненные сегодня";
+const COMPLETED_WEEK_SECTION_LABEL = "За 7 дней";
 const COMPLETED_EARLIER_SECTION_LABEL = "Ранее";
 const TODAY_EMPTY_MESSAGE = "Задач на сегодня нет";
 const INBOX_SECTION_LABEL = "Входящие";
@@ -285,19 +286,26 @@ export default function InboxPage() {
     [completeLater, reloadCompleted],
   );
 
-  const { todayCompletedTasks, earlierCompletedTasks } = useMemo(() => {
+  const { todayCompletedTasks, weekCompletedTasks, earlierCompletedTasks } = useMemo(() => {
     const startOfToday = new Date();
     startOfToday.setHours(0, 0, 0, 0);
+    const startOf7DaysAgo = new Date(startOfToday);
+    startOf7DaysAgo.setDate(startOf7DaysAgo.getDate() - 7);
+
     const today: Task[] = [];
+    const week: Task[] = [];
     const earlier: Task[] = [];
     for (const task of completedTasks) {
-      if (task.completed_at && new Date(task.completed_at) >= startOfToday) {
+      const completedDate = task.completed_at ? new Date(task.completed_at) : null;
+      if (completedDate && completedDate >= startOfToday) {
         today.push(task);
+      } else if (completedDate && completedDate >= startOf7DaysAgo) {
+        week.push(task);
       } else {
         earlier.push(task);
       }
     }
-    return { todayCompletedTasks: today, earlierCompletedTasks: earlier };
+    return { todayCompletedTasks: today, weekCompletedTasks: week, earlierCompletedTasks: earlier };
   }, [completedTasks]);
 
   const renderContent = () => {
@@ -337,6 +345,17 @@ export default function InboxPage() {
             <TaskSection
               label={TODAY_SECTION_LABEL}
               tasks={todayCompletedTasks}
+              goals={goals}
+              onComplete={handleCompleteTodayAndReload}
+              onUpdate={handleUpdateTask}
+              onMove={handleMoveTask}
+              onDelete={deleteToday}
+            />
+          )}
+          {weekCompletedTasks.length > 0 && (
+            <TaskSection
+              label={COMPLETED_WEEK_SECTION_LABEL}
+              tasks={weekCompletedTasks}
               goals={goals}
               onComplete={handleCompleteTodayAndReload}
               onUpdate={handleUpdateTask}
