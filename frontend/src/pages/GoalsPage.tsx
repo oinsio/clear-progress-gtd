@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect } from "react";
 import { Target, Plus, GripVertical } from "lucide-react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import {
   DndContext,
   closestCenter,
@@ -13,18 +13,18 @@ import {
   arrayMove,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { RightFilterPanel, type RightPanelMode } from "@/components/tasks/RightFilterPanel";
+import { RightFilterPanel } from "@/components/tasks/RightFilterPanel";
 import { GoalItem } from "@/components/goals/GoalItem";
 import { GoalCreateSheet } from "@/components/goals/GoalCreateSheet";
 import type { GoalCreateData } from "@/components/goals/GoalCreateSheet";
-import GoalPage from "@/pages/GoalPage";
 import { useGoals } from "@/hooks/useGoals";
 import { useTasks } from "@/hooks/useTasks";
 import { usePanelSide } from "@/hooks/usePanelSide";
 import { usePanelOpen } from "@/hooks/usePanelOpen";
+import { useRightPanelNavigation } from "@/hooks/useRightPanelNavigation";
 import { useDndSensors } from "@/hooks/useDndSensors";
 import { useInlineAdd } from "@/hooks/useInlineAdd";
-import { BOX, ROUTES } from "@/constants";
+import { BOX } from "@/constants";
 import { cn } from "@/shared/lib/cn";
 import { TaskService } from "@/services/TaskService";
 import { TaskRepository } from "@/db/repositories/TaskRepository";
@@ -87,25 +87,15 @@ const EMPTY_GOALS_MESSAGE = "Нет ни одной цели";
 const ADD_TASK_PLACEHOLDER = "Название задачи...";
 
 export default function GoalsPage() {
-  const { goals, isLoading, createGoal, reloadGoals, reorderGoals } = useGoals();
+  const { goals, isLoading, createGoal, reorderGoals } = useGoals();
   const { createTask } = useTasks(BOX.INBOX);
   const { panelSide } = usePanelSide();
   const { isPanelOpen, togglePanelOpen } = usePanelOpen();
   const navigate = useNavigate();
-  const location = useLocation();
   const sensors = useDndSensors();
 
   const [goalTaskCounts, setGoalTaskCounts] = useState<Record<string, number>>({});
   const [isGoalSheetOpen, setIsGoalSheetOpen] = useState(false);
-  const [selectedGoalId, setSelectedGoalId] = useState<string | null>(null);
-
-  useEffect(() => {
-    const locationState = location.state as { openGoalId?: string } | null;
-    if (locationState?.openGoalId) {
-      setSelectedGoalId(locationState.openGoalId);
-      navigate(location.pathname, { replace: true, state: null });
-    }
-  }, [location.state, location.pathname, navigate]);
 
   const handleGoalCreate = useCallback(
     async (data: GoalCreateData) => {
@@ -129,22 +119,14 @@ export default function GoalsPage() {
     void defaultTaskService.getGoalTaskCounts().then(setGoalTaskCounts);
   }, []);
 
-  const handleModeChange = useCallback(
-    (newMode: RightPanelMode) => {
-      if (newMode === "inbox" || newMode === "tasks" || newMode === "completed") {
-        navigate(ROUTES.INBOX, { state: { filterMode: newMode } });
-      } else if (newMode === "categories") {
-        navigate(ROUTES.CATEGORIES);
-      } else if (newMode === "contexts") {
-        navigate(ROUTES.CONTEXTS);
-      }
+  const handleModeChange = useRightPanelNavigation();
+
+  const handleGoalNavigate = useCallback(
+    (id: string) => {
+      navigate(`/goals/${id}`);
     },
     [navigate],
   );
-
-  const handleGoalNavigate = useCallback((id: string) => {
-    setSelectedGoalId(id);
-  }, []);
 
   const handleDragEnd = useCallback(
     (event: DragEndEvent) => {
@@ -255,17 +237,6 @@ export default function GoalsPage() {
         <GoalCreateSheet
           onSave={handleGoalCreate}
           onClose={() => setIsGoalSheetOpen(false)}
-        />
-      )}
-
-      {/* Goal edit modal */}
-      {selectedGoalId !== null && (
-        <GoalPage
-          goalId={selectedGoalId}
-          onClose={() => {
-            setSelectedGoalId(null);
-            void reloadGoals();
-          }}
         />
       )}
 

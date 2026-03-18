@@ -15,6 +15,7 @@ export interface UseGoalReturn {
   updateGoal: (changes: Partial<Goal>) => Promise<void>;
   updateGoalStatus: (status: GoalStatus) => Promise<void>;
   deleteGoal: () => Promise<void>;
+  reload: () => Promise<void>;
 }
 
 export function useGoal(
@@ -63,5 +64,5 @@ export function useGoal(
     await goalService.softDelete(goal.id);
   }, [goalService, goal]);
 
-  return { goal, tasks, isLoading, updateGoal, updateGoalStatus, deleteGoal };
+  return { goal, tasks, isLoading, updateGoal, updateGoalStatus, deleteGoal, reload: loadGoal };
 }
