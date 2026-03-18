@@ -42,6 +42,7 @@ function TaskSection({
   onReorder,
   emptyMessage,
   hideEmptyState,
+  onEmptyClick,
 }: {
   label: string;
   tasks: Task[];
@@ -55,6 +56,7 @@ function TaskSection({
   onReorder?: (tasks: Task[]) => Promise<void>;
   emptyMessage?: string;
   hideEmptyState?: boolean;
+  onEmptyClick?: () => void;
 }) {
   return (
     <section>
@@ -73,6 +75,7 @@ function TaskSection({
           onDelete={onDelete}
           onReorder={onReorder}
           emptyMessage={emptyMessage}
+          onEmptyClick={onEmptyClick}
         />
       )}
     </section>
@@ -236,7 +239,7 @@ export default function InboxPage() {
 
   const handleAddTaskSubmit = useCallback(
     async (title: string) => {
-      const targetBox = activeBox === BOX_FILTER_ALL ? BOX.TODAY : activeBox;
+      const targetBox = filterMode === "inbox" ? BOX.INBOX : activeBox === BOX_FILTER_ALL ? BOX.TODAY : activeBox;
       const createFunctions = {
         [BOX.INBOX]: createInboxTask,
         [BOX.TODAY]: createTodayTask,
@@ -246,7 +249,7 @@ export default function InboxPage() {
       await createFunctions[targetBox](title);
       setIsAddingTask(false);
     },
-    [activeBox, createInboxTask, createTodayTask, createWeekTask, createLaterTask],
+    [filterMode, activeBox, createInboxTask, createTodayTask, createWeekTask, createLaterTask],
   );
 
   const handleAddTaskCancel = useCallback(() => {
@@ -268,9 +271,10 @@ export default function InboxPage() {
   );
 
   const targetBoxLabel = useMemo(() => {
+    if (filterMode === "inbox") return BOX_FILTER_LABELS[BOX.INBOX];
     const targetBox = activeBox === BOX_FILTER_ALL ? BOX.TODAY : activeBox;
     return BOX_FILTER_LABELS[targetBox];
-  }, [activeBox]);
+  }, [filterMode, activeBox]);
 
   const handleCompleteTodayAndReload = useCallback(
     async (id: string) => {
@@ -336,19 +340,29 @@ export default function InboxPage() {
 
     if (filterMode === "inbox") {
       return (
-        <TaskSection
-          label={INBOX_SECTION_LABEL}
-          tasks={applyFilters(inboxTasks)}
-          goals={goals}
-          contexts={contexts}
-          categories={categories}
-          onComplete={completeInbox}
-          onUpdate={handleUpdateTask}
-          onMove={handleMoveTask}
-          onDelete={deleteInbox}
-          onReorder={reorderInbox}
-          emptyMessage={INBOX_EMPTY_MESSAGE}
-        />
+        <>
+          {isAddingTask && (
+            <AddTaskInput
+              targetBox={targetBoxLabel}
+              onAdd={handleAddTaskSubmit}
+              onCancel={handleAddTaskCancel}
+            />
+          )}
+          <TaskSection
+            label={INBOX_SECTION_LABEL}
+            tasks={applyFilters(inboxTasks)}
+            goals={goals}
+            contexts={contexts}
+            categories={categories}
+            onComplete={completeInbox}
+            onUpdate={handleUpdateTask}
+            onMove={handleMoveTask}
+            onDelete={deleteInbox}
+            onReorder={reorderInbox}
+            emptyMessage={INBOX_EMPTY_MESSAGE}
+            onEmptyClick={handleAddTask}
+          />
+        </>
       );
     }
 

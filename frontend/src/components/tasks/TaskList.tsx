@@ -83,9 +83,10 @@ interface TaskListProps {
   onDelete: (id: string) => void;
   onReorder?: (tasks: Task[]) => Promise<void>;
   emptyMessage?: string;
+  onEmptyClick?: () => void;
 }
 
-export function TaskList({ tasks, goals, contexts, categories, onComplete, onUpdate, onMove, onDelete, onReorder, emptyMessage }: TaskListProps) {
+export function TaskList({ tasks, goals, contexts, categories, onComplete, onUpdate, onMove, onDelete, onReorder, emptyMessage, onEmptyClick }: TaskListProps) {
   const pointerSensor = useSensor(PointerSensor, {
     activationConstraint: { distance: DRAG_ACTIVATION_DISTANCE_PX },
   });
@@ -98,6 +99,18 @@ export function TaskList({ tasks, goals, contexts, categories, onComplete, onUpd
   const sensors = useSensors(pointerSensor, touchSensor);
 
   if (tasks.length === 0) {
+    if (onEmptyClick) {
+      return (
+        <button
+          type="button"
+          data-testid="task-list-empty"
+          onClick={onEmptyClick}
+          className={`w-full flex flex-col items-center justify-center text-gray-400 hover:text-accent transition-colors ${emptyMessage ? "py-3" : "py-16"}`}
+        >
+          <p className="text-sm">{emptyMessage ?? INBOX_EMPTY_MESSAGE}</p>
+        </button>
+      );
+    }
     return (
       <div
         data-testid="task-list-empty"
