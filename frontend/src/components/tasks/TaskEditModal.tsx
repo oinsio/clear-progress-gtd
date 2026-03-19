@@ -2,12 +2,14 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { X, Inbox, ChevronRight, ArrowLeft } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import type { Task, Goal, Context, Category } from "@/types/entities";
-import type { Box } from "@/types/common";
+import type { Box, RepeatRule } from "@/types/common";
 import { cn } from "@/shared/lib/cn";
 import { BOX } from "@/constants";
 import { TodayBoxIcon, WeekBoxIcon, LaterBoxIcon } from "./BoxIcons";
 import { useChecklist } from "@/hooks/useChecklist";
 import type { ChecklistService } from "@/services/ChecklistService";
+import { parseRepeatRule, serializeRepeatRule, formatRepeatRuleLabel } from "@/utils/repeatRule";
+import { RepeatRuleSelector } from "./RepeatRuleSelector";
 import * as React from "react";
 
 interface TaskEditModalProps {
@@ -42,6 +44,7 @@ const SELECTOR_TYPE = {
   GOAL: "goal",
   CONTEXT: "context",
   CATEGORY: "category",
+  REPEAT: "repeat",
 } as const;
 
 type SelectorType = (typeof SELECTOR_TYPE)[keyof typeof SELECTOR_TYPE];
@@ -50,6 +53,7 @@ const SELECTOR_TITLE_KEYS: Record<SelectorType, string> = {
   [SELECTOR_TYPE.GOAL]: "selector.goal",
   [SELECTOR_TYPE.CONTEXT]: "selector.context",
   [SELECTOR_TYPE.CATEGORY]: "selector.category",
+  [SELECTOR_TYPE.REPEAT]: "taskEdit.fieldRepeat",
 };
 
 export function TaskEditModal({
@@ -70,6 +74,9 @@ export function TaskEditModal({
   const [selectedContextId, setSelectedContextId] = useState(task.context_id);
   const [selectedCategoryId, setSelectedCategoryId] = useState(task.category_id);
   const [selectedBox, setSelectedBox] = useState<Box>(task.box);
+  const [selectedRepeatRule, setSelectedRepeatRule] = useState<RepeatRule | null>(() =>
+    parseRepeatRule(task.repeat_rule),
+  );
   const [isSaving, setIsSaving] = useState(false);
   const [openSelector, setOpenSelector] = useState<SelectorType | null>(null);
   const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
@@ -89,6 +96,7 @@ export function TaskEditModal({
       setSelectedContextId(task.context_id);
       setSelectedCategoryId(task.category_id);
       setSelectedBox(task.box);
+      setSelectedRepeatRule(parseRepeatRule(task.repeat_rule));
       setOpenSelector(null);
       setIsConfirmingDelete(false);
       setActiveTab(ACTIVE_TAB.DETAILS);
@@ -120,12 +128,13 @@ export function TaskEditModal({
         context_id: selectedContextId,
         category_id: selectedCategoryId,
         box: selectedBox,
+        repeat_rule: selectedRepeatRule ? serializeRepeatRule(selectedRepeatRule) : "",
       });
       onClose();
     } finally {
       setIsSaving(false);
     }
-  }, [task.id, title, notes, selectedGoalId, selectedContextId, selectedCategoryId, selectedBox, onUpdate, onClose]);
+  }, [task.id, title, notes, selectedGoalId, selectedContextId, selectedCategoryId, selectedBox, selectedRepeatRule, onUpdate, onClose]);
 
   const handleNewItemKeyDown = useCallback(
     async (event: React.KeyboardEvent<HTMLInputElement>) => {
@@ -349,6 +358,22 @@ export function TaskEditModal({
                 </div>
               </button>
             )}
+
+            {/* Repeat drill-down row */}
+            <button
+              type="button"
+              data-testid="task-edit-repeat-row"
+              onClick={() => setOpenSelector(SELECTOR_TYPE.REPEAT)}
+              className="flex items-center justify-between w-full py-2.5 text-sm border-b border-gray-100"
+            >
+              <span className="text-gray-500 font-medium">{t("taskEdit.fieldRepeat")}</span>
+              <div className="flex items-center gap-1">
+                <span className={cn(selectedRepeatRule ? "text-gray-800" : "text-gray-400")}>
+                  {selectedRepeatRule ? formatRepeatRuleLabel(selectedRepeatRule, t) : t("repeat.none")}
+                </span>
+                <ChevronRight size={16} className="text-gray-400" />
+              </div>
+            </button>
           </div>
         )}
 
@@ -571,6 +596,17 @@ export function TaskEditModal({
           data-testid="task-edit-selector-sheet"
           className="absolute bottom-0 left-0 right-0 bg-white rounded-t-2xl shadow-xl max-h-[90vh] overflow-y-auto"
         >
+          {openSelector === SELECTOR_TYPE.REPEAT ? (
+            <RepeatRuleSelector
+              value={selectedRepeatRule}
+              onChange={(rule) => {
+                setSelectedRepeatRule(rule);
+                setOpenSelector(null);
+              }}
+              onBack={() => setOpenSelector(null)}
+            />
+          ) : (
+            <>
           {/* Selector header */}
           <div className="flex items-center gap-2 px-4 pt-4 pb-2 border-b border-gray-100">
             <button
@@ -702,6 +738,8 @@ export function TaskEditModal({
               </>
             )}
           </div>
+            </>
+          )}
         </div>
       )}
     </div>

@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect, useRef } from "react";
-import { FileText, GripVertical, ListChecks } from "lucide-react";
+import { FileText, GripVertical, ListChecks, RotateCcw } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import type { SyntheticListenerMap } from "@dnd-kit/core/dist/hooks/utilities";
 import type { Task, Goal, Context, Category } from "@/types/entities";
@@ -113,7 +113,7 @@ export function TaskItem({ task, goals, contexts, categories, onComplete, onUpda
                 {formatCompletedAt(task.completed_at)}
               </span>
             )}
-            {(task.notes && !task.is_completed || checklistProgress.total > 0) && (
+            {(task.notes && !task.is_completed || checklistProgress.total > 0 || task.repeat_rule) && (
               <span className="flex items-center gap-2 mt-0.5">
                 {task.notes && !task.is_completed && (
                   <FileText size={12} className="text-gray-400 flex-shrink-0" />
@@ -126,6 +126,13 @@ export function TaskItem({ task, goals, contexts, categories, onComplete, onUpda
                     <ListChecks size={10} />
                     <span className="text-[10px]">{checklistProgress.completed}/{checklistProgress.total}</span>
                   </span>
+                )}
+                {task.repeat_rule && (
+                  <RotateCcw
+                    data-testid="repeat-rule-indicator"
+                    size={10}
+                    className="text-gray-400 flex-shrink-0"
+                  />
                 )}
               </span>
             )}
