@@ -4,15 +4,26 @@ import { MemoryRouter } from "react-router-dom";
 import SettingsPage from "./SettingsPage";
 import type { UseSettingsReturn } from "@/hooks/useSettings";
 import type { AccentColor } from "@/types/common";
+import type { Language } from "@/constants";
 
 vi.mock("@/hooks/useSettings");
 vi.mock("@/app/providers/ThemeProvider");
+vi.mock("@/hooks/useLanguage");
+vi.mock("@/hooks/usePanelSide", () => ({ usePanelSide: vi.fn(() => ({ panelSide: "right", setPanelSide: vi.fn() })) }));
+vi.mock("@/hooks/usePanelOpen", () => ({ usePanelOpen: vi.fn(() => ({ isPanelOpen: false, togglePanelOpen: vi.fn() })) }));
+vi.mock("@/components/tasks/RightFilterPanel", () => ({ RightFilterPanel: () => null }));
+vi.mock("@/i18n", () => ({ default: {} }));
+vi.mock("react-i18next", () => ({
+  useTranslation: () => ({ t: (key: string) => key }),
+}));
 
 import { useSettings } from "@/hooks/useSettings";
 import { useTheme } from "@/app/providers/ThemeProvider";
+import { useLanguage } from "@/hooks/useLanguage";
 
 const mockUseSettings = vi.mocked(useSettings);
 const mockUseTheme = vi.mocked(useTheme);
+const mockUseLanguage = vi.mocked(useLanguage);
 
 function buildSettingsHook(overrides: Partial<UseSettingsReturn> = {}): UseSettingsReturn {
   return {
@@ -33,6 +44,14 @@ function buildThemeHook(overrides: { accentColor?: AccentColor; setAccentColor?:
   };
 }
 
+function buildLanguageHook(overrides: { language?: Language; setLanguage?: ReturnType<typeof vi.fn> } = {}): ReturnType<typeof useLanguage> {
+  return {
+    language: "ru",
+    setLanguage: vi.fn(),
+    ...overrides,
+  };
+}
+
 function renderPage() {
   return render(
     <MemoryRouter>
@@ -45,6 +64,7 @@ describe("SettingsPage", () => {
   beforeEach(() => {
     mockUseSettings.mockReturnValue(buildSettingsHook());
     mockUseTheme.mockReturnValue(buildThemeHook());
+    mockUseLanguage.mockReturnValue(buildLanguageHook());
   });
 
   it("should render the settings page container", () => {
@@ -110,5 +130,27 @@ describe("SettingsPage", () => {
     renderPage();
     fireEvent.click(screen.getByTestId("settings-color-option-teal"));
     expect(setAccentColor).toHaveBeenCalledWith("teal");
+  });
+
+  it("should render the language section with two buttons", () => {
+    renderPage();
+    expect(screen.getByTestId("settings-language")).toBeInTheDocument();
+    expect(screen.getByTestId("settings-language-option-ru")).toBeInTheDocument();
+    expect(screen.getByTestId("settings-language-option-en")).toBeInTheDocument();
+  });
+
+  it("should mark the current language as active", () => {
+    mockUseLanguage.mockReturnValue(buildLanguageHook({ language: "en" }));
+    renderPage();
+    expect(screen.getByTestId("settings-language-option-en")).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getByTestId("settings-language-option-ru")).toHaveAttribute("aria-pressed", "false");
+  });
+
+  it("should call setLanguage when a language option is clicked", () => {
+    const setLanguage = vi.fn();
+    mockUseLanguage.mockReturnValue(buildLanguageHook({ setLanguage }));
+    renderPage();
+    fireEvent.click(screen.getByTestId("settings-language-option-en"));
+    expect(setLanguage).toHaveBeenCalledWith("en");
   });
 });

@@ -1,5 +1,6 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import { FileText, GripVertical, ListChecks } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import type { SyntheticListenerMap } from "@dnd-kit/core/dist/hooks/utilities";
 import type { Task, Goal, Context, Category } from "@/types/entities";
 import type { Box } from "@/types/common";
@@ -29,6 +30,7 @@ interface TaskItemProps {
 }
 
 export function TaskItem({ task, goals, contexts, categories, onComplete, onUpdate, onMove, onDelete, dragHandleProps }: TaskItemProps) {
+  const { t } = useTranslation();
   const { progress: checklistProgress } = useChecklist(task.id);
   const [isExpanded, setIsExpanded] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -79,7 +81,7 @@ export function TaskItem({ task, goals, contexts, categories, onComplete, onUpda
         <div className="flex items-center gap-3 px-4 py-3">
           <button
             type="button"
-            aria-label={task.is_completed ? "Noncomplete task" : "Complete task"}
+            aria-label={task.is_completed ? t("task.noncomplete") : t("task.complete")}
             onClick={handleCompleteClick}
             className={cn(
               "w-5 h-5 rounded-full border-2 flex-shrink-0 transition-colors self-start mt-0.5",
@@ -132,7 +134,7 @@ export function TaskItem({ task, goals, contexts, categories, onComplete, onUpda
             <button
               type="button"
               ref={dragHandleProps.ref}
-              aria-label="Перетащить задачу"
+              aria-label={t("task.drag")}
               className="flex-shrink-0 text-gray-300 cursor-grab active:cursor-grabbing touch-none"
               {...dragHandleProps.attributes}
               {...dragHandleProps.listeners}
@@ -148,23 +150,23 @@ export function TaskItem({ task, goals, contexts, categories, onComplete, onUpda
             data-testid="restore-confirmation"
             className="flex items-center justify-between px-4 py-2 bg-gray-50 border-t border-gray-100"
           >
-            <span className="text-sm text-gray-600">Вернуть задачу?</span>
+            <span className="text-sm text-gray-600">{t("task.restoreConfirm")}</span>
             <div className="flex gap-3">
               <button
                 type="button"
-                aria-label="Отмена"
+                aria-label={t("task.cancel")}
                 onClick={handleRestoreCancel}
                 className="text-sm text-gray-500"
               >
-                Отмена
+                {t("task.cancel")}
               </button>
               <button
                 type="button"
-                aria-label="Вернуть"
+                aria-label={t("task.restore")}
                 onClick={handleRestoreConfirm}
                 className="text-sm text-accent font-medium"
               >
-                Вернуть
+                {t("task.restore")}
               </button>
             </div>
           </div>

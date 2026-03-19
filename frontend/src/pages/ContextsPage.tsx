@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect } from "react";
 import { MapPin, Plus, GripVertical } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import {
   DndContext,
   closestCenter,
@@ -28,11 +29,6 @@ import { TaskRepository } from "@/db/repositories/TaskRepository";
 
 const defaultTaskService = new TaskService(new TaskRepository());
 
-const EMPTY_CONTEXTS_MESSAGE = "Нет ни одного контекста";
-const ADD_CONTEXT_PLACEHOLDER = "Название контекста...";
-const ADD_TASK_PLACEHOLDER = "Название задачи...";
-const TASK_COUNT_LABEL = "Задач:";
-
 function SortableContextItem({
   context,
   taskCount,
@@ -42,6 +38,7 @@ function SortableContextItem({
   taskCount: number;
   onNavigate: (id: string) => void;
 }) {
+  const { t } = useTranslation();
   const {
     attributes,
     listeners,
@@ -72,7 +69,7 @@ function SortableContextItem({
         <span className="text-gray-800 text-sm">{context.name}</span>
         {taskCount > 0 && (
           <span className="block text-xs text-gray-400 mt-0.5">
-            {TASK_COUNT_LABEL} {taskCount}
+            {t("context.taskCount")} {taskCount}
           </span>
         )}
       </button>
@@ -81,7 +78,7 @@ function SortableContextItem({
         ref={setActivatorNodeRef}
         {...attributes}
         {...listeners}
-        aria-label="Перетащить контекст"
+        aria-label={t("context.drag")}
         className="flex-shrink-0 px-3 py-3 text-gray-300 hover:text-gray-400 touch-none cursor-grab active:cursor-grabbing"
       >
         <GripVertical className="w-4 h-4" aria-hidden="true" />
@@ -91,6 +88,7 @@ function SortableContextItem({
 }
 
 export default function ContextsPage() {
+  const { t } = useTranslation();
   const { contexts, isLoading, createContext, reorderContexts } = useContexts();
   const { createTask } = useTasks(BOX.INBOX);
   const { panelSide } = usePanelSide();
@@ -153,14 +151,14 @@ export default function ContextsPage() {
       <div className="flex flex-1 flex-col overflow-hidden">
         {/* Header */}
         <header className="px-4 py-3 border-b border-gray-100">
-          <h1 className="text-lg font-semibold text-accent">Контексты</h1>
+          <h1 className="text-lg font-semibold text-accent">{t("filter.contexts")}</h1>
         </header>
 
         {/* Scrollable context list */}
         <main className="flex-1 overflow-y-auto">
           {!isLoading && activeContexts.length === 0 && !isAddingContext ? (
             <div className="flex flex-col items-center py-3" data-testid="empty-contexts-message">
-              <p className="text-gray-400 text-sm">{EMPTY_CONTEXTS_MESSAGE}</p>
+              <p className="text-gray-400 text-sm">{t("context.empty")}</p>
             </div>
           ) : (
             <DndContext
@@ -192,7 +190,7 @@ export default function ContextsPage() {
                         onChange={(event) => setNewContextName(event.target.value)}
                         onKeyDown={handleAddContextKeyDown}
                         onBlur={handleAddContextBlur}
-                        placeholder={ADD_CONTEXT_PLACEHOLDER}
+                        placeholder={t("context.namePlaceholder")}
                         className="w-full text-sm outline-none placeholder:text-gray-400"
                         data-testid="add-context-input"
                       />
@@ -213,7 +211,7 @@ export default function ContextsPage() {
                 onChange={(event) => setNewTaskTitle(event.target.value)}
                 onKeyDown={handleAddTaskKeyDown}
                 onBlur={handleAddTaskBlur}
-                placeholder={ADD_TASK_PLACEHOLDER}
+                placeholder={t("context.taskPlaceholder")}
                 className="w-full text-sm outline-none placeholder:text-gray-400"
                 data-testid="add-task-input"
               />
@@ -231,7 +229,7 @@ export default function ContextsPage() {
           {/* Add context button */}
           <button
             type="button"
-            aria-label="Добавить контекст"
+            aria-label={t("context.add")}
             data-testid="add-context-button"
             onClick={() => setIsAddingContext(true)}
             className="relative flex items-center justify-center w-10 h-10 rounded-full text-accent hover:bg-accent/10 active:bg-accent/20 transition-colors"
@@ -246,7 +244,7 @@ export default function ContextsPage() {
           {/* Add task button */}
           <button
             type="button"
-            aria-label="Добавить задачу"
+            aria-label={t("context.addTask")}
             data-testid="add-task-button"
             onClick={() => setIsAddingTask(true)}
             className="ml-auto flex-shrink-0 w-10 h-10 bg-accent text-white rounded-full flex items-center justify-center shadow-md hover:bg-accent/80 active:bg-accent/70 transition-colors"

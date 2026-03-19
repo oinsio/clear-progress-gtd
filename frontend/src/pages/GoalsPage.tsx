@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect } from "react";
 import { Target, Plus, GripVertical } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import {
   DndContext,
   closestCenter,
@@ -39,6 +40,7 @@ function SortableGoalItem({
   taskCount: number;
   onNavigate: (id: string) => void;
 }) {
+  const { t } = useTranslation();
   const {
     attributes,
     listeners,
@@ -61,7 +63,7 @@ function SortableGoalItem({
       ref={setActivatorNodeRef}
       {...attributes}
       {...listeners}
-      aria-label="Перетащить цель"
+      aria-label={t("goal.drag")}
       className="flex-shrink-0 px-3 py-3 text-gray-300 hover:text-gray-400 touch-none cursor-grab active:cursor-grabbing"
     >
       <GripVertical className="w-4 h-4" aria-hidden="true" />
@@ -82,11 +84,8 @@ function SortableGoalItem({
 
 const defaultTaskService = new TaskService(new TaskRepository());
 
-const PAGE_TITLE = "Мои цели";
-const EMPTY_GOALS_MESSAGE = "Нет ни одной цели";
-const ADD_TASK_PLACEHOLDER = "Название задачи...";
-
 export default function GoalsPage() {
+  const { t } = useTranslation();
   const { goals, isLoading, createGoal, reorderGoals } = useGoals();
   const { createTask } = useTasks(BOX.INBOX);
   const { panelSide } = usePanelSide();
@@ -146,14 +145,14 @@ export default function GoalsPage() {
       <div className="flex flex-1 flex-col overflow-hidden">
         {/* Header */}
         <header className="px-4 py-3 border-b border-gray-100">
-          <h1 className="text-lg font-semibold text-accent">{PAGE_TITLE}</h1>
+          <h1 className="text-lg font-semibold text-accent">{t("goal.pageTitle")}</h1>
         </header>
 
         {/* Scrollable goal list */}
         <main className="flex-1 overflow-y-auto">
           {!isLoading && activeGoals.length === 0 ? (
             <div className="flex flex-col items-center py-3" data-testid="empty-goals-message">
-              <p className="text-gray-400 text-sm">{EMPTY_GOALS_MESSAGE}</p>
+              <p className="text-gray-400 text-sm">{t("goal.empty")}</p>
             </div>
           ) : (
             <DndContext
@@ -189,7 +188,7 @@ export default function GoalsPage() {
                 onChange={(event) => setNewTaskTitle(event.target.value)}
                 onKeyDown={handleAddTaskKeyDown}
                 onBlur={handleAddTaskBlur}
-                placeholder={ADD_TASK_PLACEHOLDER}
+                placeholder={t("goal.taskPlaceholder")}
                 className="w-full text-sm outline-none placeholder:text-gray-400"
                 data-testid="add-task-input"
               />
@@ -207,7 +206,7 @@ export default function GoalsPage() {
           {/* Add goal button */}
           <button
             type="button"
-            aria-label="Добавить цель"
+            aria-label={t("goal.add")}
             data-testid="add-goal-button"
             onClick={() => setIsGoalSheetOpen(true)}
             className="relative flex items-center justify-center w-10 h-10 rounded-full text-accent hover:bg-accent/10 active:bg-accent/20 transition-colors"
@@ -222,7 +221,7 @@ export default function GoalsPage() {
           {/* Add task button */}
           <button
             type="button"
-            aria-label="Добавить задачу"
+            aria-label={t("goal.addTask")}
             data-testid="add-task-button"
             onClick={() => setIsAddingTask(true)}
             className="ml-auto flex-shrink-0 w-10 h-10 bg-accent text-white rounded-full flex items-center justify-center shadow-md hover:bg-accent/80 active:bg-accent/70 transition-colors"

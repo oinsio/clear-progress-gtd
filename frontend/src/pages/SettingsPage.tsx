@@ -1,31 +1,19 @@
 import { useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { useSettings } from "@/hooks/useSettings";
 import { useTheme } from "@/app/providers/ThemeProvider";
+import { useLanguage } from "@/hooks/useLanguage";
 import { usePanelSide } from "@/hooks/usePanelSide";
 import { usePanelOpen } from "@/hooks/usePanelOpen";
 import { RightFilterPanel, type RightPanelMode } from "@/components/tasks/RightFilterPanel";
-import { BOX_ORDER, BOX_FILTER_LABELS, ACCENT_COLORS, ACCENT_COLOR_VALUES, PANEL_SIDES, ROUTES } from "@/constants";
+import { BOX_ORDER, ACCENT_COLORS, ACCENT_COLOR_VALUES, PANEL_SIDES, ROUTES, SUPPORTED_LANGUAGES } from "@/constants";
 import type { Box, AccentColor, PanelSide } from "@/types/common";
+import type { Language } from "@/constants";
 import { cn } from "@/shared/lib/cn";
 
-const PANEL_SIDE_LABELS: Record<PanelSide, string> = {
-  left: "Слева",
-  right: "Справа",
-};
-
-const ACCENT_COLOR_LABELS: Record<AccentColor, string> = {
-  coral: "Коралловый",
-  orange: "Оранжевый",
-  yellow: "Жёлтый",
-  green: "Зелёный",
-  teal: "Бирюзовый",
-  blue: "Синий",
-  indigo: "Индиго",
-  purple: "Фиолетовый",
-};
-
 export default function SettingsPage() {
+  const { t } = useTranslation();
   const [filterMode, setFilterMode] = useState<RightPanelMode>(null);
   const { isPanelOpen, togglePanelOpen } = usePanelOpen();
 
@@ -33,6 +21,7 @@ export default function SettingsPage() {
   const { defaultBox, setDefaultBox } = useSettings();
   const { accentColor, setAccentColor } = useTheme();
   const { panelSide, setPanelSide } = usePanelSide();
+  const { language, setLanguage } = useLanguage();
 
   const handlePanelToggle = togglePanelOpen;
 
@@ -59,18 +48,22 @@ export default function SettingsPage() {
     setPanelSide(side);
   };
 
+  const handleLanguageSelect = (lang: Language): void => {
+    setLanguage(lang);
+  };
+
   return (
     <div data-testid="settings-page" className="flex h-screen overflow-hidden bg-white">
       {/* Main content */}
       <div className="flex flex-1 flex-col overflow-hidden">
         <main className="flex-1 overflow-y-auto">
           <div className="max-w-lg mx-auto px-4 py-6 space-y-8">
-            <h1 className="text-xl font-semibold text-gray-900">Настройки</h1>
+            <h1 className="text-xl font-semibold text-gray-900">{t("settings.title")}</h1>
 
             {/* Default box section */}
             <section data-testid="settings-default-box" className="space-y-3">
               <h2 className="text-sm font-medium text-gray-500 uppercase tracking-wide">
-                Коробочка по умолчанию
+                {t("settings.defaultBox")}
               </h2>
               <div className="flex flex-wrap gap-2">
                 {BOX_ORDER.map((box) => (
@@ -86,7 +79,7 @@ export default function SettingsPage() {
                         : "bg-white border-gray-200 text-gray-700 hover:border-gray-300",
                     )}
                   >
-                    {BOX_FILTER_LABELS[box]}
+                    {t(`box.${box}`)}
                   </button>
                 ))}
               </div>
@@ -95,7 +88,7 @@ export default function SettingsPage() {
             {/* Accent color section */}
             <section data-testid="settings-accent-color" className="space-y-3">
               <h2 className="text-sm font-medium text-gray-500 uppercase tracking-wide">
-                Цвет приложения
+                {t("settings.accentColor")}
               </h2>
               <div className="flex gap-4">
                 {ACCENT_COLORS.map((color) => {
@@ -105,7 +98,7 @@ export default function SettingsPage() {
                       key={color}
                       data-testid={`settings-color-option-${color}`}
                       aria-pressed={isSelected}
-                      aria-label={ACCENT_COLOR_LABELS[color]}
+                      aria-label={t(`color.${color}`)}
                       onClick={() => handleColorSelect(color)}
                       className={cn(
                         "w-9 h-9 rounded-full transition-all",
@@ -120,7 +113,7 @@ export default function SettingsPage() {
             {/* Panel side section */}
             <section data-testid="settings-panel-side" className="space-y-3">
               <h2 className="text-sm font-medium text-gray-500 uppercase tracking-wide">
-                Расположение панели
+                {t("settings.panelSide")}
               </h2>
               <div className="flex flex-wrap gap-2">
                 {PANEL_SIDES.map((side) => (
@@ -136,7 +129,32 @@ export default function SettingsPage() {
                         : "bg-white border-gray-200 text-gray-700 hover:border-gray-300",
                     )}
                   >
-                    {PANEL_SIDE_LABELS[side]}
+                    {side === "left" ? t("settings.panelLeft") : t("settings.panelRight")}
+                  </button>
+                ))}
+              </div>
+            </section>
+
+            {/* Language section */}
+            <section data-testid="settings-language" className="space-y-3">
+              <h2 className="text-sm font-medium text-gray-500 uppercase tracking-wide">
+                {t("settings.language")}
+              </h2>
+              <div className="flex flex-wrap gap-2">
+                {SUPPORTED_LANGUAGES.map((lang) => (
+                  <button
+                    key={lang}
+                    data-testid={`settings-language-option-${lang}`}
+                    aria-pressed={language === lang}
+                    onClick={() => handleLanguageSelect(lang)}
+                    className={cn(
+                      "px-4 py-2 rounded-lg text-sm font-medium border transition-colors",
+                      language === lang
+                        ? "bg-accent border-accent text-white"
+                        : "bg-white border-gray-200 text-gray-700 hover:border-gray-300",
+                    )}
+                  >
+                    {t(`lang.${lang}`)}
                   </button>
                 ))}
               </div>

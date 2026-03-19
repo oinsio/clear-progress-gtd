@@ -89,7 +89,12 @@ export const STORAGE_KEYS = {
   DEFAULT_BOX: "default_box",
   PANEL_SIDE: "panel_side",
   PANEL_OPEN: "panel_open",
+  LANGUAGE: "language",
 } as const;
+
+export const SUPPORTED_LANGUAGES = ["ru", "en"] as const;
+export type Language = (typeof SUPPORTED_LANGUAGES)[number];
+export const DEFAULT_LANGUAGE: Language = "ru";
 
 export const SETTING_KEYS = {
   DEFAULT_BOX: "default_box",

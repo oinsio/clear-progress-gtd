@@ -1,0 +1,159 @@
+{
+  "nav": {
+    "inbox": "Inbox",
+    "today": "Today",
+    "goals": "Goals",
+    "search": "Search"
+  },
+  "box": {
+    "inbox": "Inbox",
+    "today": "Today",
+    "week": "This week",
+    "later": "Later",
+    "all": "All"
+  },
+  "task": {
+    "addPlaceholder": "Task in «{{box}}»",
+    "searchPlaceholder": "Search tasks...",
+    "emptyInbox": "No tasks",
+    "emptyToday": "No tasks for today",
+    "complete": "Complete task",
+    "noncomplete": "Noncomplete task",
+    "restore": "Restore",
+    "restoreConfirm": "Restore task?",
+    "cancel": "Cancel",
+    "drag": "Drag task",
+    "add": "Add task"
+  },
+  "section": {
+    "inbox": "Inbox",
+    "today": "Today",
+    "week": "This week",
+    "later": "Later",
+    "completedToday": "Completed today",
+    "completedYesterday": "Yesterday",
+    "completedWeek": "Last 7 days",
+    "completedEarlier": "Earlier"
+  },
+  "goal": {
+    "pageTitle": "My Goals",
+    "empty": "No goals yet",
+    "newTitle": "New Goal",
+    "titlePlaceholder": "Goal title",
+    "descriptionPlaceholder": "Add description",
+    "titleLabel": "Title",
+    "descriptionLabel": "Description",
+    "statusLabel": "Status",
+    "cancel": "Cancel",
+    "create": "Create",
+    "close": "Close",
+    "drag": "Drag goal",
+    "add": "Add goal",
+    "addTask": "Add task",
+    "taskPlaceholder": "Task title...",
+    "status": {
+      "planning": "Planning",
+      "in_progress": "In progress",
+      "paused": "Paused",
+      "completed": "Completed",
+      "cancelled": "Cancelled"
+    }
+  },
+  "context": {
+    "empty": "No contexts yet",
+    "namePlaceholder": "Context name...",
+    "taskPlaceholder": "Task title...",
+    "taskCount": "Tasks:",
+    "drag": "Drag context",
+    "add": "Add context",
+    "addTask": "Add task"
+  },
+  "category": {
+    "empty": "No categories yet",
+    "namePlaceholder": "Category name...",
+    "taskPlaceholder": "Task title...",
+    "taskCount": "Tasks:",
+    "drag": "Drag category",
+    "add": "Add category",
+    "addTask": "Add task"
+  },
+  "search": {
+    "placeholder": "Tasks and goals...",
+    "tasks": "Tasks",
+    "goals": "Goals",
+    "noResults": "Nothing found",
+    "emptyQuery": "Type to search"
+  },
+  "filter": {
+    "inbox": "Inbox",
+    "contexts": "Contexts",
+    "categories": "Categories",
+    "goals": "Goals",
+    "tasks": "Tasks",
+    "completed": "Completed",
+    "close": "Close panel",
+    "open": "Open panel",
+    "search": "Search"
+  },
+  "settings": {
+    "title": "Settings",
+    "defaultBox": "Default box",
+    "accentColor": "App color",
+    "panelSide": "Panel position",
+    "language": "Language",
+    "panelLeft": "Left",
+    "panelRight": "Right",
+    "login": "Sign in",
+    "loginAriaLabel": "Sign in to account",
+    "settingsAriaLabel": "Settings"
+  },
+  "selector": {
+    "goal": "Goal",
+    "context": "Context",
+    "category": "Category",
+    "noGoal": "No goal",
+    "noContext": "No context",
+    "noCategory": "No category"
+  },
+  "taskEdit": {
+    "title": "Edit task",
+    "close": "Close",
+    "back": "Back",
+    "tabDetails": "Details",
+    "tabChecklist": "Checklist",
+    "tabChecklistProgress": "Checklist ({{completed}}/{{total}})",
+    "fieldTitle": "Title",
+    "fieldNotes": "Notes",
+    "fieldBox": "Box",
+    "notesPlaceholder": "Add a note...",
+    "newChecklistItemPlaceholder": "Enter new item...",
+    "activeSection": "Active ({{count}})",
+    "doneSection": "Done ({{count}})",
+    "delete": "Delete",
+    "cancel": "Cancel",
+    "save": "Save",
+    "deleteLabel": "Delete task",
+    "cancelLabel": "Cancel",
+    "saveLabel": "Save",
+    "deleteConfirmTitle": "Delete task?",
+    "deleteConfirmCancel": "Cancel",
+    "deleteConfirmOk": "Delete",
+    "checkItemMark": "Check: {{title}}",
+    "checkItemUnmark": "Uncheck: {{title}}",
+    "checkItemDelete": "Delete: {{title}}"
+  },
+  "color": {
+    "coral": "Coral",
+    "orange": "Orange",
+    "yellow": "Yellow",
+    "green": "Green",
+    "teal": "Teal",
+    "blue": "Blue",
+    "indigo": "Indigo",
+    "purple": "Purple"
+  },
+  "lang": {
+    "ru": "Русский",
+    "en": "English"
+  }
+}

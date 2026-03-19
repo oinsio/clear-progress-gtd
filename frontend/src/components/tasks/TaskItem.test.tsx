@@ -12,6 +12,7 @@ vi.mock("@/hooks/useChecklist", () => ({
     isLoading: false,
     createItem: vi.fn(),
     toggleItem: vi.fn(),
+    updateItem: vi.fn(),
     deleteItem: vi.fn(),
   }),
 }));
@@ -63,20 +64,20 @@ describe("TaskItem", () => {
     const task = buildTask({ is_completed: false });
     const onComplete = vi.fn();
     renderTaskItem({ task, onComplete });
-    await userEvent.click(screen.getByRole("button", { name: /complete task/i }));
+    await userEvent.click(screen.getByRole("button", { name: /завершить задачу/i }));
     expect(onComplete).toHaveBeenCalledWith(task.id);
   });
 
   it("should NOT call onComplete immediately when complete button is clicked on completed task", async () => {
     const onComplete = vi.fn();
     renderTaskItem({ task: buildTask({ is_completed: true }), onComplete });
-    await userEvent.click(screen.getByRole("button", { name: /noncomplete task/i }));
+    await userEvent.click(screen.getByRole("button", { name: /снять завершение/i }));
     expect(onComplete).not.toHaveBeenCalled();
   });
 
   it("should show restore confirmation when complete button is clicked on completed task", async () => {
     renderTaskItem({ task: buildTask({ is_completed: true }) });
-    await userEvent.click(screen.getByRole("button", { name: /noncomplete task/i }));
+    await userEvent.click(screen.getByRole("button", { name: /снять завершение/i }));
     expect(screen.getByTestId("restore-confirmation")).toBeInTheDocument();
   });
 
@@ -84,21 +85,21 @@ describe("TaskItem", () => {
     const task = buildTask({ is_completed: true });
     const onComplete = vi.fn();
     renderTaskItem({ task, onComplete });
-    await userEvent.click(screen.getByRole("button", { name: /noncomplete task/i }));
+    await userEvent.click(screen.getByRole("button", { name: /снять завершение/i }));
     await userEvent.click(screen.getByRole("button", { name: /вернуть/i }));
     expect(onComplete).toHaveBeenCalledWith(task.id);
   });
 
   it("should hide restore confirmation after 'Вернуть' is clicked", async () => {
     renderTaskItem({ task: buildTask({ is_completed: true }) });
-    await userEvent.click(screen.getByRole("button", { name: /noncomplete task/i }));
+    await userEvent.click(screen.getByRole("button", { name: /снять завершение/i }));
     await userEvent.click(screen.getByRole("button", { name: /вернуть/i }));
     expect(screen.queryByTestId("restore-confirmation")).not.toBeInTheDocument();
   });
 
   it("should hide restore confirmation when cancel button is clicked", async () => {
     renderTaskItem({ task: buildTask({ is_completed: true }) });
-    await userEvent.click(screen.getByRole("button", { name: /noncomplete task/i }));
+    await userEvent.click(screen.getByRole("button", { name: /снять завершение/i }));
     await userEvent.click(screen.getByRole("button", { name: /отмена/i }));
     expect(screen.queryByTestId("restore-confirmation")).not.toBeInTheDocument();
   });
@@ -106,24 +107,24 @@ describe("TaskItem", () => {
   it("should NOT call onComplete when cancel button is clicked", async () => {
     const onComplete = vi.fn();
     renderTaskItem({ task: buildTask({ is_completed: true }), onComplete });
-    await userEvent.click(screen.getByRole("button", { name: /noncomplete task/i }));
+    await userEvent.click(screen.getByRole("button", { name: /снять завершение/i }));
     await userEvent.click(screen.getByRole("button", { name: /отмена/i }));
     expect(onComplete).not.toHaveBeenCalled();
   });
 
-  it("should have aria-label 'Complete task' when task is not completed", () => {
+  it("should have aria-label 'Завершить задачу' when task is not completed", () => {
     renderTaskItem({ task: buildTask({ is_completed: false }) });
-    expect(screen.getByRole("button", { name: /complete task/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /завершить задачу/i })).toBeInTheDocument();
   });
 
-  it("should have aria-label 'Noncomplete task' when task is completed", () => {
+  it("should have aria-label 'Снять завершение' when task is completed", () => {
     renderTaskItem({ task: buildTask({ is_completed: true }) });
-    expect(screen.getByRole("button", { name: /noncomplete task/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /снять завершение/i })).toBeInTheDocument();
   });
 
   it("should show filled complete button when task is completed", () => {
     renderTaskItem({ task: buildTask({ is_completed: true }) });
-    expect(screen.getByRole("button", { name: /noncomplete task/i })).toHaveClass("bg-accent");
+    expect(screen.getByRole("button", { name: /снять завершение/i })).toHaveClass("bg-accent");
   });
 
   it("should show completed_at label when task is completed and has completed_at", () => {
@@ -177,6 +178,7 @@ describe("TaskItem", () => {
       isLoading: false,
       createItem: vi.fn(),
       toggleItem: vi.fn(),
+      updateItem: vi.fn(),
       deleteItem: vi.fn(),
     });
     renderTaskItem();
@@ -191,6 +193,7 @@ describe("TaskItem", () => {
       isLoading: false,
       createItem: vi.fn(),
       toggleItem: vi.fn(),
+      updateItem: vi.fn(),
       deleteItem: vi.fn(),
     });
     renderTaskItem();
@@ -205,6 +208,7 @@ describe("TaskItem", () => {
       isLoading: false,
       createItem: vi.fn(),
       toggleItem: vi.fn(),
+      updateItem: vi.fn(),
       deleteItem: vi.fn(),
     });
     renderTaskItem();

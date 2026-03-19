@@ -1,31 +1,23 @@
 import { useState, useCallback } from "react";
 import { X, CircleMinus, Pause, Square, Play, Check } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import type { LucideIcon } from "lucide-react";
 import { cn } from "@/shared/lib/cn";
 import type { GoalStatus } from "@/types/common";
 
-const GOAL_TITLE_PLACEHOLDER = "Название цели";
-const GOAL_DESCRIPTION_PLACEHOLDER = "Добавить описание";
-const SHEET_TITLE = "Новая цель";
-const CANCEL_LABEL = "Отмена";
-const CREATE_LABEL = "Создать";
-const CLOSE_LABEL = "Закрыть";
-const TITLE_FIELD_LABEL = "Название";
-const DESCRIPTION_FIELD_LABEL = "Описание";
 const DEFAULT_GOAL_STATUS: GoalStatus = "planning";
 
 interface GoalStatusOption {
   status: GoalStatus;
   icon: LucideIcon;
-  label: string;
 }
 
 const STATUS_OPTIONS: GoalStatusOption[] = [
-  { status: "cancelled", icon: CircleMinus, label: "Отменена" },
-  { status: "paused", icon: Pause, label: "На паузе" },
-  { status: "planning", icon: Square, label: "Планирую" },
-  { status: "in_progress", icon: Play, label: "В процессе" },
-  { status: "completed", icon: Check, label: "Завершена" },
+  { status: "cancelled", icon: CircleMinus },
+  { status: "paused", icon: Pause },
+  { status: "planning", icon: Square },
+  { status: "in_progress", icon: Play },
+  { status: "completed", icon: Check },
 ];
 
 export interface GoalCreateData {
@@ -40,6 +32,7 @@ interface GoalCreateSheetProps {
 }
 
 export function GoalCreateSheet({ onSave, onClose }: GoalCreateSheetProps) {
+  const { t } = useTranslation();
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [status, setStatus] = useState<GoalStatus>(DEFAULT_GOAL_STATUS);
@@ -72,11 +65,11 @@ export function GoalCreateSheet({ onSave, onClose }: GoalCreateSheetProps) {
       <div className="relative bg-white rounded-t-2xl shadow-xl max-h-[90vh] overflow-y-auto">
         {/* Header */}
         <div className="flex items-center justify-between px-4 pt-4 pb-2 border-b border-gray-100">
-          <h2 className="text-base font-semibold text-gray-800">{SHEET_TITLE}</h2>
+          <h2 className="text-base font-semibold text-gray-800">{t("goal.newTitle")}</h2>
           <button
             type="button"
             onClick={onClose}
-            aria-label={CLOSE_LABEL}
+            aria-label={t("goal.close")}
             className="w-8 h-8 flex items-center justify-center rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
           >
             <X size={18} />
@@ -90,14 +83,14 @@ export function GoalCreateSheet({ onSave, onClose }: GoalCreateSheetProps) {
               htmlFor="goal-create-title"
               className="text-xs font-medium text-gray-500 mb-1 block"
             >
-              {TITLE_FIELD_LABEL}
+              {t("goal.titleLabel")}
             </label>
             <input
               id="goal-create-title"
               type="text"
               value={title}
               onChange={(event) => setTitle(event.target.value)}
-              placeholder={GOAL_TITLE_PLACEHOLDER}
+              placeholder={t("goal.titlePlaceholder")}
               autoFocus
               className="w-full text-sm text-gray-800 border border-gray-200 rounded-lg px-3 py-2 outline-none focus:border-accent"
               data-testid="goal-create-title-input"
@@ -110,13 +103,13 @@ export function GoalCreateSheet({ onSave, onClose }: GoalCreateSheetProps) {
               htmlFor="goal-create-description"
               className="text-xs font-medium text-gray-500 mb-1 block"
             >
-              {DESCRIPTION_FIELD_LABEL}
+              {t("goal.descriptionLabel")}
             </label>
             <textarea
               id="goal-create-description"
               value={description}
               onChange={(event) => setDescription(event.target.value)}
-              placeholder={GOAL_DESCRIPTION_PLACEHOLDER}
+              placeholder={t("goal.descriptionPlaceholder")}
               rows={3}
               className="w-full text-sm text-gray-700 border border-gray-200 rounded-lg px-3 py-2 outline-none focus:border-accent resize-none"
               data-testid="goal-create-description-input"
@@ -125,15 +118,15 @@ export function GoalCreateSheet({ onSave, onClose }: GoalCreateSheetProps) {
 
           {/* Status segmented control */}
           <div>
-            <label className="text-xs font-medium text-gray-500 mb-2 block">Статус</label>
+            <label className="text-xs font-medium text-gray-500 mb-2 block">{t("goal.statusLabel")}</label>
             <div className="flex rounded-full border border-accent overflow-hidden">
-              {STATUS_OPTIONS.map(({ status: optionStatus, icon: Icon, label }) => {
+              {STATUS_OPTIONS.map(({ status: optionStatus, icon: Icon }) => {
                 const isSelected = status === optionStatus;
                 return (
                   <button
                     key={optionStatus}
                     type="button"
-                    aria-label={label}
+                    aria-label={t(`goal.status.${optionStatus}`)}
                     aria-pressed={isSelected}
                     onClick={() => setStatus(optionStatus)}
                     className={cn(
@@ -154,20 +147,20 @@ export function GoalCreateSheet({ onSave, onClose }: GoalCreateSheetProps) {
           <button
             type="button"
             onClick={onClose}
-            aria-label={CANCEL_LABEL}
+            aria-label={t("goal.cancel")}
             className="flex-1 py-2.5 text-sm text-gray-600 border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors"
           >
-            {CANCEL_LABEL}
+            {t("goal.cancel")}
           </button>
           <button
             type="button"
             onClick={handleSave}
             disabled={!canSave}
-            aria-label={CREATE_LABEL}
+            aria-label={t("goal.create")}
             data-testid="goal-create-save-button"
             className="flex-1 py-2.5 text-sm text-white bg-accent rounded-xl hover:opacity-90 transition-opacity disabled:opacity-50"
           >
-            {CREATE_LABEL}
+            {t("goal.create")}
           </button>
         </div>
       </div>

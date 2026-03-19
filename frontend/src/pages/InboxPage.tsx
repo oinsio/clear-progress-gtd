@@ -1,6 +1,7 @@
 import { useState, useCallback, useRef, useEffect, useMemo } from "react";
 import { useLocation } from "react-router-dom";
 import { Plus } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { TaskList } from "@/components/tasks/TaskList";
 import { BoxFilterBar } from "@/components/tasks/BoxFilterBar";
 import { RightFilterPanel, type RightPanelMode } from "@/components/tasks/RightFilterPanel";
@@ -14,22 +15,12 @@ import { usePanelSide } from "@/hooks/usePanelSide";
 import { usePanelOpen } from "@/hooks/usePanelOpen";
 import type { BoxFilter, Box } from "@/types/common";
 import type { Task } from "@/types/entities";
-import { BOX_FILTER_ALL, BOX, BOX_FILTER_LABELS } from "@/constants";
+import { BOX_FILTER_ALL, BOX } from "@/constants";
 import { cn } from "@/shared/lib/cn";
 import { groupCompletedTasks } from "@/shared/lib/utils";
 import * as React from "react";
 
 const SEARCH_DEBOUNCE_MS = 300;
-const TODAY_SECTION_LABEL = "Сегодня";
-const WEEK_SECTION_LABEL = "Неделя";
-const LATER_SECTION_LABEL = "Позже";
-const COMPLETED_TODAY_SECTION_LABEL = "Выполненные сегодня";
-const COMPLETED_YESTERDAY_SECTION_LABEL = "Вчера";
-const COMPLETED_WEEK_SECTION_LABEL = "За 7 дней";
-const COMPLETED_EARLIER_SECTION_LABEL = "Ранее";
-const TODAY_EMPTY_MESSAGE = "Задач на сегодня нет";
-const INBOX_SECTION_LABEL = "Входящие";
-const INBOX_EMPTY_MESSAGE = "Задач нет";
 
 function TaskSection({
   label,
@@ -93,6 +84,7 @@ function AddTaskInput({
   onAdd: (title: string) => Promise<void>;
   onCancel: () => void;
 }) {
+  const { t } = useTranslation();
   const [inputValue, setInputValue] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -122,7 +114,7 @@ function AddTaskInput({
         onChange={(event) => setInputValue(event.target.value)}
         onKeyDown={handleKeyDown}
         onBlur={onCancel}
-        placeholder={`Задача в «${targetBox}»`}
+        placeholder={t("task.addPlaceholder", { box: targetBox })}
         className="flex-1 text-sm outline-none placeholder:text-gray-400"
         data-testid="add-task-input"
       />
@@ -131,6 +123,7 @@ function AddTaskInput({
 }
 
 export default function InboxPage() {
+  const { t } = useTranslation();
   const location = useLocation();
   const initialFilterMode = (location.state as { filterMode?: RightPanelMode } | null)?.filterMode ?? "tasks";
   const [activeBox, setActiveBox] = useState<BoxFilter>(BOX_FILTER_ALL);
@@ -273,10 +266,10 @@ export default function InboxPage() {
   );
 
   const targetBoxLabel = useMemo(() => {
-    if (filterMode === "inbox") return BOX_FILTER_LABELS[BOX.INBOX];
+    if (filterMode === "inbox") return t(`box.${BOX.INBOX}`);
     const targetBox = activeBox === BOX_FILTER_ALL ? BOX.TODAY : activeBox;
-    return BOX_FILTER_LABELS[targetBox];
-  }, [filterMode, activeBox]);
+    return t(`box.${targetBox}`);
+  }, [filterMode, activeBox, t]);
 
   const handleCompleteTodayAndReload = useCallback(
     async (id: string) => {
@@ -334,7 +327,7 @@ export default function InboxPage() {
             />
           )}
           <TaskSection
-            label={INBOX_SECTION_LABEL}
+            label={t("section.inbox")}
             tasks={applyFilters(inboxTasks)}
             goals={goals}
             contexts={contexts}
@@ -344,7 +337,7 @@ export default function InboxPage() {
             onMove={handleMoveTask}
             onDelete={deleteInbox}
             onReorder={reorderInbox}
-            emptyMessage={INBOX_EMPTY_MESSAGE}
+            emptyMessage={t("task.emptyInbox")}
             onEmptyClick={handleAddTask}
           />
         </>
@@ -356,7 +349,7 @@ export default function InboxPage() {
         <>
           {todayCompletedTasks.length > 0 && (
             <TaskSection
-              label={TODAY_SECTION_LABEL}
+              label={t("section.today")}
               tasks={todayCompletedTasks}
               goals={goals}
               contexts={contexts}
@@ -369,7 +362,7 @@ export default function InboxPage() {
           )}
           {yesterdayCompletedTasks.length > 0 && (
             <TaskSection
-              label={COMPLETED_YESTERDAY_SECTION_LABEL}
+              label={t("section.completedYesterday")}
               tasks={yesterdayCompletedTasks}
               goals={goals}
               contexts={contexts}
@@ -382,7 +375,7 @@ export default function InboxPage() {
           )}
           {weekCompletedTasks.length > 0 && (
             <TaskSection
-              label={COMPLETED_WEEK_SECTION_LABEL}
+              label={t("section.completedWeek")}
               tasks={weekCompletedTasks}
               goals={goals}
               contexts={contexts}
@@ -395,7 +388,7 @@ export default function InboxPage() {
           )}
           {earlierCompletedTasks.length > 0 && (
             <TaskSection
-              label={COMPLETED_EARLIER_SECTION_LABEL}
+              label={t("section.completedEarlier")}
               tasks={earlierCompletedTasks}
               goals={goals}
               contexts={contexts}
@@ -436,7 +429,7 @@ export default function InboxPage() {
             />
           )}
           <TaskSection
-            label={TODAY_SECTION_LABEL}
+            label={t("section.today")}
             tasks={visibleTodayTasks}
             goals={goals}
             contexts={contexts}
@@ -446,10 +439,10 @@ export default function InboxPage() {
             onMove={handleMoveTask}
             onDelete={deleteToday}
             onReorder={reorderToday}
-            emptyMessage={TODAY_EMPTY_MESSAGE}
+            emptyMessage={t("task.emptyToday")}
           />
           <TaskSection
-            label={WEEK_SECTION_LABEL}
+            label={t("section.week")}
             tasks={visibleWeekTasks}
             goals={goals}
             contexts={contexts}
@@ -462,7 +455,7 @@ export default function InboxPage() {
             hideEmptyState
           />
           <TaskSection
-            label={LATER_SECTION_LABEL}
+            label={t("section.later")}
             tasks={visibleLaterTasks}
             goals={goals}
             contexts={contexts}
@@ -476,7 +469,7 @@ export default function InboxPage() {
           />
           {todayCompletedTasks.length > 0 && (
             <TaskSection
-              label={COMPLETED_TODAY_SECTION_LABEL}
+              label={t("section.completedToday")}
               tasks={todayCompletedTasks}
               goals={goals}
               contexts={contexts}
@@ -539,7 +532,7 @@ export default function InboxPage() {
               type="search"
               value={searchQuery}
               onChange={handleSearchChange}
-              placeholder="Поиск задач..."
+              placeholder={t("task.searchPlaceholder")}
               autoFocus
               className={cn(
                 "flex-1 text-sm outline-none placeholder:text-gray-400",
@@ -560,7 +553,7 @@ export default function InboxPage() {
           <div className="flex items-center justify-end border-t border-gray-200 bg-white px-3 py-2 safe-area-bottom">
             <button
               type="button"
-              aria-label="Добавить задачу"
+              aria-label={t("task.add")}
               data-testid="add-task-button"
               onClick={handleAddTask}
               className="w-10 h-10 bg-accent text-white rounded-full flex items-center justify-center shadow-md hover:bg-accent/80 active:bg-accent/70 transition-colors"

@@ -1,0 +1,159 @@
+{
+  "nav": {
+    "inbox": "Входящие",
+    "today": "Сегодня",
+    "goals": "Цели",
+    "search": "Поиск"
+  },
+  "box": {
+    "inbox": "Входящие",
+    "today": "Сегодня",
+    "week": "Неделя",
+    "later": "Позже",
+    "all": "Все"
+  },
+  "task": {
+    "addPlaceholder": "Задача в «{{box}}»",
+    "searchPlaceholder": "Поиск задач...",
+    "emptyInbox": "Задач нет",
+    "emptyToday": "Задач на сегодня нет",
+    "complete": "Завершить задачу",
+    "noncomplete": "Снять завершение",
+    "restore": "Вернуть",
+    "restoreConfirm": "Вернуть задачу?",
+    "cancel": "Отмена",
+    "drag": "Перетащить задачу",
+    "add": "Добавить задачу"
+  },
+  "section": {
+    "inbox": "Входящие",
+    "today": "Сегодня",
+    "week": "Неделя",
+    "later": "Позже",
+    "completedToday": "Выполненные сегодня",
+    "completedYesterday": "Вчера",
+    "completedWeek": "За 7 дней",
+    "completedEarlier": "Ранее"
+  },
+  "goal": {
+    "pageTitle": "Мои цели",
+    "empty": "Нет ни одной цели",
+    "newTitle": "Новая цель",
+    "titlePlaceholder": "Название цели",
+    "descriptionPlaceholder": "Добавить описание",
+    "titleLabel": "Название",
+    "descriptionLabel": "Описание",
+    "statusLabel": "Статус",
+    "cancel": "Отмена",
+    "create": "Создать",
+    "close": "Закрыть",
+    "drag": "Перетащить цель",
+    "add": "Добавить цель",
+    "addTask": "Добавить задачу",
+    "taskPlaceholder": "Название задачи...",
+    "status": {
+      "planning": "Планирую",
+      "in_progress": "В процессе",
+      "paused": "На паузе",
+      "completed": "Завершена",
+      "cancelled": "Отменена"
+    }
+  },
+  "context": {
+    "empty": "Нет ни одного контекста",
+    "namePlaceholder": "Название контекста...",
+    "taskPlaceholder": "Название задачи...",
+    "taskCount": "Задач:",
+    "drag": "Перетащить контекст",
+    "add": "Добавить контекст",
+    "addTask": "Добавить задачу"
+  },
+  "category": {
+    "empty": "Нет ни одной категории",
+    "namePlaceholder": "Название категории...",
+    "taskPlaceholder": "Название задачи...",
+    "taskCount": "Задач:",
+    "drag": "Перетащить категорию",
+    "add": "Добавить категорию",
+    "addTask": "Добавить задачу"
+  },
+  "search": {
+    "placeholder": "Задачи и цели...",
+    "tasks": "Задачи",
+    "goals": "Цели",
+    "noResults": "Ничего не найдено",
+    "emptyQuery": "Введите запрос для поиска"
+  },
+  "filter": {
+    "inbox": "Входящие",
+    "contexts": "Контексты",
+    "categories": "Категории",
+    "goals": "Цели",
+    "tasks": "Задачи",
+    "completed": "Завершённые",
+    "close": "Закрыть панель",
+    "open": "Открыть панель",
+    "search": "Поиск"
+  },
+  "settings": {
+    "title": "Настройки",
+    "defaultBox": "Коробочка по умолчанию",
+    "accentColor": "Цвет приложения",
+    "panelSide": "Расположение панели",
+    "language": "Язык",
+    "panelLeft": "Слева",
+    "panelRight": "Справа",
+    "login": "Войдите",
+    "loginAriaLabel": "Войти в аккаунт",
+    "settingsAriaLabel": "Настройки"
+  },
+  "selector": {
+    "goal": "Цель",
+    "context": "Контекст",
+    "category": "Категория",
+    "noGoal": "Без цели",
+    "noContext": "Без контекста",
+    "noCategory": "Без категории"
+  },
+  "taskEdit": {
+    "title": "Редактировать задачу",
+    "close": "Закрыть",
+    "back": "Назад",
+    "tabDetails": "Детали",
+    "tabChecklist": "Чеклист",
+    "tabChecklistProgress": "Чеклист ({{completed}}/{{total}})",
+    "fieldTitle": "Название",
+    "fieldNotes": "Заметки",
+    "fieldBox": "Коробочка",
+    "notesPlaceholder": "Добавить заметку...",
+    "newChecklistItemPlaceholder": "Введите новый пункт...",
+    "activeSection": "Активно ({{count}})",
+    "doneSection": "Готово ({{count}})",
+    "delete": "Удалить",
+    "cancel": "Отмена",
+    "save": "Сохранить",
+    "deleteLabel": "Удалить задачу",
+    "cancelLabel": "Отмена",
+    "saveLabel": "Сохранить",
+    "deleteConfirmTitle": "Удалить задачу?",
+    "deleteConfirmCancel": "Отмена",
+    "deleteConfirmOk": "Удалить",
+    "checkItemMark": "Отметить: {{title}}",
+    "checkItemUnmark": "Снять отметку: {{title}}",
+    "checkItemDelete": "Удалить: {{title}}"
+  },
+  "color": {
+    "coral": "Коралловый",
+    "orange": "Оранжевый",
+    "yellow": "Жёлтый",
+    "green": "Зелёный",
+    "teal": "Бирюзовый",
+    "blue": "Синий",
+    "indigo": "Индиго",
+    "purple": "Фиолетовый"
+  },
+  "lang": {
+    "ru": "Русский",
+    "en": "English"
+  }
+}

@@ -1,6 +1,7 @@
 import React, { useState, useCallback, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Search } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { TaskList } from "@/components/tasks/TaskList";
 import { GoalItem } from "@/components/goals/GoalItem";
 import { RightFilterPanel, type RightPanelMode } from "@/components/tasks/RightFilterPanel";
@@ -17,13 +18,9 @@ import { ROUTES } from "@/constants";
 import { cn } from "@/shared/lib/cn";
 
 const SEARCH_DEBOUNCE_MS = 300;
-const SEARCH_PLACEHOLDER = "Задачи и цели...";
-const TASKS_SECTION_LABEL = "Задачи";
-const GOALS_SECTION_LABEL = "Цели";
-const NO_RESULTS_MESSAGE = "Ничего не найдено";
-const EMPTY_QUERY_MESSAGE = "Введите запрос для поиска";
 
 export default function SearchPage() {
+  const { t } = useTranslation();
   const [searchQuery, setSearchQuery] = useState("");
   const { tasks, goals, isSearching, search, clear } = useSearch();
   const { goals: allGoals } = useGoals();
@@ -119,9 +116,9 @@ export default function SearchPage() {
             type="search"
             value={searchQuery}
             onChange={handleSearchChange}
-            placeholder={SEARCH_PLACEHOLDER}
+            placeholder={t("search.placeholder")}
             autoFocus
-            aria-label="Поиск"
+            aria-label={t("filter.search")}
             className={cn(
               "flex-1 text-sm outline-none placeholder:text-gray-400",
               isSearching && "opacity-60",
@@ -133,17 +130,17 @@ export default function SearchPage() {
         {/* Results */}
         <main className="flex-1 overflow-y-auto">
           {!hasQuery && (
-            <p className="text-sm text-gray-400 text-center py-16">{EMPTY_QUERY_MESSAGE}</p>
+            <p className="text-sm text-gray-400 text-center py-16">{t("search.emptyQuery")}</p>
           )}
 
           {hasQuery && !isSearching && !hasResults && (
-            <p className="text-sm text-gray-400 text-center py-16">{NO_RESULTS_MESSAGE}</p>
+            <p className="text-sm text-gray-400 text-center py-16">{t("search.noResults")}</p>
           )}
 
           {tasks.length > 0 && (
-            <section aria-label={TASKS_SECTION_LABEL}>
+            <section aria-label={t("search.tasks")}>
               <h2 className="text-xs font-medium text-gray-400 uppercase tracking-wide px-4 py-2 border-b border-gray-100">
-                {TASKS_SECTION_LABEL}
+                {t("search.tasks")}
               </h2>
               <TaskList
                 tasks={tasks}
@@ -159,9 +156,9 @@ export default function SearchPage() {
           )}
 
           {goals.length > 0 && (
-            <section aria-label={GOALS_SECTION_LABEL}>
+            <section aria-label={t("search.goals")}>
               <h2 className="text-xs font-medium text-gray-400 uppercase tracking-wide px-4 py-2 border-b border-gray-100">
-                {GOALS_SECTION_LABEL}
+                {t("search.goals")}
               </h2>
               <ul>
                 {goals.map((goal) => (

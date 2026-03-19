@@ -1,9 +1,10 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { X, Inbox, ChevronRight, ArrowLeft } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import type { Task, Goal, Context, Category } from "@/types/entities";
 import type { Box } from "@/types/common";
 import { cn } from "@/shared/lib/cn";
-import { BOX, BOX_FILTER_LABELS } from "@/constants";
+import { BOX } from "@/constants";
 import { TodayBoxIcon, WeekBoxIcon, LaterBoxIcon } from "./BoxIcons";
 import { useChecklist } from "@/hooks/useChecklist";
 import type { ChecklistService } from "@/services/ChecklistService";
@@ -45,10 +46,10 @@ const SELECTOR_TYPE = {
 
 type SelectorType = (typeof SELECTOR_TYPE)[keyof typeof SELECTOR_TYPE];
 
-const SELECTOR_TITLES: Record<SelectorType, string> = {
-  [SELECTOR_TYPE.GOAL]: "Цель",
-  [SELECTOR_TYPE.CONTEXT]: "Контекст",
-  [SELECTOR_TYPE.CATEGORY]: "Категория",
+const SELECTOR_TITLE_KEYS: Record<SelectorType, string> = {
+  [SELECTOR_TYPE.GOAL]: "selector.goal",
+  [SELECTOR_TYPE.CONTEXT]: "selector.context",
+  [SELECTOR_TYPE.CATEGORY]: "selector.category",
 };
 
 export function TaskEditModal({
@@ -62,6 +63,7 @@ export function TaskEditModal({
   onDelete,
   checklistService,
 }: TaskEditModalProps) {
+  const { t } = useTranslation();
   const [title, setTitle] = useState(task.title);
   const [notes, setNotes] = useState(task.notes);
   const [selectedGoalId, setSelectedGoalId] = useState(task.goal_id);
@@ -164,21 +166,21 @@ export function TaskEditModal({
   if (!isOpen) return null;
 
   const selectedGoalTitle = selectedGoalId
-    ? (goals.find((goal) => goal.id === selectedGoalId)?.title ?? "Без цели")
-    : "Без цели";
+    ? (goals.find((goal) => goal.id === selectedGoalId)?.title ?? t("selector.noGoal"))
+    : t("selector.noGoal");
 
   const selectedContextName = selectedContextId
-    ? (contexts.find((context) => context.id === selectedContextId)?.name ?? "Без контекста")
-    : "Без контекста";
+    ? (contexts.find((context) => context.id === selectedContextId)?.name ?? t("selector.noContext"))
+    : t("selector.noContext");
 
   const selectedCategoryName = selectedCategoryId
-    ? (categories.find((category) => category.id === selectedCategoryId)?.name ?? "Без категории")
-    : "Без категории";
+    ? (categories.find((category) => category.id === selectedCategoryId)?.name ?? t("selector.noCategory"))
+    : t("selector.noCategory");
 
   const checklistTabLabel =
     progress.total > 0
-      ? `Чеклист (${progress.completed}/${progress.total})`
-      : "Чеклист";
+      ? t("taskEdit.tabChecklistProgress", { completed: progress.completed, total: progress.total })
+      : t("taskEdit.tabChecklist");
 
   const activeItems = items.filter((item) => !item.is_completed);
   const completedItems = items.filter((item) => item.is_completed);
@@ -196,11 +198,11 @@ export function TaskEditModal({
       <div className="relative bg-white rounded-t-2xl shadow-xl max-h-[90vh] overflow-y-auto">
         {/* Header */}
         <div className="flex items-center justify-between px-4 pt-4 pb-2 border-b border-gray-100">
-          <h2 className="text-base font-semibold text-gray-800">Редактировать задачу</h2>
+          <h2 className="text-base font-semibold text-gray-800">{t("taskEdit.title")}</h2>
           <button
             type="button"
             onClick={onClose}
-            aria-label="Закрыть"
+            aria-label={t("taskEdit.close")}
             className="w-8 h-8 flex items-center justify-center rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
           >
             <X size={18} />
@@ -220,7 +222,7 @@ export function TaskEditModal({
                 : "text-accent border-accent/40 hover:bg-accent/5",
             )}
           >
-            Детали
+            {t("taskEdit.tabDetails")}
           </button>
           <button
             type="button"
@@ -242,12 +244,12 @@ export function TaskEditModal({
           <div className="px-4 py-4 flex flex-col gap-4">
             {/* Title */}
             <div>
-              <label className="text-xs font-medium text-gray-500 mb-1 block">Название</label>
+              <label className="text-xs font-medium text-gray-500 mb-1 block">{t("taskEdit.fieldTitle")}</label>
               <input
                 type="text"
                 value={title}
                 onChange={(event) => setTitle(event.target.value)}
-                placeholder="Название задачи"
+                placeholder={t("goal.titlePlaceholder")}
                 className="w-full text-sm text-gray-800 border border-gray-200 rounded-lg px-3 py-2 outline-none focus:border-accent"
                 data-testid="task-edit-title"
               />
@@ -255,11 +257,11 @@ export function TaskEditModal({
 
             {/* Notes */}
             <div>
-              <label className="text-xs font-medium text-gray-500 mb-1 block">Заметки</label>
+              <label className="text-xs font-medium text-gray-500 mb-1 block">{t("taskEdit.fieldNotes")}</label>
               <textarea
                 value={notes}
                 onChange={(event) => setNotes(event.target.value)}
-                placeholder="Добавить заметку..."
+                placeholder={t("taskEdit.notesPlaceholder")}
                 rows={3}
                 className="w-full text-sm text-gray-700 border border-gray-200 rounded-lg px-3 py-2 outline-none focus:border-accent resize-none"
                 data-testid="task-edit-notes"
@@ -268,7 +270,7 @@ export function TaskEditModal({
 
             {/* Box selector */}
             <div>
-              <label className="text-xs font-medium text-gray-500 mb-2 block">Коробочка</label>
+              <label className="text-xs font-medium text-gray-500 mb-2 block">{t("taskEdit.fieldBox")}</label>
               <div className="flex gap-1">
                 {BOX_OPTIONS.map((box) => {
                   const BoxIcon = BOX_ICONS[box];
@@ -277,7 +279,7 @@ export function TaskEditModal({
                     <button
                       key={box}
                       type="button"
-                      aria-label={BOX_FILTER_LABELS[box]}
+                      aria-label={t(`box.${box}`)}
                       aria-pressed={isSelected}
                       onClick={() => setSelectedBox(box)}
                       className={cn(
@@ -302,7 +304,7 @@ export function TaskEditModal({
                 onClick={() => setOpenSelector(SELECTOR_TYPE.GOAL)}
                 className="flex items-center justify-between w-full py-2.5 text-sm border-b border-gray-100"
               >
-                <span className="text-gray-500 font-medium">Цель</span>
+                <span className="text-gray-500 font-medium">{t("selector.goal")}</span>
                 <div className="flex items-center gap-1">
                   <span className={cn(selectedGoalId ? "text-gray-800" : "text-gray-400")}>
                     {selectedGoalTitle}
@@ -320,7 +322,7 @@ export function TaskEditModal({
                 onClick={() => setOpenSelector(SELECTOR_TYPE.CONTEXT)}
                 className="flex items-center justify-between w-full py-2.5 text-sm border-b border-gray-100"
               >
-                <span className="text-gray-500 font-medium">Контекст</span>
+                <span className="text-gray-500 font-medium">{t("selector.context")}</span>
                 <div className="flex items-center gap-1">
                   <span className={cn(selectedContextId ? "text-gray-800" : "text-gray-400")}>
                     {selectedContextName}
@@ -338,7 +340,7 @@ export function TaskEditModal({
                 onClick={() => setOpenSelector(SELECTOR_TYPE.CATEGORY)}
                 className="flex items-center justify-between w-full py-2.5 text-sm border-b border-gray-100"
               >
-                <span className="text-gray-500 font-medium">Категория</span>
+                <span className="text-gray-500 font-medium">{t("selector.category")}</span>
                 <div className="flex items-center gap-1">
                   <span className={cn(selectedCategoryId ? "text-gray-800" : "text-gray-400")}>
                     {selectedCategoryName}
@@ -356,7 +358,7 @@ export function TaskEditModal({
             {/* Active items section */}
             <div data-testid="task-edit-checklist-active-section">
               <p className="text-center text-sm font-medium text-accent mb-2">
-                Активно ({activeItems.length})
+                {t("taskEdit.activeSection", { count: activeItems.length })}
               </p>
               <div className="flex flex-col gap-1">
                 {activeItems.map((item) => (
@@ -364,7 +366,7 @@ export function TaskEditModal({
                     <button
                       type="button"
                       data-testid={`checklist-item-checkbox-${item.id}`}
-                      aria-label={`Отметить: ${item.title}`}
+                      aria-label={t("taskEdit.checkItemMark", { title: item.title })}
                       onClick={() => void toggleItem(item.id)}
                       className="w-5 h-5 rounded border-2 border-gray-300 flex-shrink-0 flex items-center justify-center hover:border-accent transition-colors"
                     />
@@ -420,7 +422,7 @@ export function TaskEditModal({
                     value={newItemTitle}
                     onChange={(event) => setNewItemTitle(event.target.value)}
                     onKeyDown={(event) => void handleNewItemKeyDown(event)}
-                    placeholder="Введите новый пункт..."
+                    placeholder={t("taskEdit.newChecklistItemPlaceholder")}
                     className="flex-1 text-sm text-gray-400 outline-none placeholder:text-gray-300"
                   />
                 </div>
@@ -431,7 +433,7 @@ export function TaskEditModal({
             {completedItems.length > 0 && (
               <div data-testid="task-edit-checklist-done-section">
                 <p className="text-center text-sm font-medium text-accent mb-2">
-                  Готово ({completedItems.length})
+                  {t("taskEdit.doneSection", { count: completedItems.length })}
                 </p>
                 <div className="flex flex-col gap-1">
                   {completedItems.map((item) => (
@@ -439,7 +441,7 @@ export function TaskEditModal({
                       <button
                         type="button"
                         data-testid={`checklist-item-checkbox-${item.id}`}
-                        aria-label={`Снять отметку: ${item.title}`}
+                        aria-label={t("taskEdit.checkItemUnmark", { title: item.title })}
                         onClick={() => void toggleItem(item.id)}
                         className="w-5 h-5 rounded border-2 border-accent bg-accent flex-shrink-0 flex items-center justify-center hover:opacity-80 transition-opacity"
                       >
@@ -477,7 +479,7 @@ export function TaskEditModal({
                         <button
                           type="button"
                           data-testid={`checklist-item-delete-btn-${item.id}`}
-                          aria-label={`Удалить: ${item.title}`}
+                          aria-label={t("taskEdit.checkItemDelete", { title: item.title })}
                           onMouseDown={(event) => event.preventDefault()}
                           onClick={() => void deleteItem(item.id)}
                           className="flex-shrink-0 text-red-500 hover:text-red-700 transition-colors"
@@ -507,27 +509,27 @@ export function TaskEditModal({
             type="button"
             data-testid="task-edit-delete-btn"
             onClick={handleDeleteClick}
-            aria-label="Удалить задачу"
+            aria-label={t("taskEdit.deleteLabel")}
             className="flex-1 py-2.5 text-sm text-red-500 border border-red-200 rounded-xl hover:bg-red-50 transition-colors"
           >
-            Удалить
+            {t("taskEdit.delete")}
           </button>
           <button
             type="button"
             onClick={onClose}
-            aria-label="Отмена"
+            aria-label={t("taskEdit.cancelLabel")}
             className="flex-1 py-2.5 text-sm text-gray-600 border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors"
           >
-            Отмена
+            {t("taskEdit.cancel")}
           </button>
           <button
             type="button"
             onClick={handleSave}
-            aria-label="Сохранить"
+            aria-label={t("taskEdit.saveLabel")}
             disabled={!title.trim() || isSaving}
             className="flex-1 py-2.5 text-sm text-white bg-accent rounded-xl hover:opacity-90 transition-opacity disabled:opacity-50"
           >
-            Сохранить
+            {t("taskEdit.save")}
           </button>
         </div>
 
@@ -537,26 +539,26 @@ export function TaskEditModal({
             data-testid="task-edit-delete-confirm"
             className="absolute inset-0 bg-white/95 rounded-t-2xl flex flex-col items-center justify-center gap-4 px-6"
           >
-            <p className="text-base font-medium text-gray-800 text-center">Удалить задачу?</p>
+            <p className="text-base font-medium text-gray-800 text-center">{t("taskEdit.deleteConfirmTitle")}</p>
             <p className="text-sm text-gray-500 text-center">{task.title}</p>
             <div className="flex gap-3 w-full">
               <button
                 type="button"
                 data-testid="task-edit-delete-cancel"
                 onClick={handleDeleteCancel}
-                aria-label="Отмена"
+                aria-label={t("taskEdit.deleteConfirmCancel")}
                 className="flex-1 py-2.5 text-sm text-gray-600 border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors"
               >
-                Отмена
+                {t("taskEdit.deleteConfirmCancel")}
               </button>
               <button
                 type="button"
                 data-testid="task-edit-delete-confirm-btn"
                 onClick={handleDeleteConfirm}
-                aria-label="Удалить"
+                aria-label={t("taskEdit.deleteConfirmOk")}
                 className="flex-1 py-2.5 text-sm text-white bg-red-500 rounded-xl hover:bg-red-600 transition-colors"
               >
-                Удалить
+                {t("taskEdit.deleteConfirmOk")}
               </button>
             </div>
           </div>
@@ -574,13 +576,13 @@ export function TaskEditModal({
             <button
               type="button"
               onClick={() => setOpenSelector(null)}
-              aria-label="Назад"
+              aria-label={t("taskEdit.back")}
               className="w-8 h-8 flex items-center justify-center rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
             >
               <ArrowLeft size={18} />
             </button>
             <h2 className="text-base font-semibold text-gray-800">
-              {SELECTOR_TITLES[openSelector]}
+              {t(SELECTOR_TITLE_KEYS[openSelector])}
             </h2>
           </div>
 
@@ -601,7 +603,7 @@ export function TaskEditModal({
                       : "text-gray-500 hover:bg-gray-100",
                   )}
                 >
-                  Без цели
+                  {t("selector.noGoal")}
                 </button>
                 {goals.map((goal) => (
                   <button
@@ -639,7 +641,7 @@ export function TaskEditModal({
                       : "text-gray-500 hover:bg-gray-100",
                   )}
                 >
-                  Без контекста
+                  {t("selector.noContext")}
                 </button>
                 {contexts.map((context) => (
                   <button
@@ -677,7 +679,7 @@ export function TaskEditModal({
                       : "text-gray-500 hover:bg-gray-100",
                   )}
                 >
-                  Без категории
+                  {t("selector.noCategory")}
                 </button>
                 {categories.map((category) => (
                   <button

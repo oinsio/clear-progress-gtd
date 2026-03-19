@@ -1,8 +1,9 @@
 import { useState, useCallback, useRef, useEffect } from "react";
 import { ChevronDown, Plus } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { cn } from "@/shared/lib/cn";
 import type { BoxFilter } from "@/types/common";
-import { TASK_BOX_FILTER_ORDER, BOX_FILTER_LABELS } from "@/constants";
+import { TASK_BOX_FILTER_ORDER } from "@/constants";
 import { TodayBoxIcon, WeekBoxIcon, LaterBoxIcon, AllBoxesIcon } from "./BoxIcons";
 import * as React from "react";
 
@@ -29,6 +30,7 @@ interface BoxFilterBarProps {
 }
 
 export function BoxFilterBar({ activeBox, onBoxChange, onAddTask }: BoxFilterBarProps) {
+  const { t } = useTranslation();
   const [isExpanded, setIsExpanded] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -73,7 +75,7 @@ export function BoxFilterBar({ activeBox, onBoxChange, onAddTask }: BoxFilterBar
                 key={box}
                 type="button"
                 data-testid={`box-filter-${box}`}
-                aria-label={BOX_FILTER_LABELS[box]}
+                aria-label={t(`box.${box}`)}
                 aria-pressed={isActive}
                 onClick={() => handleSelect(box)}
                 className={cn(
@@ -91,7 +93,7 @@ export function BoxFilterBar({ activeBox, onBoxChange, onAddTask }: BoxFilterBar
           <button
             type="button"
             data-testid="box-filter-toggle"
-            aria-label={`Фильтр: ${BOX_FILTER_LABELS[displayBox]}. Нажмите для выбора`}
+            aria-label={t(`box.${displayBox}`)}
             aria-expanded={false}
             onClick={handleToggle}
             className="flex items-center gap-0.5 px-1 py-1 text-accent rounded-lg active:bg-accent/10 transition-colors"
@@ -104,7 +106,7 @@ export function BoxFilterBar({ activeBox, onBoxChange, onAddTask }: BoxFilterBar
 
       <button
         type="button"
-        aria-label="Добавить задачу"
+        aria-label={t("task.add")}
         data-testid="add-task-button"
         onClick={onAddTask}
         className="ml-auto flex-shrink-0 w-10 h-10 bg-accent text-white rounded-full flex items-center justify-center shadow-md hover:bg-accent/80 active:bg-accent/70 transition-colors"

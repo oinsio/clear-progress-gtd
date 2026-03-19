@@ -9,6 +9,7 @@ import {
   CircleUser,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { cn } from "@/shared/lib/cn";
 import type { PanelSide } from "@/types/common";
 import { ROUTES } from "@/constants";
@@ -26,18 +27,18 @@ export type RightPanelMode =
 
 interface FilterItem {
   mode: Exclude<RightPanelMode, "search" | null>;
-  label: string;
+  labelKey: string;
   Icon: React.ElementType;
   route?: string;
 }
 
 const FILTER_ITEMS: FilterItem[] = [
-  { mode: "inbox", label: "Входящие", Icon: Inbox },
-  { mode: "contexts", label: "Контексты", Icon: MapPin, route: ROUTES.CONTEXTS },
-  { mode: "categories", label: "Категории", Icon: Tag, route: ROUTES.CATEGORIES },
-  { mode: "goals", label: "Цели", Icon: Target, route: ROUTES.GOALS },
-  { mode: "tasks", label: "Задачи", Icon: CheckSquare },
-  { mode: "completed", label: "Завершённые", Icon: CheckCheck },
+  { mode: "inbox", labelKey: "filter.inbox", Icon: Inbox },
+  { mode: "contexts", labelKey: "filter.contexts", Icon: MapPin, route: ROUTES.CONTEXTS },
+  { mode: "categories", labelKey: "filter.categories", Icon: Tag, route: ROUTES.CATEGORIES },
+  { mode: "goals", labelKey: "filter.goals", Icon: Target, route: ROUTES.GOALS },
+  { mode: "tasks", labelKey: "filter.tasks", Icon: CheckSquare },
+  { mode: "completed", labelKey: "filter.completed", Icon: CheckCheck },
 ];
 
 interface RightFilterPanelProps {
@@ -56,6 +57,7 @@ export function RightFilterPanel({
   onModeChange,
 }: RightFilterPanelProps) {
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   const isLeft = side === "left";
   const panelBorder = isLeft ? "border-r border-accent/70" : "border-l border-accent/70";
@@ -73,7 +75,7 @@ export function RightFilterPanel({
           className={cn("w-52 flex flex-col bg-accent overflow-hidden cursor-pointer", panelBorder)}
           onClick={onToggle}
           data-testid="right-panel-toggle"
-          aria-label="Закрыть панель"
+          aria-label={t("filter.close")}
           role="button"
           tabIndex={0}
           onKeyDown={(e) => e.key === "Enter" && onToggle()}
@@ -82,16 +84,16 @@ export function RightFilterPanel({
           <div className="flex items-center justify-between border-b border-white/20">
             <button
               type="button"
-              aria-label="Войти в аккаунт"
+              aria-label={t("settings.loginAriaLabel")}
               data-testid="right-panel-login"
               onClick={(e) => { e.stopPropagation(); navigate(ROUTES.SETUP); }}
               className="flex-1 flex items-center px-4 py-4 text-white hover:bg-black/15 transition-colors"
             >
-              <span className="text-base font-medium">Войдите</span>
+              <span className="text-base font-medium">{t("settings.login")}</span>
             </button>
             <button
               type="button"
-              aria-label="Настройки"
+              aria-label={t("settings.settingsAriaLabel")}
               data-testid="right-panel-account"
               onClick={(e) => { e.stopPropagation(); navigate(ROUTES.SETTINGS); }}
               className="flex items-center justify-center px-4 py-4 text-white hover:bg-black/15 transition-colors"
@@ -101,9 +103,10 @@ export function RightFilterPanel({
           </div>
 
           {/* Filter items */}
-          <nav className="flex-1 px-2 py-2 overflow-y-auto" aria-label="Фильтры задач">
-            {FILTER_ITEMS.map(({ mode: itemMode, label, Icon, route }) => {
+          <nav className="flex-1 px-2 py-2 overflow-y-auto" aria-label={t("filter.open")}>
+            {FILTER_ITEMS.map(({ mode: itemMode, labelKey, Icon, route }) => {
               const isActive = mode === itemMode;
+              const label = t(labelKey);
               return (
                 <button
                   key={itemMode}
@@ -113,7 +116,7 @@ export function RightFilterPanel({
                   data-testid={`right-filter-${itemMode}`}
                   onClick={(e) => {
                     e.stopPropagation();
-                    route ? navigate(route) : onModeChange(isActive ? null : itemMode);
+                    if (route) { navigate(route); } else { onModeChange(isActive ? null : itemMode); }
                   }}
                   className={cn(
                     "w-full flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-medium transition-colors text-left",
@@ -133,13 +136,13 @@ export function RightFilterPanel({
           <div className="px-2 py-2 border-t border-white/25">
             <button
               type="button"
-              aria-label="Поиск"
+              aria-label={t("filter.search")}
               data-testid="right-filter-search"
               onClick={(e) => { e.stopPropagation(); navigate(ROUTES.SEARCH); }}
               className="w-full flex items-center gap-3 px-3 h-10 rounded-xl text-sm font-medium transition-colors text-left text-white/80 hover:bg-white/10 hover:text-white"
             >
               <Search className="w-5 h-5 flex-shrink-0" aria-hidden="true" />
-              <span>Поиск</span>
+              <span>{t("filter.search")}</span>
             </button>
           </div>
         </div>
@@ -149,7 +152,7 @@ export function RightFilterPanel({
           className={cn("w-14 flex flex-col items-center bg-accent overflow-hidden cursor-pointer", panelBorder)}
           onClick={onToggle}
           data-testid="right-panel-toggle"
-          aria-label="Открыть панель"
+          aria-label={t("filter.open")}
           role="button"
           tabIndex={0}
           onKeyDown={(e) => e.key === "Enter" && onToggle()}
@@ -157,7 +160,7 @@ export function RightFilterPanel({
           {/* Account icon */}
           <button
             type="button"
-            aria-label="Настройки"
+            aria-label={t("settings.settingsAriaLabel")}
             data-testid="right-panel-account"
             onClick={(e) => { e.stopPropagation(); navigate(ROUTES.SETTINGS); }}
             className="w-10 h-10 flex items-center justify-center mt-3 mb-1 rounded-xl text-white/80 hover:bg-white/10 hover:text-white transition-colors"
@@ -166,9 +169,10 @@ export function RightFilterPanel({
           </button>
 
           {/* All filter icons */}
-          <nav className="flex-1 flex flex-col items-center gap-1 py-1 overflow-y-auto" aria-label="Фильтры задач">
-            {FILTER_ITEMS.map(({ mode: itemMode, label, Icon, route }) => {
+          <nav className="flex-1 flex flex-col items-center gap-1 py-1 overflow-y-auto" aria-label={t("filter.open")}>
+            {FILTER_ITEMS.map(({ mode: itemMode, labelKey, Icon, route }) => {
               const isActive = mode === itemMode;
+              const label = t(labelKey);
               return (
                 <button
                   key={itemMode}
@@ -178,7 +182,7 @@ export function RightFilterPanel({
                   data-testid={`right-filter-${itemMode}`}
                   onClick={(e) => {
                     e.stopPropagation();
-                    route ? navigate(route) : onModeChange(isActive ? null : itemMode);
+                    if (route) { navigate(route); } else { onModeChange(isActive ? null : itemMode); }
                   }}
                   className={cn(
                     "w-10 h-10 rounded-xl flex items-center justify-center transition-colors flex-shrink-0",
@@ -197,7 +201,7 @@ export function RightFilterPanel({
           <div className="flex flex-col items-center py-2 border-t border-white/25">
             <button
               type="button"
-              aria-label="Поиск"
+              aria-label={t("filter.search")}
               data-testid="right-filter-search"
               onClick={(e) => { e.stopPropagation(); navigate(ROUTES.SEARCH); }}
               className="w-10 h-10 rounded-xl flex items-center justify-center transition-colors text-white/70 hover:bg-white/10 hover:text-white"
