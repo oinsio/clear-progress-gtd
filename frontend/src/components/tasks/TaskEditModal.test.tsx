@@ -6,7 +6,31 @@ import { buildTask } from "@/test/factories/taskFactory";
 import { buildGoal } from "@/test/factories/goalFactory";
 import { buildContext } from "@/test/factories/contextFactory";
 import { buildCategory } from "@/test/factories/categoryFactory";
+import { buildChecklistItem } from "@/test/factories/checklistItemFactory";
+import type { ChecklistItem } from "@/types/entities";
+import type { ChecklistService } from "@/services/ChecklistService";
 import { BOX } from "@/constants";
+
+function buildMockChecklistService(items: ChecklistItem[] = []): ChecklistService {
+  const completedCount = items.filter((item) => item.is_completed).length;
+  return {
+    getByTaskId: vi.fn().mockResolvedValue(items),
+    getById: vi.fn(),
+    create: vi.fn().mockImplementation(async (_taskId: string, title: string) =>
+      buildChecklistItem({ title }),
+    ),
+    update: vi.fn(),
+    toggle: vi.fn().mockImplementation(async (id: string) => {
+      const found = items.find((item) => item.id === id);
+      return found ? { ...found, is_completed: !found.is_completed } : null;
+    }),
+    softDelete: vi.fn().mockImplementation(async (id: string) => {
+      const found = items.find((item) => item.id === id);
+      return found ? { ...found, is_deleted: true } : null;
+    }),
+    getProgress: vi.fn().mockResolvedValue({ completed: completedCount, total: items.length }),
+  } as unknown as ChecklistService;
+}
 
 function renderModal(overrides = {}) {
   const task = buildTask();
@@ -18,6 +42,8 @@ function renderModal(overrides = {}) {
     isOpen: true,
     onClose: vi.fn(),
     onUpdate: vi.fn().mockResolvedValue(undefined),
+    onDelete: vi.fn(),
+    checklistService: buildMockChecklistService(),
     ...overrides,
   };
   render(<TaskEditModal {...props} />);
@@ -35,7 +61,8 @@ describe("TaskEditModal", () => {
           categories={[]}
           isOpen={false}
           onClose={vi.fn()}
-          onUpdate={vi.fn()} />,
+          onUpdate={vi.fn()}
+          onDelete={vi.fn()} />,
     );
     expect(screen.queryByTestId("task-edit-modal")).not.toBeInTheDocument();
   });
@@ -221,5 +248,93 @@ describe("TaskEditModal", () => {
     expect(screen.getByTestId("task-edit-selector-sheet")).toBeInTheDocument();
     await userEvent.click(screen.getByRole("button", { name: /назад/i }));
     expect(screen.queryByTestId("task-edit-selector-sheet")).not.toBeInTheDocument();
+  });
+});
+
+describe("TaskEditModal — checklist tab", () => {
+  it("should show Детали and Чеклист tabs", async () => {
+    renderModal({ checklistService: buildMockChecklistService() });
+    expect(screen.getByTestId("task-edit-tab-details")).toBeInTheDocument();
+    expect(screen.getByTestId("task-edit-tab-checklist")).toBeInTheDocument();
+  });
+
+  it("should show details content by default when Детали tab is active", () => {
+    renderModal({ checklistService: buildMockChecklistService() });
+    expect(screen.getByTestId("task-edit-title")).toBeInTheDocument();
+    expect(screen.queryByTestId("task-edit-checklist-panel")).not.toBeInTheDocument();
+  });
+
+  it("should show checklist panel when Чеклист tab is clicked", async () => {
+    renderModal({ checklistService: buildMockChecklistService() });
+    await userEvent.click(screen.getByTestId("task-edit-tab-checklist"));
+    expect(screen.getByTestId("task-edit-checklist-panel")).toBeInTheDocument();
+    expect(screen.queryByTestId("task-edit-title")).not.toBeInTheDocument();
+  });
+
+  it("should show progress in checklist tab label when items exist", async () => {
+    const taskId = crypto.randomUUID();
+    const task = buildTask({ id: taskId });
+    const items = [
+      buildChecklistItem({ task_id: taskId, is_completed: true }),
+      buildChecklistItem({ task_id: taskId, is_completed: true }),
+      buildChecklistItem({ task_id: taskId, is_completed: false }),
+      buildChecklistItem({ task_id: taskId, is_completed: false }),
+    ];
+    renderModal({ task, checklistService: buildMockChecklistService(items) });
+    expect(await screen.findByTestId("task-edit-tab-checklist")).toHaveTextContent("Чеклист (2/4)");
+  });
+
+  it("should show Чеклист without progress when no items", async () => {
+    renderModal({ checklistService: buildMockChecklistService([]) });
+    expect(await screen.findByTestId("task-edit-tab-checklist")).toHaveTextContent("Чеклист");
+    expect(screen.getByTestId("task-edit-tab-checklist")).not.toHaveTextContent("(");
+  });
+
+  it("should show active items in Активно section", async () => {
+    const taskId = crypto.randomUUID();
+    const task = buildTask({ id: taskId });
+    const items = [
+      buildChecklistItem({ task_id: taskId, title: "Пункт 1", is_completed: false }),
+      buildChecklistItem({ task_id: taskId, title: "Пункт 2", is_completed: true }),
+    ];
+    renderModal({ task, checklistService: buildMockChecklistService(items) });
+    await userEvent.click(screen.getByTestId("task-edit-tab-checklist"));
+    expect(await screen.findByTestId("task-edit-checklist-active-section")).toBeInTheDocument();
+    expect(screen.getByText("Пункт 1")).toBeInTheDocument();
+  });
+
+  it("should show completed items in Готово section", async () => {
+    const taskId = crypto.randomUUID();
+    const task = buildTask({ id: taskId });
+    const items = [
+      buildChecklistItem({ task_id: taskId, title: "Пункт готов", is_completed: true }),
+    ];
+    renderModal({ task, checklistService: buildMockChecklistService(items) });
+    await userEvent.click(screen.getByTestId("task-edit-tab-checklist"));
+    expect(await screen.findByTestId("task-edit-checklist-done-section")).toBeInTheDocument();
+    expect(screen.getByText("Пункт готов")).toBeInTheDocument();
+  });
+
+  it("should call toggle when checkbox of active item is clicked", async () => {
+    const taskId = crypto.randomUUID();
+    const task = buildTask({ id: taskId });
+    const items = [buildChecklistItem({ task_id: taskId, title: "Пункт", is_completed: false })];
+    const mockService = buildMockChecklistService(items);
+    renderModal({ task, checklistService: mockService });
+    await userEvent.click(screen.getByTestId("task-edit-tab-checklist"));
+    const checkbox = await screen.findByTestId(`checklist-item-checkbox-${items[0].id}`);
+    await userEvent.click(checkbox);
+    expect(mockService.toggle).toHaveBeenCalledWith(items[0].id);
+  });
+
+  it("should create new item when text is entered and Enter is pressed", async () => {
+    const taskId = crypto.randomUUID();
+    const task = buildTask({ id: taskId });
+    const mockService = buildMockChecklistService([]);
+    renderModal({ task, checklistService: mockService });
+    await userEvent.click(screen.getByTestId("task-edit-tab-checklist"));
+    const input = await screen.findByTestId("task-edit-checklist-new-item-input");
+    await userEvent.type(input, "Новый пункт{Enter}");
+    expect(mockService.create).toHaveBeenCalledWith(taskId, "Новый пункт");
   });
 });

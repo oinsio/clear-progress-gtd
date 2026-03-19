@@ -1,10 +1,12 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { X, Inbox, ChevronRight, ArrowLeft } from "lucide-react";
 import type { Task, Goal, Context, Category } from "@/types/entities";
 import type { Box } from "@/types/common";
 import { cn } from "@/shared/lib/cn";
 import { BOX, BOX_FILTER_LABELS } from "@/constants";
 import { TodayBoxIcon, WeekBoxIcon, LaterBoxIcon } from "./BoxIcons";
+import { useChecklist } from "@/hooks/useChecklist";
+import type { ChecklistService } from "@/services/ChecklistService";
 import * as React from "react";
 
 interface TaskEditModalProps {
@@ -16,7 +18,15 @@ interface TaskEditModalProps {
   onClose: () => void;
   onUpdate: (id: string, changes: Partial<Task>) => Promise<void>;
   onDelete: (id: string) => void;
+  checklistService?: ChecklistService;
 }
+
+const ACTIVE_TAB = {
+  DETAILS: "details",
+  CHECKLIST: "checklist",
+} as const;
+
+type ActiveTab = (typeof ACTIVE_TAB)[keyof typeof ACTIVE_TAB];
 
 const BOX_OPTIONS: Box[] = [BOX.INBOX, BOX.TODAY, BOX.WEEK, BOX.LATER];
 
@@ -50,6 +60,7 @@ export function TaskEditModal({
   onClose,
   onUpdate,
   onDelete,
+  checklistService,
 }: TaskEditModalProps) {
   const [title, setTitle] = useState(task.title);
   const [notes, setNotes] = useState(task.notes);
@@ -60,6 +71,11 @@ export function TaskEditModal({
   const [isSaving, setIsSaving] = useState(false);
   const [openSelector, setOpenSelector] = useState<SelectorType | null>(null);
   const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
+  const [activeTab, setActiveTab] = useState<ActiveTab>(ACTIVE_TAB.DETAILS);
+  const [newItemTitle, setNewItemTitle] = useState("");
+  const newItemInputRef = useRef<HTMLInputElement>(null);
+
+  const { items, progress, createItem, toggleItem } = useChecklist(task.id, checklistService);
 
   useEffect(() => {
     if (isOpen) {
@@ -71,6 +87,8 @@ export function TaskEditModal({
       setSelectedBox(task.box);
       setOpenSelector(null);
       setIsConfirmingDelete(false);
+      setActiveTab(ACTIVE_TAB.DETAILS);
+      setNewItemTitle("");
     }
   }, [isOpen, task]);
 
@@ -105,6 +123,16 @@ export function TaskEditModal({
     }
   }, [task.id, title, notes, selectedGoalId, selectedContextId, selectedCategoryId, selectedBox, onUpdate, onClose]);
 
+  const handleNewItemKeyDown = useCallback(
+    async (event: React.KeyboardEvent<HTMLInputElement>) => {
+      if (event.key === "Enter" && newItemTitle.trim()) {
+        await createItem(newItemTitle.trim());
+        setNewItemTitle("");
+      }
+    },
+    [newItemTitle, createItem],
+  );
+
   if (!isOpen) return null;
 
   const selectedGoalTitle = selectedGoalId
@@ -118,6 +146,14 @@ export function TaskEditModal({
   const selectedCategoryName = selectedCategoryId
     ? (categories.find((category) => category.id === selectedCategoryId)?.name ?? "Без категории")
     : "Без категории";
+
+  const checklistTabLabel =
+    progress.total > 0
+      ? `Чеклист (${progress.completed}/${progress.total})`
+      : "Чеклист";
+
+  const activeItems = items.filter((item) => !item.is_completed);
+  const completedItems = items.filter((item) => item.is_completed);
 
   return (
     <div data-testid="task-edit-modal" className="fixed inset-0 z-50 flex flex-col justify-end">
@@ -143,115 +179,221 @@ export function TaskEditModal({
           </button>
         </div>
 
-        <div className="px-4 py-4 flex flex-col gap-4">
-          {/* Title */}
-          <div>
-            <label className="text-xs font-medium text-gray-500 mb-1 block">Название</label>
-            <input
-              type="text"
-              value={title}
-              onChange={(event) => setTitle(event.target.value)}
-              placeholder="Название задачи"
-              className="w-full text-sm text-gray-800 border border-gray-200 rounded-lg px-3 py-2 outline-none focus:border-accent"
-              data-testid="task-edit-title"
-            />
-          </div>
-
-          {/* Notes */}
-          <div>
-            <label className="text-xs font-medium text-gray-500 mb-1 block">Заметки</label>
-            <textarea
-              value={notes}
-              onChange={(event) => setNotes(event.target.value)}
-              placeholder="Добавить заметку..."
-              rows={3}
-              className="w-full text-sm text-gray-700 border border-gray-200 rounded-lg px-3 py-2 outline-none focus:border-accent resize-none"
-              data-testid="task-edit-notes"
-            />
-          </div>
-
-          {/* Box selector */}
-          <div>
-            <label className="text-xs font-medium text-gray-500 mb-2 block">Коробочка</label>
-            <div className="flex gap-1">
-              {BOX_OPTIONS.map((box) => {
-                const BoxIcon = BOX_ICONS[box];
-                const isSelected = selectedBox === box;
-                return (
-                  <button
-                    key={box}
-                    type="button"
-                    aria-label={BOX_FILTER_LABELS[box]}
-                    aria-pressed={isSelected}
-                    onClick={() => setSelectedBox(box)}
-                    className={cn(
-                      "flex items-center justify-center w-10 h-10 rounded-full transition-colors",
-                      isSelected
-                        ? "text-accent"
-                        : "text-gray-400 hover:text-gray-600 hover:bg-gray-100",
-                    )}
-                  >
-                    <BoxIcon className="w-7 h-7" />
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Goal drill-down row */}
-          {goals.length > 0 && (
-            <button
-              type="button"
-              data-testid="task-edit-goal-row"
-              onClick={() => setOpenSelector(SELECTOR_TYPE.GOAL)}
-              className="flex items-center justify-between w-full py-2.5 text-sm border-b border-gray-100"
-            >
-              <span className="text-gray-500 font-medium">Цель</span>
-              <div className="flex items-center gap-1">
-                <span className={cn(selectedGoalId ? "text-gray-800" : "text-gray-400")}>
-                  {selectedGoalTitle}
-                </span>
-                <ChevronRight size={16} className="text-gray-400" />
-              </div>
-            </button>
-          )}
-
-          {/* Context drill-down row */}
-          {contexts.length > 0 && (
-            <button
-              type="button"
-              data-testid="task-edit-context-row"
-              onClick={() => setOpenSelector(SELECTOR_TYPE.CONTEXT)}
-              className="flex items-center justify-between w-full py-2.5 text-sm border-b border-gray-100"
-            >
-              <span className="text-gray-500 font-medium">Контекст</span>
-              <div className="flex items-center gap-1">
-                <span className={cn(selectedContextId ? "text-gray-800" : "text-gray-400")}>
-                  {selectedContextName}
-                </span>
-                <ChevronRight size={16} className="text-gray-400" />
-              </div>
-            </button>
-          )}
-
-          {/* Category drill-down row */}
-          {categories.length > 0 && (
-            <button
-              type="button"
-              data-testid="task-edit-category-row"
-              onClick={() => setOpenSelector(SELECTOR_TYPE.CATEGORY)}
-              className="flex items-center justify-between w-full py-2.5 text-sm border-b border-gray-100"
-            >
-              <span className="text-gray-500 font-medium">Категория</span>
-              <div className="flex items-center gap-1">
-                <span className={cn(selectedCategoryId ? "text-gray-800" : "text-gray-400")}>
-                  {selectedCategoryName}
-                </span>
-                <ChevronRight size={16} className="text-gray-400" />
-              </div>
-            </button>
-          )}
+        {/* Tab switcher */}
+        <div className="flex px-4 pt-3 pb-1 gap-2">
+          <button
+            type="button"
+            data-testid="task-edit-tab-details"
+            onClick={() => setActiveTab(ACTIVE_TAB.DETAILS)}
+            className={cn(
+              "flex-1 py-1.5 text-sm rounded-full border transition-colors",
+              activeTab === ACTIVE_TAB.DETAILS
+                ? "bg-accent text-white border-accent"
+                : "text-accent border-accent/40 hover:bg-accent/5",
+            )}
+          >
+            Детали
+          </button>
+          <button
+            type="button"
+            data-testid="task-edit-tab-checklist"
+            onClick={() => setActiveTab(ACTIVE_TAB.CHECKLIST)}
+            className={cn(
+              "flex-1 py-1.5 text-sm rounded-full border transition-colors",
+              activeTab === ACTIVE_TAB.CHECKLIST
+                ? "bg-accent text-white border-accent"
+                : "text-accent border-accent/40 hover:bg-accent/5",
+            )}
+          >
+            {checklistTabLabel}
+          </button>
         </div>
+
+        {/* Details tab content */}
+        {activeTab === ACTIVE_TAB.DETAILS && (
+          <div className="px-4 py-4 flex flex-col gap-4">
+            {/* Title */}
+            <div>
+              <label className="text-xs font-medium text-gray-500 mb-1 block">Название</label>
+              <input
+                type="text"
+                value={title}
+                onChange={(event) => setTitle(event.target.value)}
+                placeholder="Название задачи"
+                className="w-full text-sm text-gray-800 border border-gray-200 rounded-lg px-3 py-2 outline-none focus:border-accent"
+                data-testid="task-edit-title"
+              />
+            </div>
+
+            {/* Notes */}
+            <div>
+              <label className="text-xs font-medium text-gray-500 mb-1 block">Заметки</label>
+              <textarea
+                value={notes}
+                onChange={(event) => setNotes(event.target.value)}
+                placeholder="Добавить заметку..."
+                rows={3}
+                className="w-full text-sm text-gray-700 border border-gray-200 rounded-lg px-3 py-2 outline-none focus:border-accent resize-none"
+                data-testid="task-edit-notes"
+              />
+            </div>
+
+            {/* Box selector */}
+            <div>
+              <label className="text-xs font-medium text-gray-500 mb-2 block">Коробочка</label>
+              <div className="flex gap-1">
+                {BOX_OPTIONS.map((box) => {
+                  const BoxIcon = BOX_ICONS[box];
+                  const isSelected = selectedBox === box;
+                  return (
+                    <button
+                      key={box}
+                      type="button"
+                      aria-label={BOX_FILTER_LABELS[box]}
+                      aria-pressed={isSelected}
+                      onClick={() => setSelectedBox(box)}
+                      className={cn(
+                        "flex items-center justify-center w-10 h-10 rounded-full transition-colors",
+                        isSelected
+                          ? "text-accent"
+                          : "text-gray-400 hover:text-gray-600 hover:bg-gray-100",
+                      )}
+                    >
+                      <BoxIcon className="w-7 h-7" />
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Goal drill-down row */}
+            {goals.length > 0 && (
+              <button
+                type="button"
+                data-testid="task-edit-goal-row"
+                onClick={() => setOpenSelector(SELECTOR_TYPE.GOAL)}
+                className="flex items-center justify-between w-full py-2.5 text-sm border-b border-gray-100"
+              >
+                <span className="text-gray-500 font-medium">Цель</span>
+                <div className="flex items-center gap-1">
+                  <span className={cn(selectedGoalId ? "text-gray-800" : "text-gray-400")}>
+                    {selectedGoalTitle}
+                  </span>
+                  <ChevronRight size={16} className="text-gray-400" />
+                </div>
+              </button>
+            )}
+
+            {/* Context drill-down row */}
+            {contexts.length > 0 && (
+              <button
+                type="button"
+                data-testid="task-edit-context-row"
+                onClick={() => setOpenSelector(SELECTOR_TYPE.CONTEXT)}
+                className="flex items-center justify-between w-full py-2.5 text-sm border-b border-gray-100"
+              >
+                <span className="text-gray-500 font-medium">Контекст</span>
+                <div className="flex items-center gap-1">
+                  <span className={cn(selectedContextId ? "text-gray-800" : "text-gray-400")}>
+                    {selectedContextName}
+                  </span>
+                  <ChevronRight size={16} className="text-gray-400" />
+                </div>
+              </button>
+            )}
+
+            {/* Category drill-down row */}
+            {categories.length > 0 && (
+              <button
+                type="button"
+                data-testid="task-edit-category-row"
+                onClick={() => setOpenSelector(SELECTOR_TYPE.CATEGORY)}
+                className="flex items-center justify-between w-full py-2.5 text-sm border-b border-gray-100"
+              >
+                <span className="text-gray-500 font-medium">Категория</span>
+                <div className="flex items-center gap-1">
+                  <span className={cn(selectedCategoryId ? "text-gray-800" : "text-gray-400")}>
+                    {selectedCategoryName}
+                  </span>
+                  <ChevronRight size={16} className="text-gray-400" />
+                </div>
+              </button>
+            )}
+          </div>
+        )}
+
+        {/* Checklist tab content */}
+        {activeTab === ACTIVE_TAB.CHECKLIST && (
+          <div data-testid="task-edit-checklist-panel" className="px-4 py-4 flex flex-col gap-4">
+            {/* Active items section */}
+            <div data-testid="task-edit-checklist-active-section">
+              <p className="text-center text-sm font-medium text-accent mb-2">
+                Активно ({activeItems.length})
+              </p>
+              <div className="flex flex-col gap-1">
+                {activeItems.map((item) => (
+                  <div key={item.id} className="flex items-center gap-3 py-1.5">
+                    <button
+                      type="button"
+                      data-testid={`checklist-item-checkbox-${item.id}`}
+                      aria-label={`Отметить: ${item.title}`}
+                      onClick={() => void toggleItem(item.id)}
+                      className="w-5 h-5 rounded border-2 border-gray-300 flex-shrink-0 flex items-center justify-center hover:border-accent transition-colors"
+                    />
+                    <span className="text-sm text-gray-800">{item.title}</span>
+                  </div>
+                ))}
+                {/* New item input */}
+                <div className="flex items-center gap-3 py-1.5">
+                  <div className="w-5 h-5 rounded border-2 border-gray-200 flex-shrink-0" />
+                  <input
+                    ref={newItemInputRef}
+                    type="text"
+                    data-testid="task-edit-checklist-new-item-input"
+                    value={newItemTitle}
+                    onChange={(event) => setNewItemTitle(event.target.value)}
+                    onKeyDown={(event) => void handleNewItemKeyDown(event)}
+                    placeholder="Введите новый пункт..."
+                    className="flex-1 text-sm text-gray-400 outline-none placeholder:text-gray-300"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Done items section */}
+            {completedItems.length > 0 && (
+              <div data-testid="task-edit-checklist-done-section">
+                <p className="text-center text-sm font-medium text-accent mb-2">
+                  Готово ({completedItems.length})
+                </p>
+                <div className="flex flex-col gap-1">
+                  {completedItems.map((item) => (
+                    <div key={item.id} className="flex items-center gap-3 py-1.5">
+                      <button
+                        type="button"
+                        data-testid={`checklist-item-checkbox-${item.id}`}
+                        aria-label={`Снять отметку: ${item.title}`}
+                        onClick={() => void toggleItem(item.id)}
+                        className="w-5 h-5 rounded border-2 border-accent bg-accent flex-shrink-0 flex items-center justify-center hover:opacity-80 transition-opacity"
+                      >
+                        <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
+                          <path
+                            d="M1 4L3.5 6.5L9 1"
+                            stroke="white"
+                            strokeWidth="1.5"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          />
+                        </svg>
+                      </button>
+                      <span className="text-sm text-gray-400 line-through">{item.title}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Footer buttons */}
         <div className="flex gap-2 px-4 pb-6 pt-2">
