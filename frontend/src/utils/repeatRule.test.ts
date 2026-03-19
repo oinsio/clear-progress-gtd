@@ -72,10 +72,10 @@ describe("formatRepeatRuleLabel", () => {
   });
 
   it("should format interval rule with count", () => {
-    expect(formatRepeatRuleLabel({ type: "interval", interval: 3 }, t)).toBe("Каждые 3 дн.");
+    expect(formatRepeatRuleLabel({ type: "interval", interval: 3 }, t)).toBe("Каждые 3 дня");
   });
 
   it("should format interval rule defaults to 1 when interval is missing", () => {
-    expect(formatRepeatRuleLabel({ type: "interval" }, t)).toBe("Каждые 1 дн.");
+    expect(formatRepeatRuleLabel({ type: "interval" }, t)).toBe("Каждый 1 день");
   });
 });
