@@ -1,3 +1,42 @@
+import type { Task } from "@/types/entities";
+
+export interface GroupedCompletedTasks {
+  todayTasks: Task[];
+  yesterdayTasks: Task[];
+  weekTasks: Task[];
+  earlierTasks: Task[];
+}
+
+const MS_PER_DAY = 24 * 60 * 60 * 1000;
+const DAYS_IN_WEEK = 7;
+
+export function groupCompletedTasks(tasks: Task[]): GroupedCompletedTasks {
+  const startOfToday = new Date();
+  startOfToday.setHours(0, 0, 0, 0);
+  const startOfYesterday = new Date(startOfToday.getTime() - MS_PER_DAY);
+  const startOf7DaysAgo = new Date(startOfToday.getTime() - DAYS_IN_WEEK * MS_PER_DAY);
+
+  const todayTasks: Task[] = [];
+  const yesterdayTasks: Task[] = [];
+  const weekTasks: Task[] = [];
+  const earlierTasks: Task[] = [];
+
+  for (const task of tasks) {
+    const completedDate = task.completed_at ? new Date(task.completed_at) : null;
+    if (completedDate && completedDate >= startOfToday) {
+      todayTasks.push(task);
+    } else if (completedDate && completedDate >= startOfYesterday) {
+      yesterdayTasks.push(task);
+    } else if (completedDate && completedDate >= startOf7DaysAgo) {
+      weekTasks.push(task);
+    } else {
+      earlierTasks.push(task);
+    }
+  }
+
+  return { todayTasks, yesterdayTasks, weekTasks, earlierTasks };
+}
+
 export function formatCompletedAt(isoString: string): string {
   if (!isoString) return "";
   const completedDate = new Date(isoString);

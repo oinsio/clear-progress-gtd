@@ -16,6 +16,7 @@ import type { BoxFilter, Box } from "@/types/common";
 import type { Task } from "@/types/entities";
 import { BOX_FILTER_ALL, BOX, BOX_FILTER_LABELS } from "@/constants";
 import { cn } from "@/shared/lib/cn";
+import { groupCompletedTasks } from "@/shared/lib/utils";
 import * as React from "react";
 
 const SEARCH_DEBOUNCE_MS = 300;
@@ -23,6 +24,7 @@ const TODAY_SECTION_LABEL = "Сегодня";
 const WEEK_SECTION_LABEL = "Неделя";
 const LATER_SECTION_LABEL = "Позже";
 const COMPLETED_TODAY_SECTION_LABEL = "Выполненные сегодня";
+const COMPLETED_YESTERDAY_SECTION_LABEL = "Вчера";
 const COMPLETED_WEEK_SECTION_LABEL = "За 7 дней";
 const COMPLETED_EARLIER_SECTION_LABEL = "Ранее";
 const TODAY_EMPTY_MESSAGE = "Задач на сегодня нет";
@@ -300,27 +302,10 @@ export default function InboxPage() {
     [completeLater, reloadCompleted],
   );
 
-  const { todayCompletedTasks, weekCompletedTasks, earlierCompletedTasks } = useMemo(() => {
-    const startOfToday = new Date();
-    startOfToday.setHours(0, 0, 0, 0);
-    const startOf7DaysAgo = new Date(startOfToday);
-    startOf7DaysAgo.setDate(startOf7DaysAgo.getDate() - 7);
-
-    const today: Task[] = [];
-    const week: Task[] = [];
-    const earlier: Task[] = [];
-    for (const task of completedTasks) {
-      const completedDate = task.completed_at ? new Date(task.completed_at) : null;
-      if (completedDate && completedDate >= startOfToday) {
-        today.push(task);
-      } else if (completedDate && completedDate >= startOf7DaysAgo) {
-        week.push(task);
-      } else {
-        earlier.push(task);
-      }
-    }
-    return { todayCompletedTasks: today, weekCompletedTasks: week, earlierCompletedTasks: earlier };
-  }, [completedTasks]);
+  const { todayTasks: todayCompletedTasks, yesterdayTasks: yesterdayCompletedTasks, weekTasks: weekCompletedTasks, earlierTasks: earlierCompletedTasks } = useMemo(
+    () => groupCompletedTasks(completedTasks),
+    [completedTasks],
+  );
 
   const renderContent = () => {
     if (filterMode === "search") {
@@ -373,6 +358,19 @@ export default function InboxPage() {
             <TaskSection
               label={TODAY_SECTION_LABEL}
               tasks={todayCompletedTasks}
+              goals={goals}
+              contexts={contexts}
+              categories={categories}
+              onComplete={handleCompleteTodayAndReload}
+              onUpdate={handleUpdateTask}
+              onMove={handleMoveTask}
+              onDelete={deleteToday}
+            />
+          )}
+          {yesterdayCompletedTasks.length > 0 && (
+            <TaskSection
+              label={COMPLETED_YESTERDAY_SECTION_LABEL}
+              tasks={yesterdayCompletedTasks}
               goals={goals}
               contexts={contexts}
               categories={categories}
