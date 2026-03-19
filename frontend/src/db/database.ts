@@ -7,8 +7,9 @@ import type {
   ChecklistItem,
   Setting,
   CoverRecord,
+  PendingCoverRecord,
 } from "@/types/entities";
-import { DB_NAME, DB_VERSION } from "@/constants";
+import { DB_NAME } from "@/constants";
 import { DB_SCHEMA } from "./schema";
 
 const V1_SCHEMA = {
@@ -29,11 +30,13 @@ export class ClearProgressDatabase extends Dexie {
   checklist_items!: EntityTable<ChecklistItem, "id">;
   settings!: EntityTable<Setting, "key">;
   covers!: EntityTable<CoverRecord, "file_id">;
+  pending_covers!: EntityTable<PendingCoverRecord, "local_id">;
 
   constructor() {
     super(DB_NAME);
     this.version(1).stores(V1_SCHEMA);
-    this.version(DB_VERSION).stores(DB_SCHEMA);
+    this.version(2).stores(DB_SCHEMA);
+    this.version(3).stores({ pending_covers: "local_id, goal_id, data_hash" });
   }
 }
 

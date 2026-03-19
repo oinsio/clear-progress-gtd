@@ -67,4 +67,15 @@ export interface CoverRecord {
   file_id: string;
   thumbnail_url: string;
   data_hash: string;
+  data?: Blob;
+}
+
+export interface PendingCoverRecord {
+  local_id: string;
+  goal_id: string;
+  data: Blob;
+  filename: string;
+  mime_type: string;
+  data_hash: string;
+  created_at: string;
 }

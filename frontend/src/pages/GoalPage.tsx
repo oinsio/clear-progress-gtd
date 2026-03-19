@@ -6,7 +6,7 @@ import { useGoal } from "@/hooks/useGoal";
 import { cn } from "@/shared/lib/cn";
 import type { GoalStatus } from "@/types/common";
 import { GoalCoverPicker } from "@/components/goals/GoalCoverPicker";
-import { buildCoverThumbnailUrl } from "@/services/CoverService";
+import { getCoverDisplayUrl } from "@/services/CoverService";
 import type { CoverService } from "@/services/CoverService";
 import { defaultCoverService } from "@/services/defaultServices";
 
@@ -43,6 +43,7 @@ export default function GoalPage({
   const [isCoverRemoved, setIsCoverRemoved] = useState(false);
   const [coverPreviewSrc, setCoverPreviewSrc] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
   const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
 
   const objectUrlRef = useRef<string | null>(null);
@@ -64,7 +65,7 @@ export default function GoalPage({
     } else if (isCoverRemoved || !goal?.cover_file_id) {
       setCoverPreviewSrc(null);
     } else {
-      setCoverPreviewSrc(buildCoverThumbnailUrl(goal.cover_file_id));
+      setCoverPreviewSrc(getCoverDisplayUrl(goal.cover_file_id));
     }
     return () => {
       if (objectUrlRef.current) {
@@ -87,6 +88,7 @@ export default function GoalPage({
   const handleSave = useCallback(async () => {
     if (!canSave) return;
     setIsSaving(true);
+    setSaveError(null);
     try {
       const originalCoverFileId = goal?.cover_file_id ?? "";
       let newCoverFileId = originalCoverFileId;
@@ -110,6 +112,8 @@ export default function GoalPage({
         cover_file_id: newCoverFileId,
       });
       onClose();
+    } catch {
+      setSaveError(t("goal.cover.uploadError"));
     } finally {
       setIsSaving(false);
     }
@@ -248,6 +252,16 @@ export default function GoalPage({
             </div>
           </div>
         </div>
+
+        {/* Save error */}
+        {saveError && (
+          <p
+            data-testid="goal-save-error"
+            className="px-4 text-sm text-red-500"
+          >
+            {saveError}
+          </p>
+        )}
 
         {/* Footer */}
         <div className="flex gap-2 px-4 pb-6 pt-2">

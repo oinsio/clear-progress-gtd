@@ -2,6 +2,10 @@ import type { CoverRecord } from "@/types/entities";
 import { db } from "../database";
 
 export class CoverRepository {
+  async getAll(): Promise<CoverRecord[]> {
+    return db.covers.toArray();
+  }
+
   async getByHash(dataHash: string): Promise<CoverRecord | undefined> {
     return db.covers.where("data_hash").equals(dataHash).first();
   }

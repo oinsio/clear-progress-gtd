@@ -1,14 +1,26 @@
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { describe, it, expect, vi } from "vitest";
 import { GoalCreateSheet } from "./GoalCreateSheet";
+import type { CoverService } from "@/services/CoverService";
+
+function buildMockCoverService(overrides: Partial<CoverService> = {}): CoverService {
+  return {
+    uploadCover: vi.fn().mockResolvedValue({ file_id: "file-123", thumbnail_url: "https://example.com/thumb" }),
+    deleteCover: vi.fn().mockResolvedValue(undefined),
+    getCoverUrl: vi.fn().mockReturnValue(null),
+    ...overrides,
+  } as unknown as CoverService;
+}
 
 function renderGoalCreateSheet(overrides: {
   onSave?: ReturnType<typeof vi.fn>;
   onClose?: ReturnType<typeof vi.fn>;
+  coverService?: CoverService;
 } = {}) {
   const onSave = overrides.onSave ?? vi.fn().mockResolvedValue(undefined);
   const onClose = overrides.onClose ?? vi.fn();
-  render(<GoalCreateSheet onSave={onSave} onClose={onClose} />);
+  const coverService = overrides.coverService;
+  render(<GoalCreateSheet onSave={onSave} onClose={onClose} coverService={coverService} />);
   return { onSave, onClose };
 }
 
@@ -111,6 +123,40 @@ describe("GoalCreateSheet", () => {
         status: "planning",
         cover_file_id: "",
       });
+    });
+  });
+
+  describe("cover upload error handling", () => {
+    async function renderAndTriggerFailedCoverUpload(onClose = vi.fn()) {
+      const coverService = buildMockCoverService({
+        uploadCover: vi.fn().mockRejectedValue(new Error("Network error")),
+      });
+      renderGoalCreateSheet({ onClose, coverService });
+
+      fireEvent.change(screen.getByTestId("goal-create-title-input"), {
+        target: { value: "My Goal" },
+      });
+
+      const fileInput = screen.getByTestId("cover-file-input");
+      const file = new File(["img"], "cover.jpg", { type: "image/jpeg" });
+      fireEvent.change(fileInput, { target: { files: [file] } });
+      fireEvent.click(screen.getByTestId("goal-create-save-button"));
+
+      await waitFor(() => {
+        expect(screen.getByTestId("goal-save-error")).toBeInTheDocument();
+      });
+
+      return { onClose };
+    }
+
+    it("should show error message when cover upload fails", async () => {
+      await renderAndTriggerFailedCoverUpload();
+    });
+
+    it("should not call onClose when cover upload fails", async () => {
+      const onClose = vi.fn();
+      await renderAndTriggerFailedCoverUpload(onClose);
+      expect(onClose).not.toHaveBeenCalled();
     });
   });
 });

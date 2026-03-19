@@ -227,8 +227,8 @@ describe("DB_NAME", () => {
 });
 
 describe("DB_VERSION", () => {
-  it("should be 2", () => {
-    expect(DB_VERSION).toBe(2);
+  it("should be 3", () => {
+    expect(DB_VERSION).toBe(3);
   });
 });
 

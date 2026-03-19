@@ -3,7 +3,7 @@ import { GoalStatusBadge } from "./GoalStatusBadge";
 import type { Goal } from "@/types/entities";
 import type { GoalStatus } from "@/types/common";
 import { formatShortDateTime } from "@/shared/lib/utils";
-import { buildCoverThumbnailUrl } from "@/services/CoverService";
+import { getCoverDisplayUrl } from "@/services/CoverService";
 import defaultCoverSvg from "@/assets/default-goal-cover.svg";
 
 const TASK_COUNT_LABEL = "Задач:";
@@ -37,10 +37,10 @@ export function GoalItem({ goal, taskCount, onNavigate, nodeRef, style, dragHand
         {/* Cover */}
         <div className="flex-shrink-0 w-12 h-12 rounded-full overflow-hidden bg-gray-100 flex items-center justify-center">
           <img
-            data-testid={goal.cover_file_id ? "goal-cover-img" : "goal-cover-placeholder"}
-            src={goal.cover_file_id ? buildCoverThumbnailUrl(goal.cover_file_id) : defaultCoverSvg}
-            alt={goal.cover_file_id ? goal.title : ""}
-            aria-hidden={!goal.cover_file_id}
+            data-testid={getCoverDisplayUrl(goal.cover_file_id) ? "goal-cover-img" : "goal-cover-placeholder"}
+            src={getCoverDisplayUrl(goal.cover_file_id) ?? defaultCoverSvg}
+            alt={getCoverDisplayUrl(goal.cover_file_id) ? goal.title : ""}
+            aria-hidden={!getCoverDisplayUrl(goal.cover_file_id)}
             className="w-full h-full object-cover"
           />
         </div>

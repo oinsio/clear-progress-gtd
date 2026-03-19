@@ -63,7 +63,8 @@
       "remove": "Remove cover",
       "uploading": "Uploading...",
       "errorSize": "File is too large (max 2 MB)",
-      "errorType": "Please select an image"
+      "errorType": "Please select an image",
+      "uploadError": "Failed to upload cover. Please try again."
     },
     "editTitle": "Edit goal",
     "save": "Save",

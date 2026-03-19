@@ -1,7 +1,6 @@
-import {
+import React, {
   createContext,
   useCallback,
-  useContext,
   useEffect,
   useRef,
   useState,
@@ -16,6 +15,7 @@ import { ContextRepository } from "@/db/repositories/ContextRepository";
 import { CategoryRepository } from "@/db/repositories/CategoryRepository";
 import { ChecklistRepository } from "@/db/repositories/ChecklistRepository";
 import { SettingsRepository } from "@/db/repositories/SettingsRepository";
+import { defaultCoverSyncService } from "@/services/defaultServices";
 
 interface SyncContextValue {
   syncStatus: SyncStatus;
@@ -47,6 +47,7 @@ export function SyncProvider({ children }: { children: React.ReactNode }) {
     setSyncStatus("syncing");
     try {
       await syncService.pull();
+      void defaultCoverSyncService.sync();
       setSyncStatus("idle");
     } catch {
       setSyncStatus("error");
@@ -68,12 +69,21 @@ export function SyncProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   useEffect(() => {
+    void defaultCoverSyncService.initializeLocalCovers();
+    void defaultCoverSyncService.sync();
     void pull();
     intervalRef.current = setInterval(() => void pull(), SYNC_INTERVAL_MS);
+
+    const handleOnline = () => {
+      void defaultCoverSyncService.sync();
+    };
+    window.addEventListener("online", handleOnline);
+
     return () => {
       if (intervalRef.current) {
         clearInterval(intervalRef.current);
       }
+      window.removeEventListener("online", handleOnline);
     };
   }, [pull]);
 
@@ -82,12 +92,4 @@ export function SyncProvider({ children }: { children: React.ReactNode }) {
       {children}
     </SyncContext.Provider>
   );
-}
-
-export function useSync(): SyncContextValue {
-  const context = useContext(SyncContext);
-  if (!context) {
-    throw new Error("useSync must be used within SyncProvider");
-  }
-  return context;
 }

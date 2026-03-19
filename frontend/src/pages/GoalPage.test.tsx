@@ -3,6 +3,7 @@ import { describe, it, expect, vi } from "vitest";
 import GoalPage from "./GoalPage";
 import { buildGoal } from "@/test/factories/goalFactory";
 import type { UseGoalReturn } from "@/hooks/useGoal";
+import type { CoverService } from "@/services/CoverService";
 
 vi.mock("@/hooks/useGoal");
 
@@ -18,12 +19,26 @@ function buildGoalHook(overrides: Partial<UseGoalReturn> = {}): UseGoalReturn {
     updateGoal: vi.fn().mockResolvedValue(undefined),
     updateGoalStatus: vi.fn().mockResolvedValue(undefined),
     deleteGoal: vi.fn().mockResolvedValue(undefined),
+    reload: vi.fn().mockResolvedValue(undefined),
     ...overrides,
   };
 }
 
-function renderGoalPage(id = "test-id", onClose = vi.fn()) {
-  render(<GoalPage goalId={id} onClose={onClose} />);
+function buildMockCoverService(overrides: Partial<CoverService> = {}): CoverService {
+  return {
+    uploadCover: vi.fn().mockResolvedValue({ file_id: "file-123", thumbnail_url: "https://example.com/thumb" }),
+    deleteCover: vi.fn().mockResolvedValue(undefined),
+    getCoverUrl: vi.fn().mockReturnValue(null),
+    ...overrides,
+  } as unknown as CoverService;
+}
+
+function renderGoalPage(
+  id = "test-id",
+  onClose = vi.fn(),
+  coverService?: CoverService,
+) {
+  render(<GoalPage goalId={id} onClose={onClose} coverService={coverService} />);
 }
 
 describe("GoalPage", () => {
@@ -121,5 +136,63 @@ describe("GoalPage", () => {
     mockUseGoal.mockReturnValue(buildGoalHook({ goal: undefined, isLoading: false }));
     renderGoalPage();
     expect(screen.getByTestId("goal-not-found")).toBeInTheDocument();
+  });
+
+  describe("cover upload error handling", () => {
+    function renderWithCoverAndSave(coverService: CoverService, onClose = vi.fn()) {
+      const goal = buildGoal({ title: "My Goal" });
+      mockUseGoal.mockReturnValue(buildGoalHook({ goal }));
+      renderGoalPage("test-id", onClose, coverService);
+
+      const fileInput = screen.getByTestId("cover-file-input");
+      const file = new File(["img"], "cover.jpg", { type: "image/jpeg" });
+      fireEvent.change(fileInput, { target: { files: [file] } });
+      fireEvent.click(screen.getByTestId("goal-save-button"));
+
+      return { onClose };
+    }
+
+    async function renderAndTriggerFailedCoverUpload(onClose = vi.fn()) {
+      const coverService = buildMockCoverService({
+        uploadCover: vi.fn().mockRejectedValue(new Error("Network error")),
+      });
+      const result = renderWithCoverAndSave(coverService, onClose);
+      await waitFor(() => {
+        expect(screen.getByTestId("goal-save-error")).toBeInTheDocument();
+      });
+      return result;
+    }
+
+    it("should show error message when cover upload fails", async () => {
+      await renderAndTriggerFailedCoverUpload();
+    });
+
+    it("should not call onClose when cover upload fails", async () => {
+      const onClose = vi.fn();
+      await renderAndTriggerFailedCoverUpload(onClose);
+      expect(onClose).not.toHaveBeenCalled();
+    });
+
+    it("should clear error message on successful save after failed attempt", async () => {
+      const onClose = vi.fn();
+      const uploadCover = vi
+        .fn()
+        .mockRejectedValueOnce(new Error("Network error"))
+        .mockResolvedValue({ file_id: "file-123", thumbnail_url: "https://example.com/thumb" });
+      const coverService = buildMockCoverService({ uploadCover });
+
+      renderWithCoverAndSave(coverService, onClose);
+
+      // First save attempt fails
+      await waitFor(() => {
+        expect(screen.getByTestId("goal-save-error")).toBeInTheDocument();
+      });
+
+      // Second save attempt succeeds
+      fireEvent.click(screen.getByTestId("goal-save-button"));
+      await waitFor(() => {
+        expect(onClose).toHaveBeenCalled();
+      });
+    });
   });
 });

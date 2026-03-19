@@ -6,7 +6,7 @@ import { ContextRepository } from "@/db/repositories/ContextRepository";
 import { CategoryRepository } from "@/db/repositories/CategoryRepository";
 import { ChecklistRepository } from "@/db/repositories/ChecklistRepository";
 import { SettingsRepository } from "@/db/repositories/SettingsRepository";
-import { PUSH_RESULT_STATUS } from "@/constants";
+import { PUSH_RESULT_STATUS, LOCAL_COVER_ID_PREFIX } from "@/constants";
 
 export class SyncService {
   constructor(
@@ -48,8 +48,14 @@ export class SyncService {
         this.checklistRepository.getAll(),
       ]);
 
+    const goalsForPush = goals.map((goal) =>
+      goal.cover_file_id.startsWith(LOCAL_COVER_ID_PREFIX)
+        ? { ...goal, cover_file_id: "" }
+        : goal,
+    );
+
     const pushResponse = await this.apiClient.push({
-      changes: { tasks, goals, contexts, categories, checklist_items },
+      changes: { tasks, goals: goalsForPush, contexts, categories, checklist_items },
     });
 
     if (!pushResponse.ok) {

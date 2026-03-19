@@ -48,6 +48,7 @@ export function GoalCreateSheet({
   const [pendingCoverFile, setPendingCoverFile] = useState<File | null>(null);
   const [coverPreviewSrc, setCoverPreviewSrc] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   const objectUrlRef = useRef<string | null>(null);
 
@@ -83,6 +84,7 @@ export function GoalCreateSheet({
     const trimmedTitle = title.trim();
     if (!trimmedTitle) return;
     setIsSaving(true);
+    setSaveError(null);
     try {
       let coverFileId = "";
       if (pendingCoverFile) {
@@ -96,10 +98,12 @@ export function GoalCreateSheet({
         cover_file_id: coverFileId,
       });
       onClose();
+    } catch {
+      setSaveError(t("goal.cover.uploadError"));
     } finally {
       setIsSaving(false);
     }
-  }, [title, description, status, pendingCoverFile, coverService, onSave, onClose]);
+  }, [title, description, status, pendingCoverFile, coverService, onSave, onClose, t]);
 
   const canSave = title.trim().length > 0 && !isSaving;
 
@@ -196,6 +200,16 @@ export function GoalCreateSheet({
             </div>
           </div>
         </div>
+
+        {/* Save error */}
+        {saveError && (
+          <p
+            data-testid="goal-save-error"
+            className="px-4 text-sm text-red-500"
+          >
+            {saveError}
+          </p>
+        )}
 
         {/* Footer */}
         <div className="flex gap-3 px-4 pb-6 pt-2">

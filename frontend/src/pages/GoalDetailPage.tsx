@@ -1,7 +1,7 @@
 import { useState, useCallback, useMemo, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {ArrowLeft, Pencil, CheckCheck, Plus, Target} from "lucide-react";
-import { buildCoverThumbnailUrl } from "@/services/CoverService";
+import { getCoverDisplayUrl } from "@/services/CoverService";
 import defaultCoverSvg from "@/assets/default-goal-cover.svg";
 import { useGoal } from "@/hooks/useGoal";
 import { useGoalTasks } from "@/hooks/useGoalTasks";
@@ -126,13 +126,9 @@ export default function GoalDetailPage() {
               {/* Cover */}
               <div className="flex-shrink-0 w-12 h-12 rounded-full overflow-hidden bg-gray-100 flex items-center justify-center">
                 <img
-                  src={
-                    goal.cover_file_id
-                      ? buildCoverThumbnailUrl(goal.cover_file_id)
-                      : defaultCoverSvg
-                  }
-                  alt={goal.cover_file_id ? goal.title : ""}
-                  aria-hidden={!goal.cover_file_id}
+                  src={getCoverDisplayUrl(goal.cover_file_id) ?? defaultCoverSvg}
+                  alt={getCoverDisplayUrl(goal.cover_file_id) ? goal.title : ""}
+                  aria-hidden={!getCoverDisplayUrl(goal.cover_file_id)}
                   className="w-full h-full object-cover"
                 />
               </div>
