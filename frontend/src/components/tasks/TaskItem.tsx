@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect, useRef } from "react";
-import { FileText, GripVertical } from "lucide-react";
+import { FileText, GripVertical, ListChecks } from "lucide-react";
 import type { SyntheticListenerMap } from "@dnd-kit/core/dist/hooks/utilities";
 import type { Task, Goal, Context, Category } from "@/types/entities";
 import type { Box } from "@/types/common";
@@ -7,6 +7,7 @@ import { cn } from "@/shared/lib/cn";
 import { formatCompletedAt } from "@/shared/lib/utils";
 import { TaskQuickActions } from "./TaskQuickActions";
 import { TaskEditModal } from "./TaskEditModal";
+import { useChecklist } from "@/hooks/useChecklist";
 import * as React from "react";
 
 export interface DragHandleProps {
@@ -28,6 +29,7 @@ interface TaskItemProps {
 }
 
 export function TaskItem({ task, goals, contexts, categories, onComplete, onUpdate, onMove, onDelete, dragHandleProps }: TaskItemProps) {
+  const { progress: checklistProgress } = useChecklist(task.id);
   const [isExpanded, setIsExpanded] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isConfirmingRestore, setIsConfirmingRestore] = useState(false);
@@ -109,8 +111,21 @@ export function TaskItem({ task, goals, contexts, categories, onComplete, onUpda
                 {formatCompletedAt(task.completed_at)}
               </span>
             )}
-            {task.notes && !task.is_completed && (
-              <FileText size={12} className="text-gray-400 mt-0.5 flex-shrink-0" />
+            {(task.notes && !task.is_completed || checklistProgress.total > 0) && (
+              <span className="flex items-center gap-2 mt-0.5">
+                {task.notes && !task.is_completed && (
+                  <FileText size={12} className="text-gray-400 flex-shrink-0" />
+                )}
+                {checklistProgress.total > 0 && (
+                  <span
+                    data-testid="checklist-badge"
+                    className="flex items-center gap-0.5 text-gray-400"
+                  >
+                    <ListChecks size={10} />
+                    <span className="text-[10px]">{checklistProgress.completed}/{checklistProgress.total}</span>
+                  </span>
+                )}
+              </span>
             )}
           </button>
           {dragHandleProps && (

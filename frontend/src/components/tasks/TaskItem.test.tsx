@@ -5,7 +5,18 @@ import { TaskItem } from "./TaskItem";
 import { buildTask } from "@/test/factories/taskFactory";
 import { buildGoal } from "@/test/factories/goalFactory";
 
-function renderTaskItem(overrides = {}) {
+vi.mock("@/hooks/useChecklist", () => ({
+  useChecklist: vi.fn().mockReturnValue({
+    items: [],
+    progress: { completed: 0, total: 0 },
+    isLoading: false,
+    createItem: vi.fn(),
+    toggleItem: vi.fn(),
+    deleteItem: vi.fn(),
+  }),
+}));
+
+function renderTaskItem(overrides: Record<string, unknown> = {}) {
   const task = buildTask();
   const props = {
     task,
@@ -15,6 +26,7 @@ function renderTaskItem(overrides = {}) {
     onComplete: vi.fn(),
     onUpdate: vi.fn().mockResolvedValue(undefined),
     onMove: vi.fn().mockResolvedValue(undefined),
+    onDelete: vi.fn(),
     ...overrides,
   };
   render(<TaskItem {...props} />);
@@ -23,8 +35,7 @@ function renderTaskItem(overrides = {}) {
 
 describe("TaskItem", () => {
   it("should render the task title", () => {
-    const task = buildTask({ title: "Buy groceries" });
-    render(<TaskItem task={task} goals={[]} contexts={[]} categories={[]} onComplete={vi.fn()} onUpdate={vi.fn()} onMove={vi.fn()} />);
+    renderTaskItem({ task: buildTask({ title: "Buy groceries" }) });
     expect(screen.getByText("Buy groceries")).toBeInTheDocument();
   });
 
@@ -34,122 +45,99 @@ describe("TaskItem", () => {
   });
 
   it("should apply line-through styling when task is completed", () => {
-    const task = buildTask({ is_completed: true });
-    render(<TaskItem task={task} goals={[]} contexts={[]} categories={[]} onComplete={vi.fn()} onUpdate={vi.fn()} onMove={vi.fn()} />);
-    const titleElement = screen.getByTestId("task-item-title");
-    expect(titleElement).toHaveClass("line-through");
+    renderTaskItem({ task: buildTask({ is_completed: true }) });
+    expect(screen.getByTestId("task-item-title")).toHaveClass("line-through");
   });
 
   it("should not apply line-through styling when task is not completed", () => {
-    const task = buildTask({ is_completed: false });
-    render(<TaskItem task={task} goals={[]} contexts={[]} categories={[]} onComplete={vi.fn()} onUpdate={vi.fn()} onMove={vi.fn()} />);
-    const titleElement = screen.getByTestId("task-item-title");
-    expect(titleElement).not.toHaveClass("line-through");
+    renderTaskItem({ task: buildTask({ is_completed: false }) });
+    expect(screen.getByTestId("task-item-title")).not.toHaveClass("line-through");
   });
 
   it("should apply base text-sm styling to title regardless of completion state", () => {
-    const task = buildTask({ is_completed: false });
-    render(<TaskItem task={task} goals={[]} contexts={[]} categories={[]} onComplete={vi.fn()} onUpdate={vi.fn()} onMove={vi.fn()} />);
+    renderTaskItem({ task: buildTask({ is_completed: false }) });
     expect(screen.getByTestId("task-item-title")).toHaveClass("text-sm");
   });
 
   it("should call onComplete with task id when complete button is clicked on incomplete task", async () => {
     const task = buildTask({ is_completed: false });
     const onComplete = vi.fn();
-    render(<TaskItem task={task} goals={[]} contexts={[]} categories={[]} onComplete={onComplete} onUpdate={vi.fn()} onMove={vi.fn()} />);
-    await userEvent.click(
-      screen.getByRole("button", { name: /complete task/i }),
-    );
+    renderTaskItem({ task, onComplete });
+    await userEvent.click(screen.getByRole("button", { name: /complete task/i }));
     expect(onComplete).toHaveBeenCalledWith(task.id);
   });
 
   it("should NOT call onComplete immediately when complete button is clicked on completed task", async () => {
-    const task = buildTask({ is_completed: true });
     const onComplete = vi.fn();
-    render(<TaskItem task={task} goals={[]} contexts={[]} categories={[]} onComplete={onComplete} onUpdate={vi.fn()} onMove={vi.fn()} />);
-    await userEvent.click(
-      screen.getByRole("button", { name: /noncomplete task/i }),
-    );
+    renderTaskItem({ task: buildTask({ is_completed: true }), onComplete });
+    await userEvent.click(screen.getByRole("button", { name: /noncomplete task/i }));
     expect(onComplete).not.toHaveBeenCalled();
   });
 
   it("should show restore confirmation when complete button is clicked on completed task", async () => {
-    const task = buildTask({ is_completed: true });
-    render(<TaskItem task={task} goals={[]} contexts={[]} categories={[]} onComplete={vi.fn()} onUpdate={vi.fn()} onMove={vi.fn()} />);
-    await userEvent.click(
-      screen.getByRole("button", { name: /noncomplete task/i }),
-    );
+    renderTaskItem({ task: buildTask({ is_completed: true }) });
+    await userEvent.click(screen.getByRole("button", { name: /noncomplete task/i }));
     expect(screen.getByTestId("restore-confirmation")).toBeInTheDocument();
   });
 
   it("should call onComplete with task id when 'Вернуть' button is clicked", async () => {
     const task = buildTask({ is_completed: true });
     const onComplete = vi.fn();
-    render(<TaskItem task={task} goals={[]} contexts={[]} categories={[]} onComplete={onComplete} onUpdate={vi.fn()} onMove={vi.fn()} />);
+    renderTaskItem({ task, onComplete });
     await userEvent.click(screen.getByRole("button", { name: /noncomplete task/i }));
     await userEvent.click(screen.getByRole("button", { name: /вернуть/i }));
     expect(onComplete).toHaveBeenCalledWith(task.id);
   });
 
   it("should hide restore confirmation after 'Вернуть' is clicked", async () => {
-    const task = buildTask({ is_completed: true });
-    render(<TaskItem task={task} goals={[]} contexts={[]} categories={[]} onComplete={vi.fn()} onUpdate={vi.fn()} onMove={vi.fn()} />);
+    renderTaskItem({ task: buildTask({ is_completed: true }) });
     await userEvent.click(screen.getByRole("button", { name: /noncomplete task/i }));
     await userEvent.click(screen.getByRole("button", { name: /вернуть/i }));
     expect(screen.queryByTestId("restore-confirmation")).not.toBeInTheDocument();
   });
 
   it("should hide restore confirmation when cancel button is clicked", async () => {
-    const task = buildTask({ is_completed: true });
-    render(<TaskItem task={task} goals={[]} contexts={[]} categories={[]} onComplete={vi.fn()} onUpdate={vi.fn()} onMove={vi.fn()} />);
+    renderTaskItem({ task: buildTask({ is_completed: true }) });
     await userEvent.click(screen.getByRole("button", { name: /noncomplete task/i }));
     await userEvent.click(screen.getByRole("button", { name: /отмена/i }));
     expect(screen.queryByTestId("restore-confirmation")).not.toBeInTheDocument();
   });
 
   it("should NOT call onComplete when cancel button is clicked", async () => {
-    const task = buildTask({ is_completed: true });
     const onComplete = vi.fn();
-    render(<TaskItem task={task} goals={[]} contexts={[]} categories={[]} onComplete={onComplete} onUpdate={vi.fn()} onMove={vi.fn()} />);
+    renderTaskItem({ task: buildTask({ is_completed: true }), onComplete });
     await userEvent.click(screen.getByRole("button", { name: /noncomplete task/i }));
     await userEvent.click(screen.getByRole("button", { name: /отмена/i }));
     expect(onComplete).not.toHaveBeenCalled();
   });
 
   it("should have aria-label 'Complete task' when task is not completed", () => {
-    const task = buildTask({ is_completed: false });
-    render(<TaskItem task={task} goals={[]} contexts={[]} categories={[]} onComplete={vi.fn()} onUpdate={vi.fn()} onMove={vi.fn()} />);
+    renderTaskItem({ task: buildTask({ is_completed: false }) });
     expect(screen.getByRole("button", { name: /complete task/i })).toBeInTheDocument();
   });
 
   it("should have aria-label 'Noncomplete task' when task is completed", () => {
-    const task = buildTask({ is_completed: true });
-    render(<TaskItem task={task} goals={[]} contexts={[]} categories={[]} onComplete={vi.fn()} onUpdate={vi.fn()} onMove={vi.fn()} />);
+    renderTaskItem({ task: buildTask({ is_completed: true }) });
     expect(screen.getByRole("button", { name: /noncomplete task/i })).toBeInTheDocument();
   });
 
   it("should show filled complete button when task is completed", () => {
-    const task = buildTask({ is_completed: true });
-    render(<TaskItem task={task} goals={[]} contexts={[]} categories={[]} onComplete={vi.fn()} onUpdate={vi.fn()} onMove={vi.fn()} />);
-    const completeButton = screen.getByRole("button", { name: /noncomplete task/i });
-    expect(completeButton).toHaveClass("bg-accent");
+    renderTaskItem({ task: buildTask({ is_completed: true }) });
+    expect(screen.getByRole("button", { name: /noncomplete task/i })).toHaveClass("bg-accent");
   });
 
   it("should show completed_at label when task is completed and has completed_at", () => {
-    const task = buildTask({ is_completed: true, completed_at: new Date().toISOString() });
-    render(<TaskItem task={task} goals={[]} contexts={[]} categories={[]} onComplete={vi.fn()} onUpdate={vi.fn()} onMove={vi.fn()} />);
+    renderTaskItem({ task: buildTask({ is_completed: true, completed_at: new Date().toISOString() }) });
     expect(screen.getByTestId("task-item-completed-at")).toBeInTheDocument();
   });
 
   it("should not show completed_at label when task is not completed", () => {
-    const task = buildTask({ is_completed: false, completed_at: "" });
-    render(<TaskItem task={task} goals={[]} contexts={[]} categories={[]} onComplete={vi.fn()} onUpdate={vi.fn()} onMove={vi.fn()} />);
+    renderTaskItem({ task: buildTask({ is_completed: false, completed_at: "" }) });
     expect(screen.queryByTestId("task-item-completed-at")).not.toBeInTheDocument();
   });
 
   it("should not show completed_at label when task is completed but has no completed_at", () => {
-    const task = buildTask({ is_completed: true, completed_at: "" });
-    render(<TaskItem task={task} goals={[]} contexts={[]} categories={[]} onComplete={vi.fn()} onUpdate={vi.fn()} onMove={vi.fn()} />);
+    renderTaskItem({ task: buildTask({ is_completed: true, completed_at: "" }) });
     expect(screen.queryByTestId("task-item-completed-at")).not.toBeInTheDocument();
   });
 
@@ -178,5 +166,48 @@ describe("TaskItem", () => {
     await userEvent.click(screen.getByTestId("task-item-body"));
     await userEvent.click(screen.getByRole("button", { name: /select goal/i }));
     expect(screen.getByText("My Goal")).toBeInTheDocument();
+  });
+
+  // Checklist badge
+  it("should not show checklist badge when task has no checklist items", async () => {
+    const { useChecklist } = await import("@/hooks/useChecklist");
+    vi.mocked(useChecklist).mockReturnValue({
+      items: [],
+      progress: { completed: 0, total: 0 },
+      isLoading: false,
+      createItem: vi.fn(),
+      toggleItem: vi.fn(),
+      deleteItem: vi.fn(),
+    });
+    renderTaskItem();
+    expect(screen.queryByTestId("checklist-badge")).not.toBeInTheDocument();
+  });
+
+  it("should show checklist badge when task has checklist items", async () => {
+    const { useChecklist } = await import("@/hooks/useChecklist");
+    vi.mocked(useChecklist).mockReturnValue({
+      items: [],
+      progress: { completed: 1, total: 3 },
+      isLoading: false,
+      createItem: vi.fn(),
+      toggleItem: vi.fn(),
+      deleteItem: vi.fn(),
+    });
+    renderTaskItem();
+    expect(screen.getByTestId("checklist-badge")).toBeInTheDocument();
+  });
+
+  it("should display checklist progress as 'completed/total' in badge", async () => {
+    const { useChecklist } = await import("@/hooks/useChecklist");
+    vi.mocked(useChecklist).mockReturnValue({
+      items: [],
+      progress: { completed: 2, total: 5 },
+      isLoading: false,
+      createItem: vi.fn(),
+      toggleItem: vi.fn(),
+      deleteItem: vi.fn(),
+    });
+    renderTaskItem();
+    expect(screen.getByTestId("checklist-badge")).toHaveTextContent("2/5");
   });
 });
