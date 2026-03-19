@@ -23,6 +23,7 @@ clasp deploy       # Create new GAS deployment
 ## Tech Stack
 
 - **Frontend**: React 18+ / TypeScript 5+ / Vite 5+ / Tailwind CSS 3.4+ / shadcn/ui / React Router 6+
+- **i18n**: i18next 23+ / react-i18next / i18next-browser-languagedetector; languages: `ru`, `en` (default)
 - **Offline DB**: Dexie.js 3+ (IndexedDB wrapper)
 - **PWA**: vite-plugin-pwa (Workbox)
 - **Backend**: Google Apps Script (TypeScript via clasp), deployed as Web App
@@ -49,6 +50,8 @@ src/
 ├── utils/            # Pure utility functions
 ├── contexts/         # React Context providers
 ├── constants/        # App-wide constants & enums
+├── locales/          # Translation files (ru.json, en.json)
+├── i18n.ts           # i18next initialization (import in main.tsx)
 └── assets/           # Static assets
 
 gas/                  # Google Apps Script backend
@@ -308,7 +311,7 @@ Before creating files, consult `project-structure.md`.
 - Performance matters: keep bundle small, lazy-load routes, avoid unnecessary re-renders
 - The app should feel native: smooth animations, instant feedback, no loading spinners for local data
 - Accessibility: semantic HTML, ARIA labels, keyboard navigation support
-- i18n is not in scope for MVP, but avoid hardcoding user-facing strings where easy to avoid
+- i18n is implemented — NEVER hardcode user-facing strings; always use `t("namespace.key")`
 
 ## Code style: no hardcoded values
 
@@ -318,6 +321,92 @@ Before creating files, consult `project-structure.md`.
 - Tailwind classes in JSX are an exception — they are NOT hardcoded values
 - Detailed rules and examples: `.claude/rules/code-style.md`
 - Variable and function naming rules: `.claude/rules/naming.md`
+- User-facing strings in JSX/logic → always `t("namespace.key")` via `useTranslation()`; see i18n section
+
+## Internationalization (i18n)
+
+### Setup
+- Library: `i18next` + `react-i18next`; initialized in `src/i18n.ts`, imported in `main.tsx`
+- Languages: `ru` (default), `en`; files in `src/locales/ru.json` and `src/locales/en.json`
+- Language state: `LanguageProvider` (Context) in `src/app/providers/LanguageProvider.tsx`
+- Language switch: `useLanguage()` hook from `src/hooks/useLanguage.ts`
+- Persistence: localStorage key `STORAGE_KEYS.LANGUAGE`
+
+### Usage in components
+
+```tsx
+// ✅ Always: use the t() function
+import { useTranslation } from "react-i18next";
+
+function MyComponent() {
+  const { t } = useTranslation();
+  return <button>{t("goal.create")}</button>;
+}
+
+// ✅ With interpolation
+t("task.addPlaceholder", { box: t("box.today") })  // → "Задача в «Сегодня»"
+
+// ✅ Dynamic keys (when mapping over array)
+{SUPPORTED_LANGUAGES.map(lang => <button>{t(`lang.${lang}`)}</button>)}
+
+// ❌ Never: hardcoded strings in JSX or logic
+return <button>Создать</button>;
+const label = "Входящие";
+```
+
+### Key naming convention
+
+Structure: `domain.specificKey` — flat two-level namespacing.
+
+| Namespace | Content |
+|-----------|---------|
+| `nav.*` | Bottom navigation labels |
+| `box.*` | Box names (inbox, today, week, later) |
+| `task.*` | Task strings (placeholders, aria-labels, empty states) |
+| `section.*` | Section headers in task lists |
+| `goal.*` | Goal form and status labels |
+| `context.*` | Context management strings |
+| `category.*` | Category management strings |
+| `search.*` | Search page |
+| `filter.*` | Filter panel |
+| `settings.*` | Settings page |
+| `selector.*` | Goal/Context/Category dropdowns |
+| `taskEdit.*` | Task edit modal |
+| `color.*` | Color name translations |
+| `lang.*` | Language name translations |
+
+### Adding new strings
+
+1. Add the key to **both** `src/locales/ru.json` and `src/locales/en.json`
+2. Use existing namespace if the string belongs to that domain; create a new namespace only if it's clearly a new domain
+3. Never add a key to one file only — missing keys fall back to key name, not gracefully
+
+### Testing with i18n
+
+Two valid patterns — choose based on what's being tested:
+
+**Pattern A: Real translations** (test the actual rendered text)
+```tsx
+// No mocking needed — i18next is initialized in test/setup.ts
+it("should render inbox link", () => {
+  render(<BottomNav />);
+  expect(screen.getByRole("link", { name: /входящие/i })).toBeInTheDocument();
+});
+```
+
+**Pattern B: Mock translations** (test component logic, not translation content)
+```tsx
+vi.mock("react-i18next", () => ({
+  useTranslation: () => ({ t: (key: string) => key }),
+}));
+
+it("should call setLanguage on click", () => {
+  // test with key names as text, e.g. "settings.language"
+});
+```
+
+Use Pattern A for navigation/layout components where the translated text is what the user sees.
+Use Pattern B for logic-heavy components (settings, forms) where you're testing behavior.
 
 ## Post-Edit Workflow
 
