@@ -12,7 +12,7 @@ void i18n
     resources: { ru: { translation: ru }, en: { translation: en } },
     fallbackLng: DEFAULT_LANGUAGE,
     detection: {
-      order: ["localStorage"],
+      order: ["localStorage", "navigator"],
       lookupLocalStorage: STORAGE_KEYS.LANGUAGE,
       caches: ["localStorage"],
     },
