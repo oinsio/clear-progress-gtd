@@ -73,9 +73,11 @@ export function TaskEditModal({
   const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
   const [activeTab, setActiveTab] = useState<ActiveTab>(ACTIVE_TAB.DETAILS);
   const [newItemTitle, setNewItemTitle] = useState("");
+  const [editingItemId, setEditingItemId] = useState<string | null>(null);
+  const [editingItemTitle, setEditingItemTitle] = useState("");
   const newItemInputRef = useRef<HTMLInputElement>(null);
 
-  const { items, progress, createItem, toggleItem } = useChecklist(task.id, checklistService);
+  const { items, progress, createItem, toggleItem, updateItem } = useChecklist(task.id, checklistService);
 
   useEffect(() => {
     if (isOpen) {
@@ -131,6 +133,32 @@ export function TaskEditModal({
       }
     },
     [newItemTitle, createItem],
+  );
+
+  const handleItemTitleClick = useCallback((item: { id: string; title: string }) => {
+    setEditingItemId(item.id);
+    setEditingItemTitle(item.title);
+  }, []);
+
+  const commitItemEdit = useCallback(
+    async (id: string) => {
+      const trimmedTitle = editingItemTitle.trim();
+      if (trimmedTitle) {
+        await updateItem(id, trimmedTitle);
+      }
+      setEditingItemId(null);
+      setEditingItemTitle("");
+    },
+    [editingItemTitle, updateItem],
+  );
+
+  const handleItemEditKeyDown = useCallback(
+    async (event: React.KeyboardEvent<HTMLInputElement>, id: string) => {
+      if (event.key === "Enter") {
+        await commitItemEdit(id);
+      }
+    },
+    [commitItemEdit],
   );
 
   if (!isOpen) return null;
@@ -340,7 +368,26 @@ export function TaskEditModal({
                       onClick={() => void toggleItem(item.id)}
                       className="w-5 h-5 rounded border-2 border-gray-300 flex-shrink-0 flex items-center justify-center hover:border-accent transition-colors"
                     />
-                    <span className="text-sm text-gray-800">{item.title}</span>
+                    {editingItemId === item.id ? (
+                      <input
+                        type="text"
+                        data-testid={`checklist-item-edit-input-${item.id}`}
+                        value={editingItemTitle}
+                        onChange={(event) => setEditingItemTitle(event.target.value)}
+                        onBlur={() => void commitItemEdit(item.id)}
+                        onKeyDown={(event) => void handleItemEditKeyDown(event, item.id)}
+                        autoFocus
+                        className="flex-1 text-sm text-gray-800 outline-none"
+                      />
+                    ) : (
+                      <span
+                        data-testid={`checklist-item-title-${item.id}`}
+                        onClick={() => handleItemTitleClick(item)}
+                        className="flex-1 text-sm text-gray-800 cursor-text"
+                      >
+                        {item.title}
+                      </span>
+                    )}
                   </div>
                 ))}
                 {/* New item input */}

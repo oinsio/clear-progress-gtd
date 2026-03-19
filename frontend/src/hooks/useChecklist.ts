@@ -12,6 +12,7 @@ export interface UseChecklistReturn {
   createItem: (title: string) => Promise<void>;
   toggleItem: (id: string) => Promise<void>;
   deleteItem: (id: string) => Promise<void>;
+  updateItem: (id: string, title: string) => Promise<void>;
 }
 
 export function useChecklist(
@@ -63,5 +64,13 @@ export function useChecklist(
     [checklistService, loadItems],
   );
 
-  return { items, progress, isLoading, createItem, toggleItem, deleteItem };
+  const updateItem = useCallback(
+    async (id: string, title: string) => {
+      await checklistService.update(id, { title });
+      await loadItems();
+    },
+    [checklistService, loadItems],
+  );
+
+  return { items, progress, isLoading, createItem, toggleItem, deleteItem, updateItem };
 }

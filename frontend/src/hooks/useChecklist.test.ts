@@ -132,4 +132,17 @@ describe("useChecklist", () => {
     expect(mockChecklistService.softDelete).toHaveBeenCalledWith(item.id);
     expect(mockGetByTaskId).toHaveBeenCalledTimes(2);
   });
+
+  it("should call update and refresh when updateItem is called", async () => {
+    const { item, mockGetByTaskId, result } = await setupHookWithItem("task-1");
+
+    await act(async () => {
+      await result.current.updateItem(item.id, "Updated title");
+    });
+
+    expect(mockChecklistService.update).toHaveBeenCalledWith(item.id, {
+      title: "Updated title",
+    });
+    expect(mockGetByTaskId).toHaveBeenCalledTimes(2);
+  });
 });

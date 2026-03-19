@@ -337,4 +337,45 @@ describe("TaskEditModal — checklist tab", () => {
     await userEvent.type(input, "Новый пункт{Enter}");
     expect(mockService.create).toHaveBeenCalledWith(taskId, "Новый пункт");
   });
+
+  async function setupChecklistItemEditing(title = "Пункт") {
+    const taskId = crypto.randomUUID();
+    const task = buildTask({ id: taskId });
+    const items = [buildChecklistItem({ task_id: taskId, title, is_completed: false })];
+    const mockService = buildMockChecklistService(items);
+    renderModal({ task, checklistService: mockService });
+    await userEvent.click(screen.getByTestId("task-edit-tab-checklist"));
+    const itemTitle = await screen.findByTestId(`checklist-item-title-${items[0].id}`);
+    await userEvent.click(itemTitle);
+    return { item: items[0], mockService };
+  }
+
+  it("should show editable input when clicking on active checklist item title", async () => {
+    const { item } = await setupChecklistItemEditing("Пункт для редактирования");
+    expect(screen.getByTestId(`checklist-item-edit-input-${item.id}`)).toBeInTheDocument();
+  });
+
+  it("should call update service when editing an item and pressing Enter", async () => {
+    const { item, mockService } = await setupChecklistItemEditing("Старый текст");
+    const editInput = screen.getByTestId(`checklist-item-edit-input-${item.id}`);
+    await userEvent.clear(editInput);
+    await userEvent.type(editInput, "Новый текст{Enter}");
+    expect(mockService.update).toHaveBeenCalledWith(item.id, { title: "Новый текст" });
+  });
+
+  it("should call update service when editing an item and losing focus", async () => {
+    const { item, mockService } = await setupChecklistItemEditing("Старый текст");
+    const editInput = screen.getByTestId(`checklist-item-edit-input-${item.id}`);
+    await userEvent.clear(editInput);
+    await userEvent.type(editInput, "Изменённый текст");
+    await userEvent.tab();
+    expect(mockService.update).toHaveBeenCalledWith(item.id, { title: "Изменённый текст" });
+  });
+
+  it("should hide edit input after committing changes", async () => {
+    const { item } = await setupChecklistItemEditing();
+    const editInput = screen.getByTestId(`checklist-item-edit-input-${item.id}`);
+    await userEvent.type(editInput, "{Enter}");
+    expect(screen.queryByTestId(`checklist-item-edit-input-${item.id}`)).not.toBeInTheDocument();
+  });
 });
