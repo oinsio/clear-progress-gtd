@@ -5,6 +5,8 @@ import type {
   PushRequest,
   PushResponse,
   InitResponse,
+  UploadCoverResponse,
+  DeleteCoverResponse,
 } from "@/types/api";
 import { STORAGE_KEYS } from "@/constants";
 
@@ -29,7 +31,7 @@ export class ApiClient {
       throw new Error(`HTTP error: ${response.status}`);
     }
 
-    return response.json() as Promise<TResponse>;
+    return await response.json() as Promise<TResponse>;
   }
 
   async ping(): Promise<PingResponse> {
@@ -41,7 +43,7 @@ export class ApiClient {
     if (!response.ok) {
       throw new Error(`HTTP error: ${response.status}`);
     }
-    return response.json() as Promise<PingResponse>;
+    return await response.json() as Promise<PingResponse>;
   }
 
   async init(): Promise<InitResponse> {
@@ -54,5 +56,26 @@ export class ApiClient {
 
   async push(pushRequest: Omit<PushRequest, "action">): Promise<PushResponse> {
     return this.request<PushResponse>({ action: "push", ...pushRequest });
+  }
+
+  async uploadCover(payload: {
+    goal_id: string;
+    filename: string;
+    mime_type: string;
+    data: string;
+  }): Promise<UploadCoverResponse["data"]> {
+    const response = await this.request<UploadCoverResponse>({
+      action: "upload_cover",
+      ...payload,
+    });
+    return response.data;
+  }
+
+  async deleteCover(payload: { file_id: string }): Promise<DeleteCoverResponse["data"]> {
+    const response = await this.request<DeleteCoverResponse>({
+      action: "delete_cover",
+      ...payload,
+    });
+    return response.data;
   }
 }

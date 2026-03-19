@@ -31,7 +31,7 @@ export interface Goal {
   version: number;
 }
 
-export interface Context {
+interface NamedEntity {
   id: string;
   name: string;
   sort_order: number;
@@ -41,15 +41,9 @@ export interface Context {
   version: number;
 }
 
-export interface Category {
-  id: string;
-  name: string;
-  sort_order: number;
-  is_deleted: boolean;
-  created_at: string;
-  updated_at: string;
-  version: number;
-}
+export type Context = NamedEntity;
+
+export type Category = NamedEntity;
 
 export interface ChecklistItem {
   id: string;
@@ -67,4 +61,10 @@ export interface Setting {
   key: string;
   value: string;
   updated_at: string;
+}
+
+export interface CoverRecord {
+  file_id: string;
+  thumbnail_url: string;
+  data_hash: string;
 }

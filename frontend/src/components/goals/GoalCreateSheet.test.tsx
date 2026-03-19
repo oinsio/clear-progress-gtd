@@ -109,6 +109,7 @@ describe("GoalCreateSheet", () => {
         title: "My Goal",
         description: "My Description",
         status: "planning",
+        cover_file_id: "",
       });
     });
   });

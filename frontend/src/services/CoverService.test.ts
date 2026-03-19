@@ -1,0 +1,197 @@
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import { CoverService, buildCoverThumbnailUrl } from "./CoverService";
+import type { ApiClient } from "./ApiClient";
+import type { CoverRepository } from "@/db/repositories/CoverRepository";
+import { MAX_COVER_SIZE_BYTES } from "@/constants";
+
+const FAKE_ARRAY_BUFFER = new TextEncoder().encode("fake image content").buffer as ArrayBuffer;
+
+// jsdom does not implement File.prototype.arrayBuffer — add polyfill for tests
+Object.defineProperty(File.prototype, "arrayBuffer", {
+  value() {
+    return Promise.resolve(FAKE_ARRAY_BUFFER);
+  },
+  configurable: true,
+  writable: true,
+});
+
+function createImageFile(opts: { name?: string; type?: string; size?: number } = {}): File {
+  const { name = "cover.jpg", type = "image/jpeg", size } = opts;
+  const content = size ? new Uint8Array(size) : new TextEncoder().encode("fake image content");
+  return new File([content], name, { type });
+}
+
+function createMockCoverRepository(
+  overrides: Partial<Record<keyof CoverRepository, unknown>> = {},
+): CoverRepository {
+  return {
+    getByHash: vi.fn().mockResolvedValue(undefined),
+    getByFileId: vi.fn().mockResolvedValue(undefined),
+    save: vi.fn().mockResolvedValue(undefined),
+    delete: vi.fn().mockResolvedValue(undefined),
+    ...overrides,
+  } as CoverRepository;
+}
+
+function createMockApiClient(
+  overrides: Partial<Record<keyof ApiClient, unknown>> = {},
+): ApiClient {
+  return {
+    uploadCover: vi.fn().mockResolvedValue({
+      file_id: "new-file-id",
+      thumbnail_url: buildCoverThumbnailUrl("new-file-id"),
+      reused: false,
+    }),
+    deleteCover: vi.fn().mockResolvedValue({ deleted: true, ref_count: 0 }),
+    ping: vi.fn(),
+    init: vi.fn(),
+    pull: vi.fn(),
+    push: vi.fn(),
+    ...overrides,
+  } as ApiClient;
+}
+
+describe("CoverService", () => {
+  let mockApiClient: ApiClient;
+  let mockCoverRepository: CoverRepository;
+
+  beforeEach(() => {
+    mockApiClient = createMockApiClient();
+    mockCoverRepository = createMockCoverRepository();
+  });
+
+  describe("uploadCover", () => {
+    it("should throw INVALID_TYPE if file is not an image", async () => {
+      const service = new CoverService(mockApiClient, mockCoverRepository);
+      const file = createImageFile({ type: "application/pdf" });
+      await expect(service.uploadCover(file, "goal-1")).rejects.toThrow("INVALID_TYPE");
+    });
+
+    it("should throw FILE_TOO_LARGE if file exceeds MAX_COVER_SIZE_BYTES", async () => {
+      const service = new CoverService(mockApiClient, mockCoverRepository);
+      const file = createImageFile({ size: MAX_COVER_SIZE_BYTES + 1 });
+      await expect(service.uploadCover(file, "goal-1")).rejects.toThrow("FILE_TOO_LARGE");
+    });
+
+    it("should return cached cover without API call if same hash exists in DB", async () => {
+      const cached = {
+        file_id: "cached-id",
+        thumbnail_url: buildCoverThumbnailUrl("cached-id"),
+        data_hash: "any-hash",
+      };
+      mockCoverRepository = createMockCoverRepository({
+        getByHash: vi.fn().mockResolvedValue(cached),
+      });
+      const service = new CoverService(mockApiClient, mockCoverRepository);
+
+      const result = await service.uploadCover(createImageFile(), "goal-1");
+
+      expect(result.file_id).toBe("cached-id");
+      expect(result.thumbnail_url).toBe(buildCoverThumbnailUrl("cached-id"));
+      expect(mockApiClient.uploadCover).not.toHaveBeenCalled();
+    });
+
+    it("should call API when no cached cover exists for the hash", async () => {
+      const service = new CoverService(mockApiClient, mockCoverRepository);
+
+      await service.uploadCover(createImageFile(), "goal-1");
+
+      expect(mockApiClient.uploadCover).toHaveBeenCalledWith(
+        expect.objectContaining({
+          goal_id: "goal-1",
+          filename: "cover.jpg",
+          mime_type: "image/jpeg",
+          data: expect.any(String),
+        }),
+      );
+    });
+
+    it("should save cover record to DB after successful upload", async () => {
+      const service = new CoverService(mockApiClient, mockCoverRepository);
+
+      await service.uploadCover(createImageFile(), "goal-1");
+
+      expect(mockCoverRepository.save).toHaveBeenCalledWith(
+        expect.objectContaining({
+          file_id: "new-file-id",
+          thumbnail_url: buildCoverThumbnailUrl("new-file-id"),
+          data_hash: expect.any(String),
+        }),
+      );
+    });
+
+    it("should return file_id and thumbnail_url from API response", async () => {
+      const service = new CoverService(mockApiClient, mockCoverRepository);
+
+      const result = await service.uploadCover(createImageFile(), "goal-1");
+
+      expect(result.file_id).toBe("new-file-id");
+      expect(result.thumbnail_url).toBe(buildCoverThumbnailUrl("new-file-id"));
+    });
+
+    it("should not save to DB when reusing cached cover", async () => {
+      const cached = {
+        file_id: "cached-id",
+        thumbnail_url: buildCoverThumbnailUrl("cached-id"),
+        data_hash: "any-hash",
+      };
+      mockCoverRepository = createMockCoverRepository({
+        getByHash: vi.fn().mockResolvedValue(cached),
+      });
+      const service = new CoverService(mockApiClient, mockCoverRepository);
+
+      await service.uploadCover(createImageFile(), "goal-1");
+
+      expect(mockCoverRepository.save).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("deleteCover", () => {
+    it("should call API deleteCover with the file_id", async () => {
+      const service = new CoverService(mockApiClient, mockCoverRepository);
+
+      await service.deleteCover("file-abc");
+
+      expect(mockApiClient.deleteCover).toHaveBeenCalledWith({ file_id: "file-abc" });
+    });
+
+    it("should remove local record from DB when backend confirms deletion", async () => {
+      const service = new CoverService(mockApiClient, mockCoverRepository);
+
+      await service.deleteCover("file-abc");
+
+      expect(mockCoverRepository.delete).toHaveBeenCalledWith("file-abc");
+    });
+
+    it("should keep local record when backend says not deleted (ref_count > 0)", async () => {
+      mockApiClient = createMockApiClient({
+        deleteCover: vi.fn().mockResolvedValue({ deleted: false, ref_count: 2 }),
+      });
+      const service = new CoverService(mockApiClient, mockCoverRepository);
+
+      await service.deleteCover("file-abc");
+
+      expect(mockCoverRepository.delete).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("getCoverUrl", () => {
+    it("should return null for empty fileId", () => {
+      const service = new CoverService(mockApiClient, mockCoverRepository);
+      expect(service.getCoverUrl("")).toBeNull();
+    });
+
+    it("should return built thumbnail URL for non-empty fileId", () => {
+      const service = new CoverService(mockApiClient, mockCoverRepository);
+      const url = service.getCoverUrl("file-123");
+      expect(url).toBe(buildCoverThumbnailUrl("file-123"));
+    });
+  });
+
+  describe("buildCoverThumbnailUrl", () => {
+    it("should build a Google Drive thumbnail URL", () => {
+      const url = buildCoverThumbnailUrl("abc123");
+      expect(url).toBe("https://drive.google.com/thumbnail?id=abc123&sz=w400");
+    });
+  });
+});

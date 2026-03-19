@@ -6,4 +6,5 @@ export const DB_SCHEMA = {
   categories: "id, is_deleted, sort_order, version, updated_at",
   checklist_items: "id, task_id, is_deleted, sort_order, version, updated_at",
   settings: "key, updated_at",
+  covers: "file_id, data_hash",
 } as const;

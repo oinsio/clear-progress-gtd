@@ -80,8 +80,40 @@ export interface InitResponse {
   ok: boolean;
 }
 
+export interface UploadCoverRequest {
+  action: "upload_cover";
+  goal_id: string;
+  filename: string;
+  mime_type: string;
+  data: string;
+}
+
+export interface UploadCoverResponse {
+  ok: boolean;
+  data: {
+    file_id: string;
+    thumbnail_url: string;
+    reused: boolean;
+  };
+}
+
+export interface DeleteCoverRequest {
+  action: "delete_cover";
+  file_id: string;
+}
+
+export interface DeleteCoverResponse {
+  ok: boolean;
+  data: {
+    deleted: boolean;
+    ref_count: number;
+  };
+}
+
 export type ApiRequest =
   | PullRequest
   | PushRequest
   | InitRequest
+  | UploadCoverRequest
+  | DeleteCoverRequest
   | { action: "ping" };

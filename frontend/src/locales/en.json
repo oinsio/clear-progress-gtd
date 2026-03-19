@@ -57,7 +57,20 @@
       "paused": "Paused",
       "completed": "Completed",
       "cancelled": "Cancelled"
-    }
+    },
+    "cover": {
+      "choose": "Choose cover",
+      "remove": "Remove cover",
+      "uploading": "Uploading...",
+      "errorSize": "File is too large (max 2 MB)",
+      "errorType": "Please select an image"
+    },
+    "editTitle": "Edit goal",
+    "save": "Save",
+    "delete": "Delete",
+    "back": "Back",
+    "notFound": "Goal not found",
+    "deleteConfirmTitle": "Delete goal?"
   },
   "context": {
     "empty": "No contexts yet",

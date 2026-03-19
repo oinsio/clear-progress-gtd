@@ -1,9 +1,10 @@
 import type React from "react";
-import { Target } from "lucide-react";
 import { GoalStatusBadge } from "./GoalStatusBadge";
 import type { Goal } from "@/types/entities";
 import type { GoalStatus } from "@/types/common";
 import { formatShortDateTime } from "@/shared/lib/utils";
+import { buildCoverThumbnailUrl } from "@/services/CoverService";
+import defaultCoverSvg from "@/assets/default-goal-cover.svg";
 
 const TASK_COUNT_LABEL = "Задач:";
 const FINISHED_GOAL_STATUSES = new Set<GoalStatus>(["completed", "cancelled"]);
@@ -33,21 +34,15 @@ export function GoalItem({ goal, taskCount, onNavigate, nodeRef, style, dragHand
         className="flex flex-1 items-center gap-3 px-4 py-3 text-left hover:bg-gray-50 active:bg-gray-100 transition-colors min-w-0"
         onClick={() => onNavigate(goal.id)}
       >
-        {/* Cover / placeholder */}
+        {/* Cover */}
         <div className="flex-shrink-0 w-12 h-12 rounded-full overflow-hidden bg-gray-100 flex items-center justify-center">
-          {goal.cover_file_id ? (
-            <img
-              src={goal.cover_file_id}
-              alt={goal.title}
-              className="w-full h-full object-cover"
-            />
-          ) : (
-            <Target
-              data-testid="goal-cover-placeholder"
-              className="w-6 h-6 text-gray-300"
-              aria-hidden="true"
-            />
-          )}
+          <img
+            data-testid={goal.cover_file_id ? "goal-cover-img" : "goal-cover-placeholder"}
+            src={goal.cover_file_id ? buildCoverThumbnailUrl(goal.cover_file_id) : defaultCoverSvg}
+            alt={goal.cover_file_id ? goal.title : ""}
+            aria-hidden={!goal.cover_file_id}
+            className="w-full h-full object-cover"
+          />
         </div>
 
         {/* Title + task count */}

@@ -1,9 +1,12 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { X, CircleMinus, Pause, Square, Play, Check } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import type { LucideIcon } from "lucide-react";
 import { cn } from "@/shared/lib/cn";
 import type { GoalStatus } from "@/types/common";
+import { GoalCoverPicker } from "./GoalCoverPicker";
+import type { CoverService } from "@/services/CoverService";
+import { defaultCoverService } from "@/services/defaultServices";
 
 const DEFAULT_GOAL_STATUS: GoalStatus = "planning";
 
@@ -24,31 +27,79 @@ export interface GoalCreateData {
   title: string;
   description: string;
   status: GoalStatus;
+  cover_file_id: string;
 }
 
 interface GoalCreateSheetProps {
   onSave: (data: GoalCreateData) => Promise<void>;
   onClose: () => void;
+  coverService?: CoverService;
 }
 
-export function GoalCreateSheet({ onSave, onClose }: GoalCreateSheetProps) {
+export function GoalCreateSheet({
+  onSave,
+  onClose,
+  coverService = defaultCoverService,
+}: GoalCreateSheetProps) {
   const { t } = useTranslation();
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [status, setStatus] = useState<GoalStatus>(DEFAULT_GOAL_STATUS);
+  const [pendingCoverFile, setPendingCoverFile] = useState<File | null>(null);
+  const [coverPreviewSrc, setCoverPreviewSrc] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+
+  const objectUrlRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (objectUrlRef.current) {
+      URL.revokeObjectURL(objectUrlRef.current);
+      objectUrlRef.current = null;
+    }
+    if (pendingCoverFile) {
+      const url = URL.createObjectURL(pendingCoverFile);
+      objectUrlRef.current = url;
+      setCoverPreviewSrc(url);
+    } else {
+      setCoverPreviewSrc(null);
+    }
+    return () => {
+      if (objectUrlRef.current) {
+        URL.revokeObjectURL(objectUrlRef.current);
+        objectUrlRef.current = null;
+      }
+    };
+  }, [pendingCoverFile]);
+
+  const handleCoverSelect = useCallback((file: File) => {
+    setPendingCoverFile(file);
+  }, []);
+
+  const handleCoverRemove = useCallback(() => {
+    setPendingCoverFile(null);
+  }, []);
 
   const handleSave = useCallback(async () => {
     const trimmedTitle = title.trim();
     if (!trimmedTitle) return;
     setIsSaving(true);
     try {
-      await onSave({ title: trimmedTitle, description: description.trim(), status });
+      let coverFileId = "";
+      if (pendingCoverFile) {
+        const result = await coverService.uploadCover(pendingCoverFile, "");
+        coverFileId = result.file_id;
+      }
+      await onSave({
+        title: trimmedTitle,
+        description: description.trim(),
+        status,
+        cover_file_id: coverFileId,
+      });
       onClose();
     } finally {
       setIsSaving(false);
     }
-  }, [title, description, status, onSave, onClose]);
+  }, [title, description, status, pendingCoverFile, coverService, onSave, onClose]);
 
   const canSave = title.trim().length > 0 && !isSaving;
 
@@ -77,24 +128,28 @@ export function GoalCreateSheet({ onSave, onClose }: GoalCreateSheetProps) {
         </div>
 
         <div className="px-4 py-4 flex flex-col gap-4">
-          {/* Title */}
-          <div>
-            <label
-              htmlFor="goal-create-title"
-              className="text-xs font-medium text-gray-500 mb-1 block"
-            >
-              {t("goal.titleLabel")}
-            </label>
-            <input
-              id="goal-create-title"
-              type="text"
-              value={title}
-              onChange={(event) => setTitle(event.target.value)}
-              placeholder={t("goal.titlePlaceholder")}
-              autoFocus
-              className="w-full text-sm text-gray-800 border border-gray-200 rounded-lg px-3 py-2 outline-none focus:border-accent"
-              data-testid="goal-create-title-input"
+          {/* Cover + Title row */}
+          <div className="flex items-center gap-3">
+            <GoalCoverPicker
+              previewSrc={coverPreviewSrc}
+              onFileSelect={handleCoverSelect}
+              onRemove={handleCoverRemove}
             />
+            <div className="flex-1">
+              <label htmlFor="goal-create-title" className="sr-only">
+                {t("goal.titleLabel")}
+              </label>
+              <input
+                id="goal-create-title"
+                type="text"
+                value={title}
+                onChange={(event) => setTitle(event.target.value)}
+                placeholder={t("goal.titlePlaceholder")}
+                autoFocus
+                className="w-full text-sm text-gray-800 border border-gray-200 rounded-lg px-3 py-2 outline-none focus:border-accent"
+                data-testid="goal-create-title-input"
+              />
+            </div>
           </div>
 
           {/* Description */}
@@ -160,7 +215,7 @@ export function GoalCreateSheet({ onSave, onClose }: GoalCreateSheetProps) {
             data-testid="goal-create-save-button"
             className="flex-1 py-2.5 text-sm text-white bg-accent rounded-xl hover:opacity-90 transition-opacity disabled:opacity-50"
           >
-            {t("goal.create")}
+            {isSaving ? t("goal.cover.uploading") : t("goal.create")}
           </button>
         </div>
       </div>
