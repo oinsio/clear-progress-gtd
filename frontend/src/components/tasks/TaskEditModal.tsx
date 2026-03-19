@@ -77,7 +77,7 @@ export function TaskEditModal({
   const [editingItemTitle, setEditingItemTitle] = useState("");
   const newItemInputRef = useRef<HTMLInputElement>(null);
 
-  const { items, progress, createItem, toggleItem, updateItem } = useChecklist(task.id, checklistService);
+  const { items, progress, createItem, toggleItem, deleteItem, updateItem } = useChecklist(task.id, checklistService);
 
   useEffect(() => {
     if (isOpen) {
@@ -388,6 +388,26 @@ export function TaskEditModal({
                         {item.title}
                       </span>
                     )}
+                    {editingItemId === item.id && (
+                      <button
+                        type="button"
+                        data-testid={`checklist-item-delete-btn-${item.id}`}
+                        aria-label={`Удалить: ${item.title}`}
+                        onMouseDown={(event) => event.preventDefault()}
+                        onClick={() => void deleteItem(item.id)}
+                        className="flex-shrink-0 text-red-500 hover:text-red-700 transition-colors"
+                      >
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                          <path
+                            d="M2 4h12M5 4V2.5A.5.5 0 0 1 5.5 2h5a.5.5 0 0 1 .5.5V4M6 7v5M10 7v5M3 4l1 9.5A.5.5 0 0 0 4.5 14h7a.5.5 0 0 0 .5-.5L13 4"
+                            stroke="currentColor"
+                            strokeWidth="1.5"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          />
+                        </svg>
+                      </button>
+                    )}
                   </div>
                 ))}
                 {/* New item input */}
@@ -433,7 +453,46 @@ export function TaskEditModal({
                           />
                         </svg>
                       </button>
-                      <span className="text-sm text-gray-400 line-through">{item.title}</span>
+                      {editingItemId === item.id ? (
+                        <input
+                          type="text"
+                          data-testid={`checklist-item-edit-input-${item.id}`}
+                          value={editingItemTitle}
+                          onChange={(event) => setEditingItemTitle(event.target.value)}
+                          onBlur={() => void commitItemEdit(item.id)}
+                          onKeyDown={(event) => void handleItemEditKeyDown(event, item.id)}
+                          autoFocus
+                          className="flex-1 text-sm text-gray-400 outline-none line-through"
+                        />
+                      ) : (
+                        <span
+                          data-testid={`checklist-item-title-${item.id}`}
+                          onClick={() => handleItemTitleClick(item)}
+                          className="flex-1 text-sm text-gray-400 line-through cursor-text"
+                        >
+                          {item.title}
+                        </span>
+                      )}
+                      {editingItemId === item.id && (
+                        <button
+                          type="button"
+                          data-testid={`checklist-item-delete-btn-${item.id}`}
+                          aria-label={`Удалить: ${item.title}`}
+                          onMouseDown={(event) => event.preventDefault()}
+                          onClick={() => void deleteItem(item.id)}
+                          className="flex-shrink-0 text-red-500 hover:text-red-700 transition-colors"
+                        >
+                          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                            <path
+                              d="M2 4h12M5 4V2.5A.5.5 0 0 1 5.5 2h5a.5.5 0 0 1 .5.5V4M6 7v5M10 7v5M3 4l1 9.5A.5.5 0 0 0 4.5 14h7a.5.5 0 0 0 .5-.5L13 4"
+                              stroke="currentColor"
+                              strokeWidth="1.5"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            />
+                          </svg>
+                        </button>
+                      )}
                     </div>
                   ))}
                 </div>
