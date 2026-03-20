@@ -47,7 +47,7 @@ export function GoalItem({ goal, taskCount, onNavigate, nodeRef, style, dragHand
 
         {/* Title + task count */}
         <div className="flex-1 min-w-0">
-          <p className="text-sm text-gray-800 font-medium leading-snug truncate">
+          <p className="text-sm text-gray-800 font-medium leading-snug break-words">
             {goal.title}
           </p>
           {taskCount > 0 && (
