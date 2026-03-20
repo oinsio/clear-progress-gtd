@@ -27,14 +27,14 @@ export class SyncService {
       throw new Error("Pull failed");
     }
 
-    const { data } = pullResponse;
+    const { data, settings } = pullResponse;
     await Promise.all([
       this.taskRepository.bulkUpsert(data.tasks),
       this.goalRepository.bulkUpsert(data.goals),
       this.contextRepository.bulkUpsert(data.contexts),
       this.categoryRepository.bulkUpsert(data.categories),
       this.checklistRepository.bulkUpsert(data.checklist_items),
-      this.settingsRepository.bulkUpsert(data.settings),
+      this.settingsRepository.bulkUpsert(settings),
     ]);
   }
 
@@ -62,11 +62,11 @@ export class SyncService {
       throw new Error("Push failed");
     }
 
-    await this.resolveConflicts(pushResponse.data);
+    await this.resolveConflicts(pushResponse.results);
   }
 
   private async resolveConflicts(
-    responseData: Awaited<ReturnType<ApiClient["push"]>>["data"],
+    responseData: Awaited<ReturnType<ApiClient["push"]>>["results"],
   ): Promise<void> {
     const conflictedTasks =
       responseData.tasks?.filter(

@@ -29,8 +29,9 @@ export interface PullResponse {
     contexts: Context[];
     categories: Category[];
     checklist_items: ChecklistItem[];
-    settings: Setting[];
   };
+  settings: Setting[];
+  server_time: string;
 }
 
 export interface PushChanges {
@@ -39,6 +40,7 @@ export interface PushChanges {
   contexts?: Context[];
   categories?: Category[];
   checklist_items?: ChecklistItem[];
+  settings?: Setting[];
 }
 
 export interface PushRequest {
@@ -60,11 +62,13 @@ export interface PushResponseData {
   contexts?: PushItemResult[];
   categories?: PushItemResult[];
   checklist_items?: PushItemResult[];
+  settings?: PushItemResult[];
 }
 
 export interface PushResponse {
   ok: boolean;
-  data: PushResponseData;
+  results: PushResponseData;
+  server_time: string;
 }
 
 export interface PingResponse {
@@ -92,11 +96,9 @@ export interface UploadCoverRequest {
 
 export interface UploadCoverResponse {
   ok: boolean;
-  data: {
-    file_id: string;
-    thumbnail_url: string;
-    reused: boolean;
-  };
+  file_id: string;
+  thumbnail_url: string;
+  reused: boolean;
 }
 
 export interface DeleteCoverRequest {
@@ -106,8 +108,6 @@ export interface DeleteCoverRequest {
 
 export interface DeleteCoverResponse {
   ok: boolean;
-  data: {
-    deleted: boolean;
-    ref_count: number;
-  };
+  deleted: boolean;
+  ref_count: number;
 }

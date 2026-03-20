@@ -26,18 +26,21 @@ function createMockApiClient(
         contexts: [],
         categories: [],
         checklist_items: [],
-        settings: [],
       },
+      settings: [],
+      server_time: "2026-03-04T11:00:00.000Z",
     }),
     push: vi.fn().mockResolvedValue({
       ok: true,
-      data: {
+      results: {
         tasks: [],
         goals: [],
         contexts: [],
         categories: [],
         checklist_items: [],
+        settings: [],
       },
+      server_time: "2026-03-04T11:00:00.000Z",
     }),
     ...overrides,
   } as ApiClient;
@@ -105,6 +108,34 @@ describe("SyncService", () => {
     settingsRepository = {
       bulkUpsert: vi.fn().mockResolvedValue(undefined),
     } as unknown as SettingsRepository;
+  });
+
+  describe("pull", () => {
+    it("should save settings from top-level response field, not from data", async () => {
+      const serverSettings = [{ key: "default_box", value: "inbox", updated_at: "2026-03-04T10:00:00.000Z" }];
+      mockApiClient = createMockApiClient({
+        pull: vi.fn().mockResolvedValue({
+          ok: true,
+          data: { tasks: [], goals: [], contexts: [], categories: [], checklist_items: [] },
+          settings: serverSettings,
+          server_time: "2026-03-04T11:00:00.000Z",
+        }),
+      });
+
+      const service = new SyncService(
+        mockApiClient,
+        taskRepository,
+        goalRepository,
+        contextRepository,
+        categoryRepository,
+        checklistRepository,
+        settingsRepository,
+      );
+
+      await service.pull();
+
+      expect(settingsRepository.bulkUpsert).toHaveBeenCalledWith(serverSettings);
+    });
   });
 
   describe("push", () => {

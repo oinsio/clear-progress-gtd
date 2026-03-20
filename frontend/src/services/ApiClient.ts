@@ -75,20 +75,22 @@ export class ApiClient {
     filename: string;
     mime_type: string;
     data: string;
-  }): Promise<UploadCoverResponse["data"]> {
+  }): Promise<Pick<UploadCoverResponse, "file_id" | "thumbnail_url" | "reused">> {
     const response = await this.request<UploadCoverResponse>({
       action: "upload_cover",
       ...payload,
     });
-    return response.data;
+    const { file_id, thumbnail_url, reused } = response;
+    return { file_id, thumbnail_url, reused };
   }
 
-  async deleteCover(payload: { file_id: string }): Promise<DeleteCoverResponse["data"]> {
+  async deleteCover(payload: { file_id: string }): Promise<Pick<DeleteCoverResponse, "deleted" | "ref_count">> {
     const response = await this.request<DeleteCoverResponse>({
       action: "delete_cover",
       ...payload,
     });
-    return response.data;
+    const { deleted, ref_count } = response;
+    return { deleted, ref_count };
   }
 }
 
