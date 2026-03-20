@@ -123,7 +123,9 @@
     "syncSection": "Sync",
     "syncConnected": "Connected",
     "syncNotConnected": "Not connected",
-    "syncConfigure": "Configure"
+    "syncConfigure": "Configure",
+    "syncConnect": "Connect",
+    "syncDisconnect": "Disconnect"
   },
   "setup": {
     "title": "Backend connection",

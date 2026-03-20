@@ -52,7 +52,14 @@ export default function SettingsPage() {
     setLanguage(lang);
   };
 
-  const isBackendConnected = !!localStorage.getItem(STORAGE_KEYS.GAS_URL);
+  const [isBackendConnected, setIsBackendConnected] = useState(
+    !!localStorage.getItem(STORAGE_KEYS.GAS_URL),
+  );
+
+  const handleDisconnect = (): void => {
+    localStorage.removeItem(STORAGE_KEYS.GAS_URL);
+    setIsBackendConnected(false);
+  };
 
   return (
     <div data-testid="settings-page" className="flex h-screen overflow-hidden bg-white">
@@ -137,31 +144,6 @@ export default function SettingsPage() {
               </div>
             </section>
 
-            {/* Sync section */}
-            <section data-testid="settings-sync" className="space-y-3">
-              <h2 className="text-sm font-medium text-gray-500 uppercase tracking-wide">
-                {t("settings.syncSection")}
-              </h2>
-              <div className="flex items-center justify-between rounded-lg border border-gray-200 px-4 py-3">
-                <span
-                  data-testid="settings-sync-status"
-                  className={cn(
-                    "text-sm font-medium",
-                    isBackendConnected ? "text-green-600" : "text-gray-400",
-                  )}
-                >
-                  {isBackendConnected ? t("settings.syncConnected") : t("settings.syncNotConnected")}
-                </span>
-                <button
-                  data-testid="settings-sync-configure"
-                  onClick={() => navigate(ROUTES.SETUP)}
-                  className="rounded-lg bg-accent px-3 py-1.5 text-xs font-medium text-white transition-colors"
-                >
-                  {t("settings.syncConfigure")}
-                </button>
-              </div>
-            </section>
-
             {/* Language section */}
             <section data-testid="settings-language" className="space-y-3">
               <h2 className="text-sm font-medium text-gray-500 uppercase tracking-wide">
@@ -184,6 +166,41 @@ export default function SettingsPage() {
                     {t(`lang.${lang}`)}
                   </button>
                 ))}
+              </div>
+            </section>
+
+            {/* Sync section */}
+            <section data-testid="settings-sync" className="space-y-3">
+              <h2 className="text-sm font-medium text-gray-500 uppercase tracking-wide">
+                {t("settings.syncSection")}
+              </h2>
+              <div className="flex items-center justify-between rounded-lg border border-gray-200 px-4 py-3">
+                <span
+                  data-testid="settings-sync-status"
+                  className={cn(
+                    "text-sm font-medium",
+                    isBackendConnected ? "text-green-600" : "text-gray-400",
+                  )}
+                >
+                  {isBackendConnected ? t("settings.syncConnected") : t("settings.syncNotConnected")}
+                </span>
+                {isBackendConnected ? (
+                  <button
+                    data-testid="settings-sync-disconnect"
+                    onClick={handleDisconnect}
+                    className="rounded-lg bg-red-500 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-red-600"
+                  >
+                    {t("settings.syncDisconnect")}
+                  </button>
+                ) : (
+                  <button
+                    data-testid="settings-sync-connect"
+                    onClick={() => navigate(ROUTES.SETUP)}
+                    className="rounded-lg bg-accent px-3 py-1.5 text-xs font-medium text-white transition-colors"
+                  >
+                    {t("settings.syncConnect")}
+                  </button>
+                )}
               </div>
             </section>
           </div>

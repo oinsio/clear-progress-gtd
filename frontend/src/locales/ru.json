@@ -123,7 +123,9 @@
     "syncSection": "Синхронизация",
     "syncConnected": "Подключено",
     "syncNotConnected": "Не подключено",
-    "syncConfigure": "Настроить"
+    "syncConfigure": "Настроить",
+    "syncConnect": "Подключить",
+    "syncDisconnect": "Отключить"
   },
   "setup": {
     "title": "Подключение к бэкенду",
