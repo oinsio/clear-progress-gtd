@@ -1,5 +1,5 @@
 import { render, screen, fireEvent } from "@testing-library/react";
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { MemoryRouter } from "react-router-dom";
 import SettingsPage from "./SettingsPage";
 import type { UseSettingsReturn } from "@/hooks/useSettings";
@@ -9,15 +9,17 @@ import type { Language } from "@/constants";
 vi.mock("@/hooks/useSettings");
 vi.mock("@/app/providers/ThemeProvider");
 vi.mock("@/hooks/useLanguage");
-vi.mock("@/hooks/usePanelSide", () => ({ usePanelSide: vi.fn(() => ({ panelSide: "right", setPanelSide: vi.fn() })) }));
-vi.mock("@/hooks/usePanelOpen", () => ({ usePanelOpen: vi.fn(() => ({ isPanelOpen: false, togglePanelOpen: vi.fn() })) }));
-vi.mock("@/components/tasks/RightFilterPanel", () => ({ RightFilterPanel: () => null }));
+vi.mock("@/hooks/usePanelSide");
+vi.mock("@/hooks/usePanelOpen");
+vi.mock("@/components/tasks/RightFilterPanel");
 vi.mock("@/i18n", () => ({ default: {} }));
 vi.mock("react-i18next", () => ({
   useTranslation: () => ({ t: (key: string) => key }),
 }));
 
+import { STORAGE_KEYS } from "@/constants";
 import { useSettings } from "@/hooks/useSettings";
+import { localStorageMock } from "@/test/mocks/localStorageMock";
 import { useTheme } from "@/app/providers/ThemeProvider";
 import { useLanguage } from "@/hooks/useLanguage";
 
@@ -62,9 +64,14 @@ function renderPage() {
 
 describe("SettingsPage", () => {
   beforeEach(() => {
+    localStorageMock.clear();
     mockUseSettings.mockReturnValue(buildSettingsHook());
     mockUseTheme.mockReturnValue(buildThemeHook());
     mockUseLanguage.mockReturnValue(buildLanguageHook());
+  });
+
+  afterEach(() => {
+    localStorageMock.clear();
   });
 
   it("should render the settings page container", () => {
@@ -152,5 +159,28 @@ describe("SettingsPage", () => {
     renderPage();
     fireEvent.click(screen.getByTestId("settings-language-option-en"));
     expect(setLanguage).toHaveBeenCalledWith("en");
+  });
+
+  describe("sync section", () => {
+    it("should render sync section", () => {
+      renderPage();
+      expect(screen.getByTestId("settings-sync")).toBeInTheDocument();
+    });
+
+    it("should show not connected status when no URL is configured", () => {
+      renderPage();
+      expect(screen.getByTestId("settings-sync-status")).toHaveTextContent("settings.syncNotConnected");
+    });
+
+    it("should show connected status when URL is configured", () => {
+      localStorageMock.setItem(STORAGE_KEYS.GAS_URL, "https://script.google.com/macros/s/abc/exec");
+      renderPage();
+      expect(screen.getByTestId("settings-sync-status")).toHaveTextContent("settings.syncConnected");
+    });
+
+    it("should render configure button", () => {
+      renderPage();
+      expect(screen.getByTestId("settings-sync-configure")).toBeInTheDocument();
+    });
   });
 });

@@ -119,7 +119,28 @@
     "panelRight": "Справа",
     "login": "Войдите",
     "loginAriaLabel": "Войти в аккаунт",
-    "settingsAriaLabel": "Настройки"
+    "settingsAriaLabel": "Настройки",
+    "syncSection": "Синхронизация",
+    "syncConnected": "Подключено",
+    "syncNotConnected": "Не подключено",
+    "syncConfigure": "Настроить"
+  },
+  "setup": {
+    "title": "Подключение к бэкенду",
+    "description": "Введите URL или Deployment ID вашего Google Apps Script",
+    "urlLabel": "Google Apps Script URL или Deployment ID",
+    "urlPlaceholder": "AKfycbx... или https://script.google.com/...",
+    "connect": "Подключить",
+    "connecting": "Проверяю...",
+    "disconnect": "Отключить",
+    "skip": "Работать без синхронизации",
+    "notInitializedHint": "Соединение установлено, но Google Sheets ещё не созданы",
+    "initialize": "Инициализировать",
+    "initializing": "Инициализирую...",
+    "goToApp": "Перейти к задачам",
+    "errorConnection": "Не удалось подключиться. Проверьте URL.",
+    "errorInit": "Ошибка инициализации. Попробуйте ещё раз.",
+    "connectedUrl": "Текущий адрес:"
   },
   "selector": {
     "goal": "Цель",

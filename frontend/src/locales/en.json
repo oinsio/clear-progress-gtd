@@ -119,7 +119,28 @@
     "panelRight": "Right",
     "login": "Sign in",
     "loginAriaLabel": "Sign in to account",
-    "settingsAriaLabel": "Settings"
+    "settingsAriaLabel": "Settings",
+    "syncSection": "Sync",
+    "syncConnected": "Connected",
+    "syncNotConnected": "Not connected",
+    "syncConfigure": "Configure"
+  },
+  "setup": {
+    "title": "Backend connection",
+    "description": "Enter your Google Apps Script URL or Deployment ID",
+    "urlLabel": "Google Apps Script URL or Deployment ID",
+    "urlPlaceholder": "AKfycbx... or https://script.google.com/...",
+    "connect": "Connect",
+    "connecting": "Checking...",
+    "disconnect": "Disconnect",
+    "skip": "Work without sync",
+    "notInitializedHint": "Connection established, but Google Sheets are not created yet",
+    "initialize": "Initialize",
+    "initializing": "Initializing...",
+    "goToApp": "Go to tasks",
+    "errorConnection": "Could not connect. Please check the URL.",
+    "errorInit": "Initialization failed. Please try again.",
+    "connectedUrl": "Current URL:"
   },
   "selector": {
     "goal": "Goal",

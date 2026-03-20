@@ -35,7 +35,10 @@ export class ApiClient {
   }
 
   async ping(): Promise<PingResponse> {
-    const url = this.getUrl();
+    return this.pingUrl(this.getUrl());
+  }
+
+  async pingUrl(url: string): Promise<PingResponse> {
     if (!url) {
       throw new Error("GAS URL is not configured");
     }
@@ -43,7 +46,7 @@ export class ApiClient {
     if (!response.ok) {
       throw new Error(`HTTP error: ${response.status}`);
     }
-    return await response.json() as Promise<PingResponse>;
+    return await response.json() as PingResponse;
   }
 
   async init(): Promise<InitResponse> {

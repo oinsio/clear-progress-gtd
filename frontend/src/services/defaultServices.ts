@@ -8,6 +8,8 @@ import { PendingCoverRepository } from "@/db/repositories/PendingCoverRepository
 import { CoverSyncService } from "./CoverSyncService";
 import { ApiClient } from "./ApiClient";
 
+export const defaultApiClient = new ApiClient();
+
 export const defaultTaskService = new TaskService(new TaskRepository());
 export const defaultGoalService = new GoalService(new GoalRepository());
 export const defaultCoverService = new CoverService(

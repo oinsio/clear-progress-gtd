@@ -7,7 +7,7 @@ import { useLanguage } from "@/hooks/useLanguage";
 import { usePanelSide } from "@/hooks/usePanelSide";
 import { usePanelOpen } from "@/hooks/usePanelOpen";
 import { RightFilterPanel, type RightPanelMode } from "@/components/tasks/RightFilterPanel";
-import { BOX_ORDER, ACCENT_COLORS, ACCENT_COLOR_VALUES, PANEL_SIDES, ROUTES, SUPPORTED_LANGUAGES } from "@/constants";
+import { BOX_ORDER, ACCENT_COLORS, ACCENT_COLOR_VALUES, PANEL_SIDES, ROUTES, STORAGE_KEYS, SUPPORTED_LANGUAGES } from "@/constants";
 import type { Box, AccentColor, PanelSide } from "@/types/common";
 import type { Language } from "@/constants";
 import { cn } from "@/shared/lib/cn";
@@ -51,6 +51,8 @@ export default function SettingsPage() {
   const handleLanguageSelect = (lang: Language): void => {
     setLanguage(lang);
   };
+
+  const isBackendConnected = !!localStorage.getItem(STORAGE_KEYS.GAS_URL);
 
   return (
     <div data-testid="settings-page" className="flex h-screen overflow-hidden bg-white">
@@ -132,6 +134,31 @@ export default function SettingsPage() {
                     {side === "left" ? t("settings.panelLeft") : t("settings.panelRight")}
                   </button>
                 ))}
+              </div>
+            </section>
+
+            {/* Sync section */}
+            <section data-testid="settings-sync" className="space-y-3">
+              <h2 className="text-sm font-medium text-gray-500 uppercase tracking-wide">
+                {t("settings.syncSection")}
+              </h2>
+              <div className="flex items-center justify-between rounded-lg border border-gray-200 px-4 py-3">
+                <span
+                  data-testid="settings-sync-status"
+                  className={cn(
+                    "text-sm font-medium",
+                    isBackendConnected ? "text-green-600" : "text-gray-400",
+                  )}
+                >
+                  {isBackendConnected ? t("settings.syncConnected") : t("settings.syncNotConnected")}
+                </span>
+                <button
+                  data-testid="settings-sync-configure"
+                  onClick={() => navigate(ROUTES.SETUP)}
+                  className="rounded-lg bg-accent px-3 py-1.5 text-xs font-medium text-white transition-colors"
+                >
+                  {t("settings.syncConfigure")}
+                </button>
               </div>
             </section>
 
