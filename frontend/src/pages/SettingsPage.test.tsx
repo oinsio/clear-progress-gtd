@@ -180,7 +180,7 @@ describe("SettingsPage", () => {
 
     it("should render configure button", () => {
       renderPage();
-      expect(screen.getByTestId("settings-sync-configure")).toBeInTheDocument();
+      expect(screen.getByTestId("settings-sync-connect")).toBeInTheDocument();
     });
   });
 });
