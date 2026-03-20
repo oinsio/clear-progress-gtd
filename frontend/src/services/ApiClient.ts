@@ -96,7 +96,7 @@ function isValidPingResponse(data: unknown): data is PingResponse {
   if (typeof data !== "object" || data === null) return false;
   const record = data as Record<string, unknown>;
   return (
-    record.ok === true &&
+    typeof record.ok === "boolean" &&
     typeof record.app === "string" &&
     typeof record.version === "string" &&
     typeof record.initialized === "boolean"

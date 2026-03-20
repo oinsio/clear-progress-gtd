@@ -103,13 +103,27 @@ describe("ApiClient.pingUrl", () => {
     await expect(apiClient.pingUrl(TEST_URL)).rejects.toThrow();
   });
 
-  it("should throw when response ok field is false", async () => {
+  it("should return response with ok: false so the caller can handle the error", async () => {
     server.use(
       http.get(TEST_URL, () =>
         HttpResponse.json({ ok: false, app: "CP", version: "1.0", initialized: false }),
       ),
     );
 
-    await expect(apiClient.pingUrl(TEST_URL)).rejects.toThrow();
+    const result = await apiClient.pingUrl(TEST_URL);
+
+    expect(result.ok).toBe(false);
+  });
+
+  it("should return response with initialized: false so the caller can trigger init", async () => {
+    server.use(
+      http.get(TEST_URL, () =>
+        HttpResponse.json({ ok: true, app: "CP", version: "1.0", initialized: false }),
+      ),
+    );
+
+    const result = await apiClient.pingUrl(TEST_URL);
+
+    expect(result.initialized).toBe(false);
   });
 });
