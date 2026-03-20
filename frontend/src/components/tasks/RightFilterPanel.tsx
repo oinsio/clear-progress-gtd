@@ -120,7 +120,7 @@ export function RightFilterPanel({
                     </span>
                   )}
                 </div>
-                <span className="text-sm font-medium truncate">{syncLabel}</span>
+                <span className="text-sm font-medium break-words">{syncLabel}</span>
               </button>
             ) : (
               <button
