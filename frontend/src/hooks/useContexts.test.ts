@@ -4,6 +4,17 @@ import { useContexts } from "./useContexts";
 import type { ContextService } from "@/services/ContextService";
 import { buildContext } from "@/test/factories/contextFactory";
 
+const syncState = { version: 0 };
+
+vi.mock("@/app/providers/SyncProvider", () => ({
+  useSync: () => ({
+    syncVersion: syncState.version,
+    syncStatus: "idle",
+    pull: vi.fn(),
+    push: vi.fn(),
+  }),
+}));
+
 function createMockContextService(
   overrides: Partial<Record<keyof ContextService, unknown>> = {},
 ): ContextService {
@@ -22,6 +33,7 @@ describe("useContexts", () => {
 
   beforeEach(() => {
     mockContextService = createMockContextService();
+    syncState.version = 0;
   });
 
   it("should set isLoading to true on initial render", () => {
@@ -80,6 +92,19 @@ describe("useContexts", () => {
       "@Office",
     );
     expect(mockGetAll).toHaveBeenCalledTimes(2);
+  });
+
+  it("should reload when syncVersion changes", async () => {
+    const mockGetAll = vi.fn().mockResolvedValue([]);
+    mockContextService = createMockContextService({ getAll: mockGetAll });
+
+    const { rerender } = renderHook(() => useContexts(mockContextService));
+    await waitFor(() => expect(mockGetAll).toHaveBeenCalledTimes(1));
+
+    syncState.version = 1;
+    rerender();
+
+    await waitFor(() => expect(mockGetAll).toHaveBeenCalledTimes(2));
   });
 
   it("should call softDelete and refresh when deleteContext is called", async () => {

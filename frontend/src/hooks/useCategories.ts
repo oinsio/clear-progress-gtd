@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import type { Category } from "@/types/entities";
 import { CategoryService } from "@/services/CategoryService";
 import { CategoryRepository } from "@/db/repositories/CategoryRepository";
+import { useSync } from "@/app/providers/SyncProvider";
 
 const defaultCategoryService = new CategoryService(new CategoryRepository());
 
@@ -19,6 +20,7 @@ export function useCategories(
 ): UseCategoriesReturn {
   const [categories, setCategories] = useState<Category[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const { syncVersion } = useSync();
 
   const loadCategories = useCallback(async () => {
     const allCategories = await categoryService.getAll();
@@ -28,7 +30,7 @@ export function useCategories(
 
   useEffect(() => {
     void loadCategories();
-  }, [loadCategories]);
+  }, [loadCategories, syncVersion]);
 
   const createCategory = useCallback(
     async (name: string) => {

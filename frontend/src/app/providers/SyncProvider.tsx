@@ -20,6 +20,7 @@ import { defaultCoverSyncService } from "@/services/defaultServices";
 
 interface SyncContextValue {
   syncStatus: SyncStatus;
+  syncVersion: number;
   pull: () => Promise<void>;
   push: () => Promise<void>;
 }
@@ -40,6 +41,7 @@ const syncService = new SyncService(
 
 export function SyncProvider({ children }: { children: React.ReactNode }) {
   const [syncStatus, setSyncStatus] = useState<SyncStatus>("idle");
+  const [syncVersion, setSyncVersion] = useState(0);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const pingIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -60,6 +62,7 @@ export function SyncProvider({ children }: { children: React.ReactNode }) {
       await syncService.pull();
       void defaultCoverSyncService.sync();
       setSyncStatus("idle");
+      setSyncVersion((version) => version + 1);
       stopPingInterval();
     } catch {
       setSyncStatus("error");
@@ -129,7 +132,7 @@ export function SyncProvider({ children }: { children: React.ReactNode }) {
   }, [syncStatus, startPingInterval]);
 
   return (
-    <SyncContext.Provider value={{ syncStatus, pull, push }}>
+    <SyncContext.Provider value={{ syncStatus, syncVersion, pull, push }}>
       {children}
     </SyncContext.Provider>
   );
@@ -139,6 +142,7 @@ const SYNC_NOOP = async (): Promise<void> => {};
 
 const SYNC_FALLBACK: SyncContextValue = {
   syncStatus: "idle",
+  syncVersion: 0,
   pull: SYNC_NOOP,
   push: SYNC_NOOP,
 };

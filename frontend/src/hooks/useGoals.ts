@@ -3,6 +3,7 @@ import type { Goal } from "@/types/entities";
 import type { GoalStatus } from "@/types/common";
 import { GoalService } from "@/services/GoalService";
 import { GoalRepository } from "@/db/repositories/GoalRepository";
+import { useSync } from "@/app/providers/SyncProvider";
 
 const defaultGoalService = new GoalService(new GoalRepository());
 
@@ -22,6 +23,7 @@ export function useGoals(
 ): UseGoalsReturn {
   const [goals, setGoals] = useState<Goal[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const { syncVersion } = useSync();
 
   const loadGoals = useCallback(async () => {
     const allGoals = await goalService.getAll();
@@ -31,7 +33,7 @@ export function useGoals(
 
   useEffect(() => {
     void loadGoals();
-  }, [loadGoals]);
+  }, [loadGoals, syncVersion]);
 
   const createGoal = useCallback(
     async (data: Pick<Goal, "title"> & Partial<Goal>) => {

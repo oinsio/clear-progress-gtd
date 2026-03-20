@@ -67,10 +67,23 @@ function SyncStatusDisplay() {
   return <div data-testid="status">{syncStatus}</div>;
 }
 
+function SyncVersionDisplay() {
+  const { syncVersion } = useSync();
+  return <div data-testid="version">{syncVersion}</div>;
+}
+
 function renderProvider() {
   return render(
     <SyncProvider>
       <SyncStatusDisplay />
+    </SyncProvider>,
+  );
+}
+
+function renderProviderWithVersion() {
+  return render(
+    <SyncProvider>
+      <SyncVersionDisplay />
     </SyncProvider>,
   );
 }
@@ -254,6 +267,19 @@ describe("SyncProvider — ping reconnect", () => {
     });
 
     expect(mockPing).toHaveBeenCalledTimes(1);
+  });
+
+  it("should expose syncVersion starting at 0", () => {
+    renderProviderWithVersion();
+
+    expect(screen.getByTestId("version").textContent).toBe("0");
+  });
+
+  it("should increment syncVersion after successful pull", async () => {
+    renderProviderWithVersion();
+    await act(async () => {});
+
+    expect(screen.getByTestId("version").textContent).toBe("1");
   });
 
   it("should clear ping interval on unmount", async () => {

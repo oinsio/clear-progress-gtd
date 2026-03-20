@@ -5,11 +5,23 @@ import type { TaskService } from "@/services/TaskService";
 import { buildTask } from "@/test/factories/taskFactory";
 import { createMockTaskService } from "@/test/mocks/taskServiceMock";
 
+const syncState = { version: 0 };
+
+vi.mock("@/app/providers/SyncProvider", () => ({
+  useSync: () => ({
+    syncVersion: syncState.version,
+    syncStatus: "idle",
+    pull: vi.fn(),
+    push: vi.fn(),
+  }),
+}));
+
 describe("useCompletedTasks", () => {
   let mockTaskService: TaskService;
 
   beforeEach(() => {
     mockTaskService = createMockTaskService();
+    syncState.version = 0;
   });
 
   it("should set isLoading to true on initial render", () => {
@@ -66,6 +78,19 @@ describe("useCompletedTasks", () => {
     });
     const { result } = renderHook(() => useCompletedTasks(mockTaskService));
     expect(result.current.completedTasks).toEqual([]);
+  });
+
+  it("should reload when syncVersion changes", async () => {
+    const mockGetCompleted = vi.fn().mockResolvedValue([]);
+    mockTaskService = createMockTaskService({ getCompleted: mockGetCompleted });
+
+    const { rerender } = renderHook(() => useCompletedTasks(mockTaskService));
+    await waitFor(() => expect(mockGetCompleted).toHaveBeenCalledTimes(1));
+
+    syncState.version = 1;
+    rerender();
+
+    await waitFor(() => expect(mockGetCompleted).toHaveBeenCalledTimes(2));
   });
 
   it("should refetch tasks when service changes", async () => {

@@ -7,6 +7,17 @@ import { BOX } from "@/constants";
 import type { Box } from "@/types/common";
 import { createMockTaskService } from "@/test/mocks/taskServiceMock";
 
+const syncState = { version: 0 };
+
+vi.mock("@/app/providers/SyncProvider", () => ({
+  useSync: () => ({
+    syncVersion: syncState.version,
+    syncStatus: "idle",
+    pull: vi.fn(),
+    push: vi.fn(),
+  }),
+}));
+
 async function setup(
   taskOverrides: Parameters<typeof buildTask>[0] = {},
   serviceOverrides: Parameters<typeof createMockTaskService>[0] = {},
@@ -24,6 +35,7 @@ describe("useTasks", () => {
 
   beforeEach(() => {
     mockTaskService = createMockTaskService();
+    syncState.version = 0;
   });
 
   it("should set isLoading to true on initial render", () => {
@@ -177,6 +189,19 @@ describe("useTasks", () => {
     it("should call reorderTasks service", () => {
       expect(mockTaskService.reorderTasks).toHaveBeenCalledWith(reorderedTasks);
     });
+  });
+
+  it("should reload when syncVersion changes", async () => {
+    const mockGetByBox = vi.fn().mockResolvedValue([]);
+    const service = createMockTaskService({ getByBox: mockGetByBox });
+
+    const { rerender } = renderHook(() => useTasks(BOX.TODAY, service));
+    await waitFor(() => expect(mockGetByBox).toHaveBeenCalledTimes(1));
+
+    syncState.version = 1;
+    rerender();
+
+    await waitFor(() => expect(mockGetByBox).toHaveBeenCalledTimes(2));
   });
 
   it("should refetch when box changes", async () => {

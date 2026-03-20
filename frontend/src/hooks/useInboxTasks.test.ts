@@ -6,11 +6,23 @@ import { buildTask } from "@/test/factories/taskFactory";
 import {BOX} from "@/constants";
 import { createMockTaskService } from "@/test/mocks/taskServiceMock";
 
+const syncState = { version: 0 };
+
+vi.mock("@/app/providers/SyncProvider", () => ({
+  useSync: () => ({
+    syncVersion: syncState.version,
+    syncStatus: "idle",
+    pull: vi.fn(),
+    push: vi.fn(),
+  }),
+}));
+
 describe("useInboxTasks", () => {
   let mockTaskService: TaskService;
 
   beforeEach(() => {
     mockTaskService = createMockTaskService();
+    syncState.version = 0;
   });
 
   it("should set isLoading to true on initial render", () => {
@@ -78,6 +90,19 @@ describe("useInboxTasks", () => {
       expect(mockGetByBox).toHaveBeenCalledTimes(2);
     },
   );
+
+  it("should reload when syncVersion changes", async () => {
+    const mockGetByBox = vi.fn().mockResolvedValue([]);
+    const service = createMockTaskService({ getByBox: mockGetByBox });
+
+    const { rerender } = renderHook(() => useInboxTasks(service));
+    await waitFor(() => expect(mockGetByBox).toHaveBeenCalledTimes(1));
+
+    syncState.version = 1;
+    rerender();
+
+    await waitFor(() => expect(mockGetByBox).toHaveBeenCalledTimes(2));
+  });
 
   it("should return empty array for tasks in loading state before fetch completes", () => {
     mockTaskService = createMockTaskService({

@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import type { Context } from "@/types/entities";
 import { ContextService } from "@/services/ContextService";
 import { ContextRepository } from "@/db/repositories/ContextRepository";
+import { useSync } from "@/app/providers/SyncProvider";
 
 const defaultContextService = new ContextService(new ContextRepository());
 
@@ -19,6 +20,7 @@ export function useContexts(
 ): UseContextsReturn {
   const [contexts, setContexts] = useState<Context[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const { syncVersion } = useSync();
 
   const loadContexts = useCallback(async () => {
     const allContexts = await contextService.getAll();
@@ -28,7 +30,7 @@ export function useContexts(
 
   useEffect(() => {
     void loadContexts();
-  }, [loadContexts]);
+  }, [loadContexts, syncVersion]);
 
   const createContext = useCallback(
     async (name: string) => {

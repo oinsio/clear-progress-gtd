@@ -4,6 +4,17 @@ import { useGoals } from "./useGoals";
 import type { GoalService } from "@/services/GoalService";
 import { buildGoal } from "@/test/factories/goalFactory";
 
+const syncState = { version: 0 };
+
+vi.mock("@/app/providers/SyncProvider", () => ({
+  useSync: () => ({
+    syncVersion: syncState.version,
+    syncStatus: "idle",
+    pull: vi.fn(),
+    push: vi.fn(),
+  }),
+}));
+
 function createMockGoalService(
   overrides: Partial<Record<keyof GoalService, unknown>> = {},
 ): GoalService {
@@ -23,6 +34,7 @@ describe("useGoals", () => {
 
   beforeEach(() => {
     mockGoalService = createMockGoalService();
+    syncState.version = 0;
   });
 
   it("should set isLoading to true on initial render", () => {
@@ -99,6 +111,19 @@ describe("useGoals", () => {
       "in_progress",
     );
     expect(mockGetAll).toHaveBeenCalledTimes(2);
+  });
+
+  it("should reload when syncVersion changes", async () => {
+    const mockGetAll = vi.fn().mockResolvedValue([]);
+    mockGoalService = createMockGoalService({ getAll: mockGetAll });
+
+    const { rerender } = renderHook(() => useGoals(mockGoalService));
+    await waitFor(() => expect(mockGetAll).toHaveBeenCalledTimes(1));
+
+    syncState.version = 1;
+    rerender();
+
+    await waitFor(() => expect(mockGetAll).toHaveBeenCalledTimes(2));
   });
 
   it("should call softDelete and refresh when deleteGoal is called", async () => {

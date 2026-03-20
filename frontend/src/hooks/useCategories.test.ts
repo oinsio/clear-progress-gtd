@@ -4,6 +4,17 @@ import { useCategories } from "./useCategories";
 import type { CategoryService } from "@/services/CategoryService";
 import { buildCategory } from "@/test/factories/categoryFactory";
 
+const syncState = { version: 0 };
+
+vi.mock("@/app/providers/SyncProvider", () => ({
+  useSync: () => ({
+    syncVersion: syncState.version,
+    syncStatus: "idle",
+    pull: vi.fn(),
+    push: vi.fn(),
+  }),
+}));
+
 function createMockCategoryService(
   overrides: Partial<Record<keyof CategoryService, unknown>> = {},
 ): CategoryService {
@@ -22,6 +33,7 @@ describe("useCategories", () => {
 
   beforeEach(() => {
     mockCategoryService = createMockCategoryService();
+    syncState.version = 0;
   });
 
   it("should set isLoading to true on initial render", () => {
@@ -80,6 +92,19 @@ describe("useCategories", () => {
       "Family",
     );
     expect(mockGetAll).toHaveBeenCalledTimes(2);
+  });
+
+  it("should reload when syncVersion changes", async () => {
+    const mockGetAll = vi.fn().mockResolvedValue([]);
+    mockCategoryService = createMockCategoryService({ getAll: mockGetAll });
+
+    const { rerender } = renderHook(() => useCategories(mockCategoryService));
+    await waitFor(() => expect(mockGetAll).toHaveBeenCalledTimes(1));
+
+    syncState.version = 1;
+    rerender();
+
+    await waitFor(() => expect(mockGetAll).toHaveBeenCalledTimes(2));
   });
 
   it("should call softDelete and refresh when deleteCategory is called", async () => {

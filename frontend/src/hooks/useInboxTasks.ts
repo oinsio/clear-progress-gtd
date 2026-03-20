@@ -3,6 +3,7 @@ import type { Task } from "@/types/entities";
 import { TaskService } from "@/services/TaskService";
 import { defaultTaskService } from "@/services/defaultServices";
 import { BOX } from "@/constants";
+import { useSync } from "@/app/providers/SyncProvider";
 
 export interface UseInboxTasksReturn {
   tasks: Task[];
@@ -16,6 +17,7 @@ export function useInboxTasks(
 ): UseInboxTasksReturn {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const { syncVersion } = useSync();
 
   const loadTasks = useCallback(async () => {
     const inboxTasks = await taskService.getByBox(BOX.INBOX);
@@ -25,7 +27,7 @@ export function useInboxTasks(
 
   useEffect(() => {
     void loadTasks();
-  }, [loadTasks]);
+  }, [loadTasks, syncVersion]);
 
   const completeTask = useCallback(
     async (id: string) => {

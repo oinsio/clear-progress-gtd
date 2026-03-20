@@ -3,6 +3,7 @@ import type { Task } from "@/types/entities";
 import type { Box } from "@/types/common";
 import { TaskService } from "@/services/TaskService";
 import { defaultTaskService } from "@/services/defaultServices";
+import { useSync } from "@/app/providers/SyncProvider";
 
 export interface UseTasksReturn {
   tasks: Task[];
@@ -22,6 +23,7 @@ export function useTasks(
 ): UseTasksReturn {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const { syncVersion } = useSync();
 
   const loadTasks = useCallback(async () => {
     const boxTasks = await taskService.getByBox(box);
@@ -32,7 +34,7 @@ export function useTasks(
   useEffect(() => {
     setIsLoading(true);
     void loadTasks();
-  }, [loadTasks]);
+  }, [loadTasks, syncVersion]);
 
   const createTask = useCallback(
     async (title: string) => {
