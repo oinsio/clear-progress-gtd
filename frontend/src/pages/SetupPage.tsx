@@ -1,7 +1,7 @@
 import { useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { ROUTES, STORAGE_KEYS } from "@/constants";
+import { ROUTES, STORAGE_KEYS, BACKEND_CONNECTION_EVENT } from "@/constants";
 import { parseGasInput } from "@/utils/gasUrl";
 import { defaultApiClient } from "@/services/defaultServices";
 import { usePanelSide } from "@/hooks/usePanelSide";
@@ -50,6 +50,7 @@ export default function SetupPage() {
         return;
       }
       localStorage.setItem(STORAGE_KEYS.GAS_URL, resolvedUrl);
+      window.dispatchEvent(new Event(BACKEND_CONNECTION_EVENT));
       if (response.initialized) {
         navigate(ROUTES.INBOX);
       } else {
@@ -81,6 +82,7 @@ export default function SetupPage() {
 
   const handleDisconnect = (): void => {
     localStorage.removeItem(STORAGE_KEYS.GAS_URL);
+    window.dispatchEvent(new Event(BACKEND_CONNECTION_EVENT));
     setUrlInput("");
     setPhase("input");
   };

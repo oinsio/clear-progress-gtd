@@ -213,5 +213,11 @@
   "lang": {
     "ru": "Русский",
     "en": "English"
+  },
+  "sync": {
+    "syncing": "Syncing...",
+    "synced": "Synced",
+    "noConnection": "No connection",
+    "ariaLabel": "Sync"
   }
 }

@@ -7,7 +7,7 @@ import { useLanguage } from "@/hooks/useLanguage";
 import { usePanelSide } from "@/hooks/usePanelSide";
 import { usePanelOpen } from "@/hooks/usePanelOpen";
 import { RightFilterPanel, type RightPanelMode } from "@/components/tasks/RightFilterPanel";
-import { BOX_ORDER, ACCENT_COLORS, ACCENT_COLOR_VALUES, PANEL_SIDES, ROUTES, STORAGE_KEYS, SUPPORTED_LANGUAGES } from "@/constants";
+import { BOX_ORDER, ACCENT_COLORS, ACCENT_COLOR_VALUES, PANEL_SIDES, ROUTES, STORAGE_KEYS, SUPPORTED_LANGUAGES, BACKEND_CONNECTION_EVENT } from "@/constants";
 import type { Box, AccentColor, PanelSide } from "@/types/common";
 import type { Language } from "@/constants";
 import { cn } from "@/shared/lib/cn";
@@ -58,6 +58,7 @@ export default function SettingsPage() {
 
   const handleDisconnect = (): void => {
     localStorage.removeItem(STORAGE_KEYS.GAS_URL);
+    window.dispatchEvent(new Event(BACKEND_CONNECTION_EVENT));
     setIsBackendConnected(false);
   };
 

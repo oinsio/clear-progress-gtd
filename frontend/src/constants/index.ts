@@ -79,6 +79,8 @@ export const API_ACTIONS = {
 export const SYNC_INTERVAL_MS = 5 * 60 * 1000;
 export const SYNC_DEBOUNCE_MS = 7500;
 
+export const BACKEND_CONNECTION_EVENT = "backend_connection_changed";
+
 export const DB_NAME = "clear-progress";
 export const DB_VERSION = 3;
 export const LOCAL_COVER_ID_PREFIX = "local:";

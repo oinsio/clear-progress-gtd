@@ -1,6 +1,7 @@
 import React, {
   createContext,
   useCallback,
+  useContext,
   useEffect,
   useRef,
   useState,
@@ -92,4 +93,16 @@ export function SyncProvider({ children }: { children: React.ReactNode }) {
       {children}
     </SyncContext.Provider>
   );
+}
+
+const SYNC_NOOP = async (): Promise<void> => {};
+
+const SYNC_FALLBACK: SyncContextValue = {
+  syncStatus: "idle",
+  pull: SYNC_NOOP,
+  push: SYNC_NOOP,
+};
+
+export function useSync(): SyncContextValue {
+  return useContext(SyncContext) ?? SYNC_FALLBACK;
 }
