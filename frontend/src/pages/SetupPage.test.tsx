@@ -29,6 +29,12 @@ vi.mock("react-i18next", () => ({
   useTranslation: () => ({ t: (key: string) => key }),
 }));
 
+import { usePanelOpen } from "@/hooks/usePanelOpen";
+import { usePanelSide } from "@/hooks/usePanelSide";
+
+const mockUsePanelOpen = vi.mocked(usePanelOpen);
+const mockUsePanelSide = vi.mocked(usePanelSide);
+
 const TEST_URL = "https://script.google.com/macros/s/abc/exec";
 const TEST_DEPLOYMENT_ID = "AKfycbxTestDeploymentId";
 
@@ -44,6 +50,8 @@ describe("SetupPage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     localStorageMock.clear();
+    mockUsePanelOpen.mockReturnValue({ isPanelOpen: false, togglePanelOpen: vi.fn() });
+    mockUsePanelSide.mockReturnValue({ panelSide: "right", setPanelSide: vi.fn() });
   });
 
   describe("when no URL is configured", () => {

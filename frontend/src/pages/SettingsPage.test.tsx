@@ -22,10 +22,14 @@ import { useSettings } from "@/hooks/useSettings";
 import { localStorageMock } from "@/test/mocks/localStorageMock";
 import { useTheme } from "@/app/providers/ThemeProvider";
 import { useLanguage } from "@/hooks/useLanguage";
+import { usePanelOpen } from "@/hooks/usePanelOpen";
+import { usePanelSide } from "@/hooks/usePanelSide";
 
 const mockUseSettings = vi.mocked(useSettings);
 const mockUseTheme = vi.mocked(useTheme);
 const mockUseLanguage = vi.mocked(useLanguage);
+const mockUsePanelOpen = vi.mocked(usePanelOpen);
+const mockUsePanelSide = vi.mocked(usePanelSide);
 
 function buildSettingsHook(overrides: Partial<UseSettingsReturn> = {}): UseSettingsReturn {
   return {
@@ -68,6 +72,8 @@ describe("SettingsPage", () => {
     mockUseSettings.mockReturnValue(buildSettingsHook());
     mockUseTheme.mockReturnValue(buildThemeHook());
     mockUseLanguage.mockReturnValue(buildLanguageHook());
+    mockUsePanelOpen.mockReturnValue({ isPanelOpen: false, togglePanelOpen: vi.fn() });
+    mockUsePanelSide.mockReturnValue({ panelSide: "right", setPanelSide: vi.fn() });
   });
 
   afterEach(() => {
