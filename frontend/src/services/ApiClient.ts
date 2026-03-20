@@ -42,11 +42,20 @@ export class ApiClient {
     if (!url) {
       throw new Error("GAS URL is not configured");
     }
-    const response = await fetch(`${url}?action=ping`);
+    const response = await fetch(`${url}?action=ping`, { redirect: "follow" });
     if (!response.ok) {
       throw new Error(`HTTP error: ${response.status}`);
     }
-    return await response.json() as PingResponse;
+    let parsedResponse: unknown;
+    try {
+      parsedResponse = await response.json();
+    } catch {
+      throw new Error("Invalid response: expected JSON");
+    }
+    if (!isValidPingResponse(parsedResponse)) {
+      throw new Error("Invalid response: not a valid ping response");
+    }
+    return parsedResponse;
   }
 
   async init(): Promise<InitResponse> {
@@ -81,4 +90,15 @@ export class ApiClient {
     });
     return response.data;
   }
+}
+
+function isValidPingResponse(data: unknown): data is PingResponse {
+  if (typeof data !== "object" || data === null) return false;
+  const record = data as Record<string, unknown>;
+  return (
+    record.ok === true &&
+    typeof record.app === "string" &&
+    typeof record.version === "string" &&
+    typeof record.initialized === "boolean"
+  );
 }
