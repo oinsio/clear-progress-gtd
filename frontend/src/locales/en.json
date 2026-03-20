@@ -211,8 +211,9 @@
     "purple": "Purple"
   },
   "lang": {
-    "ru": "Русский",
-    "en": "English"
+    "ru": "Russian",
+    "en": "English",
+    "house": "Dr. House"
   },
   "sync": {
     "syncing": "Syncing...",

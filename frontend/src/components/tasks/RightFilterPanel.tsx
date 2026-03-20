@@ -107,7 +107,7 @@ export function RightFilterPanel({
                 aria-label={t("sync.ariaLabel")}
                 data-testid="right-panel-sync"
                 onClick={handleSyncClick}
-                className="flex-1 flex items-center gap-2 px-4 py-4 text-white hover:bg-black/15 transition-colors"
+                className="flex-1 min-w-0 flex items-center gap-2 px-4 py-4 text-white hover:bg-black/15 transition-colors"
               >
                 <div className="relative flex-shrink-0">
                   <RefreshCw
@@ -138,7 +138,7 @@ export function RightFilterPanel({
               aria-label={t("settings.settingsAriaLabel")}
               data-testid="right-panel-account"
               onClick={(e) => { e.stopPropagation(); navigate(ROUTES.SETTINGS); }}
-              className="flex items-center justify-center px-4 py-4 text-white hover:bg-black/15 transition-colors"
+              className="flex-shrink-0 flex items-center justify-center px-4 py-4 text-white hover:bg-black/15 transition-colors"
             >
               <CircleUser className="w-8 h-8" aria-hidden="true" />
             </button>

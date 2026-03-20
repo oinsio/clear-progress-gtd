@@ -139,11 +139,12 @@ describe("SettingsPage", () => {
     expect(setAccentColor).toHaveBeenCalledWith("teal");
   });
 
-  it("should render the language section with two buttons", () => {
+  it("should render the language section with three buttons", () => {
     renderPage();
     expect(screen.getByTestId("settings-language")).toBeInTheDocument();
     expect(screen.getByTestId("settings-language-option-ru")).toBeInTheDocument();
     expect(screen.getByTestId("settings-language-option-en")).toBeInTheDocument();
+    expect(screen.getByTestId("settings-language-option-house")).toBeInTheDocument();
   });
 
   it("should mark the current language as active", () => {

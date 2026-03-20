@@ -97,7 +97,7 @@ export const STORAGE_KEYS = {
   LANGUAGE: "language",
 } as const;
 
-export const SUPPORTED_LANGUAGES = ["ru", "en"] as const;
+export const SUPPORTED_LANGUAGES = ["ru", "en", "house"] as const;
 export type Language = (typeof SUPPORTED_LANGUAGES)[number];
 export const DEFAULT_LANGUAGE: Language = "en";
 

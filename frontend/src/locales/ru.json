@@ -214,7 +214,8 @@
   },
   "lang": {
     "ru": "Русский",
-    "en": "English"
+    "en": "English",
+    "house": "Доктор Хаус"
   },
   "sync": {
     "syncing": "Синхронизация...",
