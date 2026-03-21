@@ -11,6 +11,7 @@ export interface UseChecklistReturn {
   progress: ChecklistProgress;
   hasUnsyncedItems: boolean;
   isLoading: boolean;
+  reload: () => Promise<void>;
   createItem: (title: string) => Promise<void>;
   toggleItem: (id: string) => Promise<void>;
   deleteItem: (id: string) => Promise<void>;
@@ -83,5 +84,5 @@ export function useChecklist(
     (item) => lastSyncedAt === null || item.updated_at > lastSyncedAt,
   );
 
-  return { items, progress, hasUnsyncedItems, isLoading, createItem, toggleItem, deleteItem, updateItem };
+  return { items, progress, hasUnsyncedItems, isLoading, reload: loadItems, createItem, toggleItem, deleteItem, updateItem };
 }

@@ -7,6 +7,7 @@ import { cn } from "@/shared/lib/cn";
 import { BOX } from "@/constants";
 import { TodayBoxIcon, WeekBoxIcon, LaterBoxIcon } from "./BoxIcons";
 import { useChecklist } from "@/hooks/useChecklist";
+import { useSync } from "@/app/providers/SyncProvider";
 import type { ChecklistService } from "@/services/ChecklistService";
 import { parseRepeatRule, serializeRepeatRule, formatRepeatRuleLabel } from "@/utils/repeatRule";
 import { RepeatRuleSelector } from "./RepeatRuleSelector";
@@ -21,6 +22,7 @@ interface TaskEditModalProps {
   onClose: () => void;
   onUpdate: (id: string, changes: Partial<Task>) => Promise<void>;
   onDelete: (id: string) => void;
+  onChecklistChange?: () => void;
   checklistService?: ChecklistService;
 }
 
@@ -65,6 +67,7 @@ export function TaskEditModal({
   onClose,
   onUpdate,
   onDelete,
+  onChecklistChange,
   checklistService,
 }: TaskEditModalProps) {
   const { t } = useTranslation();
@@ -86,7 +89,28 @@ export function TaskEditModal({
   const [editingItemTitle, setEditingItemTitle] = useState("");
   const newItemInputRef = useRef<HTMLInputElement>(null);
 
-  const { items, progress, createItem, toggleItem, deleteItem, updateItem } = useChecklist(task.id, checklistService);
+  const { items, progress, createItem: rawCreateItem, toggleItem: rawToggleItem, deleteItem: rawDeleteItem, updateItem: rawUpdateItem } = useChecklist(task.id, checklistService);
+  const { lastSyncedAt } = useSync();
+
+  const createItem = useCallback(async (title: string) => {
+    await rawCreateItem(title);
+    onChecklistChange?.();
+  }, [rawCreateItem, onChecklistChange]);
+
+  const toggleItem = useCallback(async (id: string) => {
+    await rawToggleItem(id);
+    onChecklistChange?.();
+  }, [rawToggleItem, onChecklistChange]);
+
+  const deleteItem = useCallback(async (id: string) => {
+    await rawDeleteItem(id);
+    onChecklistChange?.();
+  }, [rawDeleteItem, onChecklistChange]);
+
+  const updateItem = useCallback(async (id: string, title: string) => {
+    await rawUpdateItem(id, title);
+    onChecklistChange?.();
+  }, [rawUpdateItem, onChecklistChange]);
 
   useEffect(() => {
     if (isOpen) {
@@ -388,13 +412,23 @@ export function TaskEditModal({
               <div className="flex flex-col gap-1">
                 {activeItems.map((item) => (
                   <div key={item.id} className="flex items-center gap-3 py-1.5">
-                    <button
-                      type="button"
-                      data-testid={`checklist-item-checkbox-${item.id}`}
-                      aria-label={t("taskEdit.checkItemMark", { title: item.title })}
-                      onClick={() => void toggleItem(item.id)}
-                      className="w-5 h-5 rounded border-2 border-gray-300 flex-shrink-0 flex items-center justify-center hover:border-accent transition-colors"
-                    />
+                    <div className="flex items-center gap-1.5 flex-shrink-0">
+                      <span
+                        className={cn(
+                          "w-0.5 h-5 rounded-sm transition-colors",
+                          lastSyncedAt === null || item.updated_at > lastSyncedAt
+                            ? "bg-amber-400"
+                            : "bg-transparent",
+                        )}
+                      />
+                      <button
+                        type="button"
+                        data-testid={`checklist-item-checkbox-${item.id}`}
+                        aria-label={t("taskEdit.checkItemMark", { title: item.title })}
+                        onClick={() => void toggleItem(item.id)}
+                        className="w-5 h-5 rounded border-2 border-gray-300 flex-shrink-0 flex items-center justify-center hover:border-accent transition-colors"
+                      />
+                    </div>
                     {editingItemId === item.id ? (
                       <input
                         type="text"
@@ -439,7 +473,10 @@ export function TaskEditModal({
                 ))}
                 {/* New item input */}
                 <div className="flex items-center gap-3 py-1.5">
-                  <div className="w-5 h-5 rounded border-2 border-gray-200 flex-shrink-0" />
+                  <div className="flex items-center gap-1.5 flex-shrink-0">
+                    <span className="w-0.5 h-5" />
+                    <div className="w-5 h-5 rounded border-2 border-gray-200 flex-shrink-0" />
+                  </div>
                   <input
                     ref={newItemInputRef}
                     type="text"
@@ -463,13 +500,22 @@ export function TaskEditModal({
                 <div className="flex flex-col gap-1">
                   {completedItems.map((item) => (
                     <div key={item.id} className="flex items-center gap-3 py-1.5">
-                      <button
-                        type="button"
-                        data-testid={`checklist-item-checkbox-${item.id}`}
-                        aria-label={t("taskEdit.checkItemUnmark", { title: item.title })}
-                        onClick={() => void toggleItem(item.id)}
-                        className="w-5 h-5 rounded border-2 border-accent bg-accent flex-shrink-0 flex items-center justify-center hover:opacity-80 transition-opacity"
-                      >
+                      <div className="flex items-center gap-1.5 flex-shrink-0">
+                        <span
+                          className={cn(
+                            "w-0.5 h-5 rounded-sm transition-colors",
+                            lastSyncedAt === null || item.updated_at > lastSyncedAt
+                              ? "bg-amber-400"
+                              : "bg-transparent",
+                          )}
+                        />
+                        <button
+                          type="button"
+                          data-testid={`checklist-item-checkbox-${item.id}`}
+                          aria-label={t("taskEdit.checkItemUnmark", { title: item.title })}
+                          onClick={() => void toggleItem(item.id)}
+                          className="w-5 h-5 rounded border-2 border-accent bg-accent flex-shrink-0 flex items-center justify-center hover:opacity-80 transition-opacity"
+                        >
                         <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
                           <path
                             d="M1 4L3.5 6.5L9 1"
@@ -479,7 +525,8 @@ export function TaskEditModal({
                             strokeLinejoin="round"
                           />
                         </svg>
-                      </button>
+                        </button>
+                      </div>
                       {editingItemId === item.id ? (
                         <input
                           type="text"

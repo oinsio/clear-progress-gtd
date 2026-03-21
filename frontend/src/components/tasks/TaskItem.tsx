@@ -32,7 +32,7 @@ interface TaskItemProps {
 
 export function TaskItem({ task, goals, contexts, categories, onComplete, onUpdate, onMove, onDelete, dragHandleProps }: TaskItemProps) {
   const { t } = useTranslation();
-  const { progress: checklistProgress, hasUnsyncedItems } = useChecklist(task.id);
+  const { progress: checklistProgress, hasUnsyncedItems, reload: reloadChecklist } = useChecklist(task.id);
   const isTaskUnsynced = useIsUnsynced(task);
   const isUnsynced = isTaskUnsynced || hasUnsyncedItems;
   const [isExpanded, setIsExpanded] = useState(false);
@@ -213,6 +213,7 @@ export function TaskItem({ task, goals, contexts, categories, onComplete, onUpda
         onClose={handleCloseEdit}
         onUpdate={onUpdate}
         onDelete={onDelete}
+        onChecklistChange={reloadChecklist}
       />
     </>
   );

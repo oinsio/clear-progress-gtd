@@ -7,7 +7,7 @@ import React, {
   useState,
 } from "react";
 import type { SyncStatus } from "@/types/common";
-import { SYNC_INTERVAL_MS, PING_INTERVAL_MS, SYNC_DEBOUNCE_MS } from "@/constants";
+import { SYNC_INTERVAL_MS, PING_INTERVAL_MS, SYNC_DEBOUNCE_MS, STORAGE_KEYS } from "@/constants";
 import { SyncService } from "@/services/SyncService";
 import { ApiClient } from "@/services/ApiClient";
 import { TaskRepository } from "@/db/repositories/TaskRepository";
@@ -44,7 +44,9 @@ const syncService = new SyncService(
 export function SyncProvider({ children }: { children: React.ReactNode }) {
   const [syncStatus, setSyncStatus] = useState<SyncStatus>("idle");
   const [syncVersion, setSyncVersion] = useState(0);
-  const [lastSyncedAt, setLastSyncedAt] = useState<string | null>(null);
+  const [lastSyncedAt, setLastSyncedAt] = useState<string | null>(
+    () => localStorage.getItem(STORAGE_KEYS.LAST_SYNC),
+  );
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const pingIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -56,6 +58,17 @@ export function SyncProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
+  const applySyncResult = useCallback(async (): Promise<void> => {
+    const syncTimestamp = new Date().toISOString();
+    await syncService.push();
+    await syncService.pull();
+    void defaultCoverSyncService.sync();
+    setSyncStatus("idle");
+    setSyncVersion((version) => version + 1);
+    localStorage.setItem(STORAGE_KEYS.LAST_SYNC, syncTimestamp);
+    setLastSyncedAt(syncTimestamp);
+  }, []);
+
   const sync = useCallback(async (): Promise<void> => {
     if (!navigator.onLine) {
       setSyncStatus("offline");
@@ -63,18 +76,12 @@ export function SyncProvider({ children }: { children: React.ReactNode }) {
     }
     setSyncStatus("syncing");
     try {
-      const syncTimestamp = new Date().toISOString();
-      await syncService.push();
-      await syncService.pull();
-      void defaultCoverSyncService.sync();
-      setSyncStatus("idle");
-      setSyncVersion((version) => version + 1);
-      setLastSyncedAt(syncTimestamp);
+      await applySyncResult();
       stopPingInterval();
     } catch {
       setSyncStatus("error");
     }
-  }, [stopPingInterval]);
+  }, [applySyncResult, stopPingInterval]);
 
   const schedulePush = useCallback(() => {
     if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
@@ -88,17 +95,11 @@ export function SyncProvider({ children }: { children: React.ReactNode }) {
       if (!pingResult.initialized) {
         await apiClient.init();
       }
-      const syncTimestamp = new Date().toISOString();
-      await syncService.push();
-      await syncService.pull();
-      void defaultCoverSyncService.sync();
-      setSyncStatus("idle");
-      setSyncVersion((version) => version + 1);
-      setLastSyncedAt(syncTimestamp);
+      await applySyncResult();
     } catch {
       // Still unreachable — keep pinging
     }
-  }, [stopPingInterval]);
+  }, [applySyncResult, stopPingInterval]);
 
   const startPingInterval = useCallback(() => {
     if (pingIntervalRef.current) return;
