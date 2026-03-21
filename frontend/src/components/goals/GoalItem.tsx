@@ -29,7 +29,7 @@ export function GoalItem({ goal, taskCount, onNavigate, nodeRef, style, dragHand
       style={style}
       data-testid="goal-item"
       className={cn(
-        "flex items-center border-b border-gray-100 bg-white border-l-2 transition-colors",
+        "flex items-center border-b border-gray-100 bg-white border-l-2 transition-colors hover:bg-gray-50",
         isUnsynced ? "border-l-amber-400" : "border-l-transparent",
       )}
     >
@@ -37,7 +37,7 @@ export function GoalItem({ goal, taskCount, onNavigate, nodeRef, style, dragHand
       <button
         type="button"
         data-testid="goal-navigate-button"
-        className="flex flex-1 items-center gap-3 px-4 py-3 text-left hover:bg-gray-50 active:bg-gray-100 transition-colors min-w-0"
+        className="flex flex-1 items-center gap-3 px-4 py-3 text-left min-w-0"
         onClick={() => onNavigate(goal.id)}
       >
         {/* Cover */}

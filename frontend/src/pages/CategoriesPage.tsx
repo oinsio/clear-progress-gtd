@@ -62,14 +62,14 @@ function SortableCategoryItem({
       ref={setNodeRef}
       style={style}
       className={cn(
-        "flex items-center border-b border-gray-100 bg-white border-l-2 transition-colors",
+        "flex items-center border-b border-gray-100 bg-white border-l-2 transition-colors hover:bg-gray-50",
         isUnsynced ? "border-l-amber-400" : "border-l-transparent",
       )}
     >
       <button
         type="button"
         onClick={() => onNavigate(category.id)}
-        className="flex-1 text-left px-4 py-3 hover:bg-gray-50 transition-colors"
+        className="flex-1 text-left px-4 py-3"
       >
         <span className="text-gray-800 text-sm">{category.name}</span>
         {taskCount > 0 && (

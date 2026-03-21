@@ -83,7 +83,7 @@ export function TaskItem({ task, goals, contexts, categories, onComplete, onUpda
         ref={containerRef}
         data-testid="task-item"
         className={cn(
-          "border-b border-gray-100 border-l-2 transition-colors",
+          "border-b border-gray-100 border-l-2 transition-colors hover:bg-gray-50",
           isUnsynced ? "border-l-amber-400" : "border-l-transparent",
         )}
       >
