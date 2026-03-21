@@ -1,5 +1,6 @@
 import { describe, it, expect, vi } from "vitest";
 import { ChecklistService } from "./ChecklistService";
+import type { ChecklistItem } from "@/types/entities";
 import type { ChecklistRepository } from "@/db/repositories/ChecklistRepository";
 import { buildChecklistItem } from "@/test/factories/checklistItemFactory";
 import { createMockChecklistRepository } from "@/test/factories/checklistRepositoryFactory";
@@ -208,6 +209,73 @@ describe("ChecklistService", () => {
       await expect(
         service.softDelete("nonexistent-id"),
       ).rejects.toThrow("ChecklistItem not found: nonexistent-id");
+    });
+  });
+
+  describe("reorderItems", () => {
+    it("should do nothing when items array is empty", async () => {
+      const { service, repository } = createService();
+      await service.reorderItems([]);
+      expect(repository.bulkUpsert).not.toHaveBeenCalled();
+    });
+
+    it("should assign sort_order based on index position in given order", async () => {
+      const items = [
+        buildChecklistItem({ sort_order: 2 }),
+        buildChecklistItem({ sort_order: 0 }),
+        buildChecklistItem({ sort_order: 1 }),
+      ];
+      const { service, repository } = createService();
+      await service.reorderItems(items);
+      const updatedItems = (
+        repository.bulkUpsert as ReturnType<typeof vi.fn>
+      ).mock.calls[0][0] as ChecklistItem[];
+      expect(updatedItems[0].sort_order).toBe(0);
+      expect(updatedItems[1].sort_order).toBe(1);
+      expect(updatedItems[2].sort_order).toBe(2);
+    });
+
+    it("should increment version for each item", async () => {
+      const items = [
+        buildChecklistItem({ version: 3 }),
+        buildChecklistItem({ version: 5 }),
+      ];
+      const { service, repository } = createService();
+      await service.reorderItems(items);
+      const updatedItems = (
+        repository.bulkUpsert as ReturnType<typeof vi.fn>
+      ).mock.calls[0][0] as ChecklistItem[];
+      expect(updatedItems[0].version).toBe(4);
+      expect(updatedItems[1].version).toBe(6);
+    });
+
+    it("should update updated_at for each item", async () => {
+      const oldTimestamp = "2025-01-01T00:00:00.000Z";
+      const items = [
+        buildChecklistItem({ updated_at: oldTimestamp }),
+        buildChecklistItem({ updated_at: oldTimestamp }),
+      ];
+      const { service, repository } = createService();
+      await service.reorderItems(items);
+      const updatedItems = (
+        repository.bulkUpsert as ReturnType<typeof vi.fn>
+      ).mock.calls[0][0] as ChecklistItem[];
+      expect(updatedItems[0].updated_at).not.toBe(oldTimestamp);
+      expect(updatedItems[1].updated_at).not.toBe(oldTimestamp);
+    });
+
+    it("should call repository.bulkUpsert once with all updated items", async () => {
+      const items = [
+        buildChecklistItem(),
+        buildChecklistItem(),
+        buildChecklistItem(),
+      ];
+      const { service, repository } = createService();
+      await service.reorderItems(items);
+      expect(repository.bulkUpsert).toHaveBeenCalledTimes(1);
+      expect(
+        (repository.bulkUpsert as ReturnType<typeof vi.fn>).mock.calls[0][0],
+      ).toHaveLength(3);
     });
   });
 

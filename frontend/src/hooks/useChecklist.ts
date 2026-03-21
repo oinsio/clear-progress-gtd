@@ -16,6 +16,7 @@ export interface UseChecklistReturn {
   toggleItem: (id: string) => Promise<void>;
   deleteItem: (id: string) => Promise<void>;
   updateItem: (id: string, title: string) => Promise<void>;
+  reorderItems: (items: ChecklistItem[]) => Promise<void>;
 }
 
 export function useChecklist(
@@ -80,9 +81,18 @@ export function useChecklist(
     [checklistService, loadItems, schedulePush],
   );
 
+  const reorderItems = useCallback(
+    async (reorderedItems: ChecklistItem[]) => {
+      await checklistService.reorderItems(reorderedItems);
+      await loadItems();
+      schedulePush();
+    },
+    [checklistService, loadItems, schedulePush],
+  );
+
   const hasUnsyncedItems = items.some(
     (item) => lastSyncedAt === null || item.updated_at > lastSyncedAt,
   );
 
-  return { items, progress, hasUnsyncedItems, isLoading, reload: loadItems, createItem, toggleItem, deleteItem, updateItem };
+  return { items, progress, hasUnsyncedItems, isLoading, reload: loadItems, createItem, toggleItem, deleteItem, updateItem, reorderItems };
 }

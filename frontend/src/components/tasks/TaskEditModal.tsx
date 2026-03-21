@@ -1,5 +1,19 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import { X, Inbox, ChevronRight, ArrowLeft } from "lucide-react";
+import { X, Inbox, ChevronRight, ArrowLeft, GripVertical } from "lucide-react";
+import {
+  DndContext,
+  closestCenter,
+  type DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  SortableContext,
+  useSortable,
+  verticalListSortingStrategy,
+  arrayMove,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
+import { useDndSensors } from "@/hooks/useDndSensors";
+import type { ChecklistItem } from "@/types/entities";
 import { useTranslation } from "react-i18next";
 import type { Task, Goal, Context, Category } from "@/types/entities";
 import type { Box, RepeatRule } from "@/types/common";
@@ -58,6 +72,160 @@ const SELECTOR_TITLE_KEYS: Record<SelectorType, string> = {
   [SELECTOR_TYPE.REPEAT]: "taskEdit.fieldRepeat",
 };
 
+const CHECKLIST_ITEM_VARIANT = {
+  ACTIVE: "active",
+  COMPLETED: "completed",
+} as const;
+
+type ChecklistItemVariant = (typeof CHECKLIST_ITEM_VARIANT)[keyof typeof CHECKLIST_ITEM_VARIANT];
+
+interface SortableChecklistItemProps {
+  item: ChecklistItem;
+  isEditing: boolean;
+  editingTitle: string;
+  lastSyncedAt: string | null;
+  variant: ChecklistItemVariant;
+  toggleAriaLabel: string;
+  deleteAriaLabel: string;
+  onToggle: () => void;
+  onStartEdit: () => void;
+  onEditChange: (value: string) => void;
+  onEditBlur: () => void;
+  onEditKeyDown: (event: React.KeyboardEvent<HTMLInputElement>) => void;
+  onDelete: () => void;
+}
+
+function SortableChecklistItem({
+  item,
+  isEditing,
+  editingTitle,
+  lastSyncedAt,
+  variant,
+  toggleAriaLabel,
+  deleteAriaLabel,
+  onToggle,
+  onStartEdit,
+  onEditChange,
+  onEditBlur,
+  onEditKeyDown,
+  onDelete,
+}: SortableChecklistItemProps) {
+  const isCompleted = variant === CHECKLIST_ITEM_VARIANT.COMPLETED;
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    setActivatorNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: item.id });
+
+  const dragStyle = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  return (
+    <div ref={setNodeRef} style={dragStyle} className="flex items-center gap-3 py-1.5">
+      <div className="flex items-center gap-1.5 flex-shrink-0">
+        {!isEditing ? (
+          <button
+            type="button"
+            ref={setActivatorNodeRef}
+            {...attributes}
+            {...listeners}
+            className="text-gray-300 hover:text-gray-500 transition-colors cursor-grab active:cursor-grabbing flex-shrink-0"
+            aria-label="drag"
+          >
+            <GripVertical size={14} />
+          </button>
+        ) : (
+          <span className="w-3.5 h-5 flex-shrink-0" />
+        )}
+        <span
+          className={cn(
+            "w-0.5 h-5 rounded-sm transition-colors",
+            lastSyncedAt === null || item.updated_at > lastSyncedAt
+              ? "bg-amber-400"
+              : "bg-transparent",
+          )}
+        />
+        <button
+          type="button"
+          data-testid={`checklist-item-checkbox-${item.id}`}
+          aria-label={toggleAriaLabel}
+          onClick={onToggle}
+          className={
+            isCompleted
+              ? "w-5 h-5 rounded border-2 border-accent bg-accent flex-shrink-0 flex items-center justify-center hover:opacity-80 transition-opacity"
+              : "w-5 h-5 rounded border-2 border-gray-300 flex-shrink-0 flex items-center justify-center hover:border-accent transition-colors"
+          }
+        >
+          {isCompleted && (
+            <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
+              <path
+                d="M1 4L3.5 6.5L9 1"
+                stroke="white"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          )}
+        </button>
+      </div>
+      {isEditing ? (
+        <input
+          type="text"
+          data-testid={`checklist-item-edit-input-${item.id}`}
+          value={editingTitle}
+          onChange={(event) => onEditChange(event.target.value)}
+          onBlur={onEditBlur}
+          onKeyDown={onEditKeyDown}
+          autoFocus
+          className={cn(
+            "flex-1 text-sm outline-none",
+            isCompleted ? "text-gray-400 line-through" : "text-gray-800",
+          )}
+        />
+      ) : (
+        <span
+          data-testid={`checklist-item-title-${item.id}`}
+          onClick={onStartEdit}
+          className={cn(
+            "flex-1 text-sm cursor-text",
+            isCompleted ? "text-gray-400 line-through" : "text-gray-800",
+          )}
+        >
+          {item.title}
+        </span>
+      )}
+      {isEditing && (
+        <button
+          type="button"
+          data-testid={`checklist-item-delete-btn-${item.id}`}
+          aria-label={deleteAriaLabel}
+          onMouseDown={(event) => event.preventDefault()}
+          onClick={onDelete}
+          className="flex-shrink-0 text-red-500 hover:text-red-700 transition-colors"
+        >
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+            <path
+              d="M2 4h12M5 4V2.5A.5.5 0 0 1 5.5 2h5a.5.5 0 0 1 .5.5V4M6 7v5M10 7v5M3 4l1 9.5A.5.5 0 0 0 4.5 14h7a.5.5 0 0 0 .5-.5L13 4"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+        </button>
+      )}
+    </div>
+  );
+}
+
 export function TaskEditModal({
   task,
   goals,
@@ -89,7 +257,7 @@ export function TaskEditModal({
   const [editingItemTitle, setEditingItemTitle] = useState("");
   const newItemInputRef = useRef<HTMLInputElement>(null);
 
-  const { items, progress, createItem: rawCreateItem, toggleItem: rawToggleItem, deleteItem: rawDeleteItem, updateItem: rawUpdateItem } = useChecklist(task.id, checklistService);
+  const { items, progress, createItem: rawCreateItem, toggleItem: rawToggleItem, deleteItem: rawDeleteItem, updateItem: rawUpdateItem, reorderItems: rawReorderItems } = useChecklist(task.id, checklistService);
   const { lastSyncedAt } = useSync();
 
   const createItem = useCallback(async (title: string) => {
@@ -111,6 +279,11 @@ export function TaskEditModal({
     await rawUpdateItem(id, title);
     onChecklistChange?.();
   }, [rawUpdateItem, onChecklistChange]);
+
+  const reorderItems = useCallback(async (reorderedItems: ChecklistItem[]) => {
+    await rawReorderItems(reorderedItems);
+    onChecklistChange?.();
+  }, [rawReorderItems, onChecklistChange]);
 
   useEffect(() => {
     if (isOpen) {
@@ -196,6 +369,35 @@ export function TaskEditModal({
     [commitItemEdit],
   );
 
+  const dndSensors = useDndSensors();
+
+  const activeItems = items.filter((item) => !item.is_completed);
+  const completedItems = items.filter((item) => item.is_completed);
+
+  const handleActiveItemsDragEnd = useCallback(
+    (event: DragEndEvent) => {
+      const { active, over } = event;
+      if (!over || active.id === over.id) return;
+      const oldIndex = activeItems.findIndex((item) => item.id === active.id);
+      const newIndex = activeItems.findIndex((item) => item.id === over.id);
+      const reordered = arrayMove(activeItems, oldIndex, newIndex);
+      void reorderItems(reordered);
+    },
+    [activeItems, reorderItems],
+  );
+
+  const handleCompletedItemsDragEnd = useCallback(
+    (event: DragEndEvent) => {
+      const { active, over } = event;
+      if (!over || active.id === over.id) return;
+      const oldIndex = completedItems.findIndex((item) => item.id === active.id);
+      const newIndex = completedItems.findIndex((item) => item.id === over.id);
+      const reordered = arrayMove(completedItems, oldIndex, newIndex);
+      void reorderItems(reordered);
+    },
+    [completedItems, reorderItems],
+  );
+
   if (!isOpen) return null;
 
   const selectedGoalTitle = selectedGoalId
@@ -214,9 +416,6 @@ export function TaskEditModal({
     progress.total > 0
       ? t("taskEdit.tabChecklistProgress", { completed: progress.completed, total: progress.total })
       : t("taskEdit.tabChecklist");
-
-  const activeItems = items.filter((item) => !item.is_completed);
-  const completedItems = items.filter((item) => item.is_completed);
 
   return (
     <div data-testid="task-edit-modal" className="fixed inset-0 z-50 flex flex-col justify-end">
@@ -409,86 +608,55 @@ export function TaskEditModal({
               <p className="text-center text-sm font-medium text-accent mb-2">
                 {t("taskEdit.activeSection", { count: activeItems.length })}
               </p>
-              <div className="flex flex-col gap-1">
-                {activeItems.map((item) => (
-                  <div key={item.id} className="flex items-center gap-3 py-1.5">
-                    <div className="flex items-center gap-1.5 flex-shrink-0">
-                      <span
-                        className={cn(
-                          "w-0.5 h-5 rounded-sm transition-colors",
-                          lastSyncedAt === null || item.updated_at > lastSyncedAt
-                            ? "bg-amber-400"
-                            : "bg-transparent",
-                        )}
+              <DndContext
+                sensors={dndSensors}
+                collisionDetection={closestCenter}
+                onDragEnd={handleActiveItemsDragEnd}
+              >
+                <SortableContext
+                  items={activeItems.map((item) => item.id)}
+                  strategy={verticalListSortingStrategy}
+                >
+                  <div className="flex flex-col gap-1">
+                    {activeItems.map((item) => (
+                      <SortableChecklistItem
+                        key={item.id}
+                        item={item}
+                        isEditing={editingItemId === item.id}
+                        editingTitle={editingItemTitle}
+                        lastSyncedAt={lastSyncedAt}
+                        variant={CHECKLIST_ITEM_VARIANT.ACTIVE}
+                        toggleAriaLabel={t("taskEdit.checkItemMark", { title: item.title })}
+                        deleteAriaLabel={t("taskEdit.checkItemDelete", { title: item.title })}
+                        onToggle={() => void toggleItem(item.id)}
+                        onStartEdit={() => handleItemTitleClick(item)}
+                        onEditChange={setEditingItemTitle}
+                        onEditBlur={() => void commitItemEdit(item.id)}
+                        onEditKeyDown={(event) => void handleItemEditKeyDown(event, item.id)}
+                        onDelete={() => void deleteItem(item.id)}
                       />
-                      <button
-                        type="button"
-                        data-testid={`checklist-item-checkbox-${item.id}`}
-                        aria-label={t("taskEdit.checkItemMark", { title: item.title })}
-                        onClick={() => void toggleItem(item.id)}
-                        className="w-5 h-5 rounded border-2 border-gray-300 flex-shrink-0 flex items-center justify-center hover:border-accent transition-colors"
+                    ))}
+                    {/* New item input */}
+                    <div className="flex items-center gap-3 py-1.5">
+                      <div className="flex items-center gap-1.5 flex-shrink-0">
+                        <span className="w-3.5 h-5 flex-shrink-0" />
+                        <span className="w-0.5 h-5" />
+                        <div className="w-5 h-5 rounded border-2 border-gray-200 flex-shrink-0" />
+                      </div>
+                      <input
+                        ref={newItemInputRef}
+                        type="text"
+                        data-testid="task-edit-checklist-new-item-input"
+                        value={newItemTitle}
+                        onChange={(event) => setNewItemTitle(event.target.value)}
+                        onKeyDown={(event) => void handleNewItemKeyDown(event)}
+                        placeholder={t("taskEdit.newChecklistItemPlaceholder")}
+                        className="flex-1 text-sm text-gray-400 outline-none placeholder:text-gray-300"
                       />
                     </div>
-                    {editingItemId === item.id ? (
-                      <input
-                        type="text"
-                        data-testid={`checklist-item-edit-input-${item.id}`}
-                        value={editingItemTitle}
-                        onChange={(event) => setEditingItemTitle(event.target.value)}
-                        onBlur={() => void commitItemEdit(item.id)}
-                        onKeyDown={(event) => void handleItemEditKeyDown(event, item.id)}
-                        autoFocus
-                        className="flex-1 text-sm text-gray-800 outline-none"
-                      />
-                    ) : (
-                      <span
-                        data-testid={`checklist-item-title-${item.id}`}
-                        onClick={() => handleItemTitleClick(item)}
-                        className="flex-1 text-sm text-gray-800 cursor-text"
-                      >
-                        {item.title}
-                      </span>
-                    )}
-                    {editingItemId === item.id && (
-                      <button
-                        type="button"
-                        data-testid={`checklist-item-delete-btn-${item.id}`}
-                        aria-label={`Удалить: ${item.title}`}
-                        onMouseDown={(event) => event.preventDefault()}
-                        onClick={() => void deleteItem(item.id)}
-                        className="flex-shrink-0 text-red-500 hover:text-red-700 transition-colors"
-                      >
-                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                          <path
-                            d="M2 4h12M5 4V2.5A.5.5 0 0 1 5.5 2h5a.5.5 0 0 1 .5.5V4M6 7v5M10 7v5M3 4l1 9.5A.5.5 0 0 0 4.5 14h7a.5.5 0 0 0 .5-.5L13 4"
-                            stroke="currentColor"
-                            strokeWidth="1.5"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                          />
-                        </svg>
-                      </button>
-                    )}
                   </div>
-                ))}
-                {/* New item input */}
-                <div className="flex items-center gap-3 py-1.5">
-                  <div className="flex items-center gap-1.5 flex-shrink-0">
-                    <span className="w-0.5 h-5" />
-                    <div className="w-5 h-5 rounded border-2 border-gray-200 flex-shrink-0" />
-                  </div>
-                  <input
-                    ref={newItemInputRef}
-                    type="text"
-                    data-testid="task-edit-checklist-new-item-input"
-                    value={newItemTitle}
-                    onChange={(event) => setNewItemTitle(event.target.value)}
-                    onKeyDown={(event) => void handleNewItemKeyDown(event)}
-                    placeholder={t("taskEdit.newChecklistItemPlaceholder")}
-                    className="flex-1 text-sm text-gray-400 outline-none placeholder:text-gray-300"
-                  />
-                </div>
-              </div>
+                </SortableContext>
+              </DndContext>
             </div>
 
             {/* Done items section */}
@@ -497,79 +665,37 @@ export function TaskEditModal({
                 <p className="text-center text-sm font-medium text-accent mb-2">
                   {t("taskEdit.doneSection", { count: completedItems.length })}
                 </p>
-                <div className="flex flex-col gap-1">
-                  {completedItems.map((item) => (
-                    <div key={item.id} className="flex items-center gap-3 py-1.5">
-                      <div className="flex items-center gap-1.5 flex-shrink-0">
-                        <span
-                          className={cn(
-                            "w-0.5 h-5 rounded-sm transition-colors",
-                            lastSyncedAt === null || item.updated_at > lastSyncedAt
-                              ? "bg-amber-400"
-                              : "bg-transparent",
-                          )}
+                <DndContext
+                  sensors={dndSensors}
+                  collisionDetection={closestCenter}
+                  onDragEnd={handleCompletedItemsDragEnd}
+                >
+                  <SortableContext
+                    items={completedItems.map((item) => item.id)}
+                    strategy={verticalListSortingStrategy}
+                  >
+                    <div className="flex flex-col gap-1">
+                      {completedItems.map((item) => (
+                        <SortableChecklistItem
+                          key={item.id}
+                          item={item}
+                          isEditing={editingItemId === item.id}
+                          editingTitle={editingItemTitle}
+                          lastSyncedAt={lastSyncedAt}
+                          variant={CHECKLIST_ITEM_VARIANT.COMPLETED}
+                          toggleAriaLabel={t("taskEdit.checkItemUnmark", { title: item.title })}
+                          deleteAriaLabel={t("taskEdit.checkItemDelete", { title: item.title })}
+                          onToggle={() => void toggleItem(item.id)}
+                          onStartEdit={() => handleItemTitleClick(item)}
+                          onEditChange={setEditingItemTitle}
+                          onEditBlur={() => void commitItemEdit(item.id)}
+                          onEditKeyDown={(event) => void handleItemEditKeyDown(event, item.id)}
+                          onDelete={() => void deleteItem(item.id)}
                         />
-                        <button
-                          type="button"
-                          data-testid={`checklist-item-checkbox-${item.id}`}
-                          aria-label={t("taskEdit.checkItemUnmark", { title: item.title })}
-                          onClick={() => void toggleItem(item.id)}
-                          className="w-5 h-5 rounded border-2 border-accent bg-accent flex-shrink-0 flex items-center justify-center hover:opacity-80 transition-opacity"
-                        >
-                        <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
-                          <path
-                            d="M1 4L3.5 6.5L9 1"
-                            stroke="white"
-                            strokeWidth="1.5"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                          />
-                        </svg>
-                        </button>
-                      </div>
-                      {editingItemId === item.id ? (
-                        <input
-                          type="text"
-                          data-testid={`checklist-item-edit-input-${item.id}`}
-                          value={editingItemTitle}
-                          onChange={(event) => setEditingItemTitle(event.target.value)}
-                          onBlur={() => void commitItemEdit(item.id)}
-                          onKeyDown={(event) => void handleItemEditKeyDown(event, item.id)}
-                          autoFocus
-                          className="flex-1 text-sm text-gray-400 outline-none line-through"
-                        />
-                      ) : (
-                        <span
-                          data-testid={`checklist-item-title-${item.id}`}
-                          onClick={() => handleItemTitleClick(item)}
-                          className="flex-1 text-sm text-gray-400 line-through cursor-text"
-                        >
-                          {item.title}
-                        </span>
-                      )}
-                      {editingItemId === item.id && (
-                        <button
-                          type="button"
-                          data-testid={`checklist-item-delete-btn-${item.id}`}
-                          aria-label={t("taskEdit.checkItemDelete", { title: item.title })}
-                          onMouseDown={(event) => event.preventDefault()}
-                          onClick={() => void deleteItem(item.id)}
-                          className="flex-shrink-0 text-red-500 hover:text-red-700 transition-colors"
-                        >
-                          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                            <path
-                              d="M2 4h12M5 4V2.5A.5.5 0 0 1 5.5 2h5a.5.5 0 0 1 .5.5V4M6 7v5M10 7v5M3 4l1 9.5A.5.5 0 0 0 4.5 14h7a.5.5 0 0 0 .5-.5L13 4"
-                              stroke="currentColor"
-                              strokeWidth="1.5"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                            />
-                          </svg>
-                        </button>
-                      )}
+                      ))}
                     </div>
-                  ))}
-                </div>
+                  </SortableContext>
+                </DndContext>
               </div>
             )}
           </div>

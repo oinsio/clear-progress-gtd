@@ -59,6 +59,18 @@ export class ChecklistService {
     return this.applyChanges(id, { is_deleted: true });
   }
 
+  async reorderItems(items: ChecklistItem[]): Promise<void> {
+    if (items.length === 0) return;
+    const now = new Date().toISOString();
+    const updatedItems = items.map((item, index) => ({
+      ...item,
+      sort_order: index,
+      version: item.version + 1,
+      updated_at: now,
+    }));
+    await this.checklistRepository.bulkUpsert(updatedItems);
+  }
+
   async getProgress(taskId: string): Promise<ChecklistProgress> {
     const items = await this.checklistRepository.getByTaskId(taskId);
     return {
