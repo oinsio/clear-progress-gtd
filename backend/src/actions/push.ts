@@ -6,7 +6,7 @@ import { getAllGoals, upsertGoal } from '../sheets/goals.sheet';
 import { getAllContexts, upsertContext } from '../sheets/contexts.sheet';
 import { getAllCategories, upsertCategory } from '../sheets/categories.sheet';
 import { getAllChecklistItems, upsertChecklistItem } from '../sheets/checklists.sheet';
-import { upsertSetting } from '../sheets/settings.sheet';
+import { getAllSettings, upsertSetting } from '../sheets/settings.sheet';
 import type { Task, Goal, Context, Category, ChecklistItem, Setting, PushItemResult } from '../types';
 
 type AnyEntity = Task | Goal | Context | Category | ChecklistItem;
@@ -103,8 +103,20 @@ export function push(changes: {
       results.checklist_items = processRecords(changes.checklist_items, getAllChecklistItems(), upsertChecklistItem);
     }
     if (changes.settings?.length) {
-      changes.settings.forEach(s => upsertSetting(s));
-      results.settings = changes.settings.map(s => ({ id: s.key, status: PUSH_STATUSES.ACCEPTED }));
+      const serverSettings = getAllSettings();
+      results.settings = changes.settings.map(clientSetting => {
+        const serverSetting = serverSettings.find(s => s.key === clientSetting.key);
+        const resolution = serverSetting
+          ? resolveConflict(clientSetting.updated_at, serverSetting.updated_at)
+          : CONFLICT_RESOLUTION.ACCEPT;
+
+        if (resolution === CONFLICT_RESOLUTION.ACCEPT) {
+          upsertSetting(clientSetting);
+          return { id: clientSetting.key, status: PUSH_STATUSES.ACCEPTED };
+        }
+
+        return { id: clientSetting.key, status: PUSH_STATUSES.CONFLICT };
+      });
     }
 
     return jsonOk({ results, server_time: new Date().toISOString() });

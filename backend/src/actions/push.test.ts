@@ -9,14 +9,14 @@ vi.mock('../sheets/goals.sheet', () => ({ getAllGoals: vi.fn(), upsertGoal: vi.f
 vi.mock('../sheets/contexts.sheet', () => ({ getAllContexts: vi.fn(), upsertContext: vi.fn() }));
 vi.mock('../sheets/categories.sheet', () => ({ getAllCategories: vi.fn(), upsertCategory: vi.fn() }));
 vi.mock('../sheets/checklists.sheet', () => ({ getAllChecklistItems: vi.fn(), upsertChecklistItem: vi.fn() }));
-vi.mock('../sheets/settings.sheet', () => ({ upsertSetting: vi.fn() }));
+vi.mock('../sheets/settings.sheet', () => ({ upsertSetting: vi.fn(), getAllSettings: vi.fn() }));
 
 import { getAllTasks, upsertTask } from '../sheets/tasks.sheet';
 import { getAllGoals, upsertGoal } from '../sheets/goals.sheet';
 import { getAllContexts, upsertContext } from '../sheets/contexts.sheet';
 import { getAllCategories, upsertCategory } from '../sheets/categories.sheet';
 import { getAllChecklistItems, upsertChecklistItem } from '../sheets/checklists.sheet';
-import { upsertSetting } from '../sheets/settings.sheet';
+import { upsertSetting, getAllSettings } from '../sheets/settings.sheet';
 
 function parseResponse(): Record<string, unknown> {
   const calls = (ContentService.createTextOutput as ReturnType<typeof vi.fn>).mock.calls;
@@ -110,6 +110,7 @@ describe('push', () => {
     vi.mocked(getAllContexts).mockReturnValue([]);
     vi.mocked(getAllCategories).mockReturnValue([]);
     vi.mocked(getAllChecklistItems).mockReturnValue([]);
+    vi.mocked(getAllSettings).mockReturnValue([]);
   });
 
   describe('general response', () => {
@@ -346,6 +347,61 @@ describe('push', () => {
     it('should not call upsertSetting when settings array is empty', () => {
       push({ settings: [] });
       expect(upsertSetting).not.toHaveBeenCalled();
+    });
+
+    it('should upsert setting when server does not have it yet', () => {
+      const clientSetting: Setting = { key: 'default_box', value: 'today', updated_at: '2026-03-21T10:00:00.000Z' };
+      vi.mocked(getAllSettings).mockReturnValue([]);
+
+      push({ settings: [clientSetting] });
+
+      expect(upsertSetting).toHaveBeenCalledWith(clientSetting);
+    });
+
+    it('should upsert setting when client updated_at is newer than server', () => {
+      const clientSetting: Setting = { key: 'default_box', value: 'today', updated_at: '2026-03-21T12:00:00.000Z' };
+      vi.mocked(getAllSettings).mockReturnValue([
+        { key: 'default_box', value: 'inbox', updated_at: '2026-03-21T10:00:00.000Z' },
+      ]);
+
+      push({ settings: [clientSetting] });
+
+      expect(upsertSetting).toHaveBeenCalledWith(clientSetting);
+    });
+
+    it('should return accepted when client updated_at is newer than server', () => {
+      const clientSetting: Setting = { key: 'default_box', value: 'today', updated_at: '2026-03-21T12:00:00.000Z' };
+      vi.mocked(getAllSettings).mockReturnValue([
+        { key: 'default_box', value: 'inbox', updated_at: '2026-03-21T10:00:00.000Z' },
+      ]);
+
+      push({ settings: [clientSetting] });
+
+      const results = parseResponse().results as Record<string, unknown[]>;
+      expect(results.settings[0]).toMatchObject({ id: 'default_box', status: PUSH_STATUSES.ACCEPTED });
+    });
+
+    it('should not call upsertSetting when server updated_at is newer than client', () => {
+      const clientSetting: Setting = { key: 'default_box', value: 'today', updated_at: '2026-03-21T10:00:00.000Z' };
+      vi.mocked(getAllSettings).mockReturnValue([
+        { key: 'default_box', value: 'week', updated_at: '2026-03-21T12:00:00.000Z' },
+      ]);
+
+      push({ settings: [clientSetting] });
+
+      expect(upsertSetting).not.toHaveBeenCalled();
+    });
+
+    it('should return conflict when server updated_at is newer than client', () => {
+      const clientSetting: Setting = { key: 'default_box', value: 'today', updated_at: '2026-03-21T10:00:00.000Z' };
+      vi.mocked(getAllSettings).mockReturnValue([
+        { key: 'default_box', value: 'week', updated_at: '2026-03-21T12:00:00.000Z' },
+      ]);
+
+      push({ settings: [clientSetting] });
+
+      const results = parseResponse().results as Record<string, unknown[]>;
+      expect(results.settings[0]).toMatchObject({ id: 'default_box', status: PUSH_STATUSES.CONFLICT });
     });
   });
 
