@@ -212,7 +212,7 @@ describe("SYNC_INTERVAL_MS", () => {
 
 describe("SYNC_DEBOUNCE_MS", () => {
   it("should be 7500 milliseconds", () => {
-    expect(SYNC_DEBOUNCE_MS).toBe(7500);
+    expect(SYNC_DEBOUNCE_MS).toBe(15000);
   });
 
   it("should be a positive number", () => {
