@@ -1,6 +1,16 @@
 import { renderHook, waitFor, act } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { useChecklist } from "./useChecklist";
+
+vi.mock("@/app/providers/SyncProvider", () => ({
+  useSync: () => ({
+    syncVersion: 0,
+    syncStatus: "idle",
+    pull: vi.fn(),
+    push: vi.fn(),
+    schedulePush: vi.fn(),
+  }),
+}));
 import type { ChecklistService } from "@/services/ChecklistService";
 import { buildChecklistItem } from "@/test/factories/checklistItemFactory";
 

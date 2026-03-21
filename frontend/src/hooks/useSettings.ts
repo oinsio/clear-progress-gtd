@@ -3,6 +3,7 @@ import type { Box, AccentColor } from "@/types/common";
 import { SettingsService } from "@/services/SettingsService";
 import { SettingsRepository } from "@/db/repositories/SettingsRepository";
 import { ACCENT_COLORS, BOX, DEFAULT_ACCENT_COLOR, SETTING_KEYS, STORAGE_KEYS } from "@/constants";
+import { useSync } from "@/app/providers/SyncProvider";
 
 const defaultSettingsService = new SettingsService(new SettingsRepository());
 
@@ -47,6 +48,7 @@ export function useSettings(
   const [accentColor, setAccentColorState] =
     useState<AccentColor>(getCachedAccentColor);
   const [isLoading, setIsLoading] = useState(true);
+  const { schedulePush } = useSync();
 
   const loadSettings = useCallback(async () => {
     const [box, color] = await Promise.all([
@@ -72,16 +74,18 @@ export function useSettings(
     async (box: Box) => {
       await settingsService.set(SETTING_KEYS.DEFAULT_BOX, box);
       await loadSettings();
+      schedulePush();
     },
-    [settingsService],
+    [settingsService, loadSettings, schedulePush],
   );
 
   const setAccentColor = useCallback(
     async (color: AccentColor) => {
       await settingsService.set(SETTING_KEYS.ACCENT_COLOR, color);
       await loadSettings();
+      schedulePush();
     },
-    [settingsService],
+    [settingsService, loadSettings, schedulePush],
   );
 
   return { defaultBox, accentColor, isLoading, setDefaultBox, setAccentColor };

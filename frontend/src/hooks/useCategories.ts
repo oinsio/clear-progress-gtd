@@ -20,7 +20,7 @@ export function useCategories(
 ): UseCategoriesReturn {
   const [categories, setCategories] = useState<Category[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const { syncVersion } = useSync();
+  const { syncVersion, schedulePush } = useSync();
 
   const loadCategories = useCallback(async () => {
     const allCategories = await categoryService.getAll();
@@ -36,32 +36,36 @@ export function useCategories(
     async (name: string) => {
       await categoryService.create(name);
       await loadCategories();
+      schedulePush();
     },
-    [categoryService, loadCategories],
+    [categoryService, loadCategories, schedulePush],
   );
 
   const updateCategory = useCallback(
     async (id: string, name: string) => {
       await categoryService.update(id, name);
       await loadCategories();
+      schedulePush();
     },
-    [categoryService, loadCategories],
+    [categoryService, loadCategories, schedulePush],
   );
 
   const deleteCategory = useCallback(
     async (id: string) => {
       await categoryService.softDelete(id);
       await loadCategories();
+      schedulePush();
     },
-    [categoryService, loadCategories],
+    [categoryService, loadCategories, schedulePush],
   );
 
   const reorderCategories = useCallback(
     async (orderedCategories: Category[]) => {
       await categoryService.reorderCategories(orderedCategories);
       await loadCategories();
+      schedulePush();
     },
-    [categoryService, loadCategories],
+    [categoryService, loadCategories, schedulePush],
   );
 
   return { categories, isLoading, createCategory, updateCategory, deleteCategory, reorderCategories };

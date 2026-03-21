@@ -5,6 +5,7 @@ import { GoalService } from "@/services/GoalService";
 import { GoalRepository } from "@/db/repositories/GoalRepository";
 import { TaskService } from "@/services/TaskService";
 import { defaultTaskService } from "@/services/defaultServices";
+import { useSync } from "@/app/providers/SyncProvider";
 
 const defaultGoalService = new GoalService(new GoalRepository());
 
@@ -26,6 +27,7 @@ export function useGoal(
   const [goal, setGoal] = useState<Goal | undefined>(undefined);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const { schedulePush } = useSync();
 
   const loadGoal = useCallback(async () => {
     const [foundGoal, goalTasks] = await Promise.all([
@@ -46,8 +48,9 @@ export function useGoal(
       if (!goal) return;
       await goalService.update(goal.id, changes);
       await loadGoal();
+      schedulePush();
     },
-    [goalService, goal, loadGoal],
+    [goalService, goal, loadGoal, schedulePush],
   );
 
   const updateGoalStatus = useCallback(
@@ -55,14 +58,16 @@ export function useGoal(
       if (!goal) return;
       await goalService.updateStatus(goal.id, status);
       await loadGoal();
+      schedulePush();
     },
-    [goalService, goal, loadGoal],
+    [goalService, goal, loadGoal, schedulePush],
   );
 
   const deleteGoal = useCallback(async () => {
     if (!goal) return;
     await goalService.softDelete(goal.id);
-  }, [goalService, goal]);
+    schedulePush();
+  }, [goalService, goal, schedulePush]);
 
   return { goal, tasks, isLoading, updateGoal, updateGoalStatus, deleteGoal, reload: loadGoal };
 }

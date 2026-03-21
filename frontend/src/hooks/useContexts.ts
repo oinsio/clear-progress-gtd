@@ -20,7 +20,7 @@ export function useContexts(
 ): UseContextsReturn {
   const [contexts, setContexts] = useState<Context[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const { syncVersion } = useSync();
+  const { syncVersion, schedulePush } = useSync();
 
   const loadContexts = useCallback(async () => {
     const allContexts = await contextService.getAll();
@@ -36,32 +36,36 @@ export function useContexts(
     async (name: string) => {
       await contextService.create(name);
       await loadContexts();
+      schedulePush();
     },
-    [contextService, loadContexts],
+    [contextService, loadContexts, schedulePush],
   );
 
   const updateContext = useCallback(
     async (id: string, name: string) => {
       await contextService.update(id, name);
       await loadContexts();
+      schedulePush();
     },
-    [contextService, loadContexts],
+    [contextService, loadContexts, schedulePush],
   );
 
   const deleteContext = useCallback(
     async (id: string) => {
       await contextService.softDelete(id);
       await loadContexts();
+      schedulePush();
     },
-    [contextService, loadContexts],
+    [contextService, loadContexts, schedulePush],
   );
 
   const reorderContexts = useCallback(
     async (orderedContexts: Context[]) => {
       await contextService.reorderContexts(orderedContexts);
       await loadContexts();
+      schedulePush();
     },
-    [contextService, loadContexts],
+    [contextService, loadContexts, schedulePush],
   );
 
   return { contexts, isLoading, createContext, updateContext, deleteContext, reorderContexts };

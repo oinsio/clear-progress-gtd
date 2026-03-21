@@ -2,6 +2,7 @@ import { useCallback } from "react";
 import type { Task } from "@/types/entities";
 import type { Box } from "@/types/common";
 import { TaskService } from "@/services/TaskService";
+import { useSync } from "@/app/providers/SyncProvider";
 
 export interface UseTaskMutationsReturn {
   completeTask: (id: string) => Promise<void>;
@@ -14,6 +15,8 @@ export function useTaskMutations(
   taskService: TaskService,
   onReload: () => Promise<void>,
 ): UseTaskMutationsReturn {
+  const { schedulePush } = useSync();
+
   const completeTask = useCallback(
     async (id: string) => {
       const task = await taskService.getById(id);
@@ -24,32 +27,36 @@ export function useTaskMutations(
         await taskService.complete(id);
       }
       await onReload();
+      schedulePush();
     },
-    [taskService, onReload],
+    [taskService, onReload, schedulePush],
   );
 
   const updateTask = useCallback(
     async (id: string, changes: Partial<Task>) => {
       await taskService.update(id, changes);
       await onReload();
+      schedulePush();
     },
-    [taskService, onReload],
+    [taskService, onReload, schedulePush],
   );
 
   const moveTask = useCallback(
     async (id: string, box: Box) => {
       await taskService.moveToBox(id, box);
       await onReload();
+      schedulePush();
     },
-    [taskService, onReload],
+    [taskService, onReload, schedulePush],
   );
 
   const deleteTask = useCallback(
     async (id: string) => {
       await taskService.softDelete(id);
       await onReload();
+      schedulePush();
     },
-    [taskService, onReload],
+    [taskService, onReload, schedulePush],
   );
 
   return { completeTask, updateTask, moveTask, deleteTask };

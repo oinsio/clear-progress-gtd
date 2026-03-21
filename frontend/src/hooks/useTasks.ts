@@ -23,7 +23,7 @@ export function useTasks(
 ): UseTasksReturn {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const { syncVersion } = useSync();
+  const { syncVersion, schedulePush } = useSync();
 
   const loadTasks = useCallback(async () => {
     const boxTasks = await taskService.getByBox(box);
@@ -40,8 +40,9 @@ export function useTasks(
     async (title: string) => {
       await taskService.create({ title, box });
       await loadTasks();
+      schedulePush();
     },
-    [taskService, loadTasks, box],
+    [taskService, loadTasks, box, schedulePush],
   );
 
   const completeTask = useCallback(
@@ -54,40 +55,45 @@ export function useTasks(
         await taskService.complete(id);
       }
       await loadTasks();
+      schedulePush();
     },
-    [taskService, loadTasks],
+    [taskService, loadTasks, schedulePush],
   );
 
   const deleteTask = useCallback(
     async (id: string) => {
       await taskService.softDelete(id);
       await loadTasks();
+      schedulePush();
     },
-    [taskService, loadTasks],
+    [taskService, loadTasks, schedulePush],
   );
 
   const moveTask = useCallback(
     async (id: string, targetBox: Box) => {
       await taskService.moveToBox(id, targetBox);
       await loadTasks();
+      schedulePush();
     },
-    [taskService, loadTasks],
+    [taskService, loadTasks, schedulePush],
   );
 
   const updateTask = useCallback(
     async (id: string, changes: Partial<Task>) => {
       await taskService.update(id, changes);
       await loadTasks();
+      schedulePush();
     },
-    [taskService, loadTasks],
+    [taskService, loadTasks, schedulePush],
   );
 
   const reorderTasks = useCallback(
     async (orderedTasks: Task[]) => {
       setTasks(orderedTasks);
       await taskService.reorderTasks(orderedTasks);
+      schedulePush();
     },
-    [taskService],
+    [taskService, schedulePush],
   );
 
   return { tasks, isLoading, createTask, completeTask, deleteTask, moveTask, updateTask, reorderTasks, reload: loadTasks };

@@ -17,7 +17,7 @@ export function useInboxTasks(
 ): UseInboxTasksReturn {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const { syncVersion } = useSync();
+  const { syncVersion, schedulePush } = useSync();
 
   const loadTasks = useCallback(async () => {
     const inboxTasks = await taskService.getByBox(BOX.INBOX);
@@ -33,16 +33,18 @@ export function useInboxTasks(
     async (id: string) => {
       await taskService.complete(id);
       await loadTasks();
+      schedulePush();
     },
-    [taskService, loadTasks],
+    [taskService, loadTasks, schedulePush],
   );
 
   const deleteTask = useCallback(
     async (id: string) => {
       await taskService.softDelete(id);
       await loadTasks();
+      schedulePush();
     },
-    [taskService, loadTasks],
+    [taskService, loadTasks, schedulePush],
   );
 
   return { tasks, isLoading, completeTask, deleteTask };

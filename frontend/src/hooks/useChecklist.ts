@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import type { ChecklistItem } from "@/types/entities";
 import { ChecklistService, type ChecklistProgress } from "@/services/ChecklistService";
 import { ChecklistRepository } from "@/db/repositories/ChecklistRepository";
+import { useSync } from "@/app/providers/SyncProvider";
 
 const defaultChecklistService = new ChecklistService(new ChecklistRepository());
 
@@ -25,6 +26,7 @@ export function useChecklist(
     total: 0,
   });
   const [isLoading, setIsLoading] = useState(true);
+  const { schedulePush } = useSync();
 
   const loadItems = useCallback(async () => {
     const [taskItems, taskProgress] = await Promise.all([
@@ -44,32 +46,36 @@ export function useChecklist(
     async (title: string) => {
       await checklistService.create(taskId, title);
       await loadItems();
+      schedulePush();
     },
-    [checklistService, taskId, loadItems],
+    [checklistService, taskId, loadItems, schedulePush],
   );
 
   const toggleItem = useCallback(
     async (id: string) => {
       await checklistService.toggle(id);
       await loadItems();
+      schedulePush();
     },
-    [checklistService, loadItems],
+    [checklistService, loadItems, schedulePush],
   );
 
   const deleteItem = useCallback(
     async (id: string) => {
       await checklistService.softDelete(id);
       await loadItems();
+      schedulePush();
     },
-    [checklistService, loadItems],
+    [checklistService, loadItems, schedulePush],
   );
 
   const updateItem = useCallback(
     async (id: string, title: string) => {
       await checklistService.update(id, { title });
       await loadItems();
+      schedulePush();
     },
-    [checklistService, loadItems],
+    [checklistService, loadItems, schedulePush],
   );
 
   return { items, progress, isLoading, createItem, toggleItem, deleteItem, updateItem };

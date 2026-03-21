@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { render, act, screen } from "@testing-library/react";
-import { PING_INTERVAL_MS } from "@/constants";
+import { render, act, screen, fireEvent } from "@testing-library/react";
+import { PING_INTERVAL_MS, SYNC_INTERVAL_MS, SYNC_DEBOUNCE_MS } from "@/constants";
 
 const {
   mockPing,
@@ -72,6 +72,24 @@ function SyncVersionDisplay() {
   return <div data-testid="version">{syncVersion}</div>;
 }
 
+function SyncMethodTrigger({ method }: { method: "pull" | "push" }) {
+  const syncCtx = useSync();
+  return (
+    <button data-testid={`${method}-btn`} onClick={() => void syncCtx[method]()}>
+      {method}
+    </button>
+  );
+}
+
+function SchedulePushTrigger() {
+  const { schedulePush } = useSync();
+  return (
+    <button data-testid="schedule-btn" onClick={schedulePush}>
+      schedule
+    </button>
+  );
+}
+
 function renderProvider() {
   return render(
     <SyncProvider>
@@ -88,30 +106,46 @@ function renderProviderWithVersion() {
   );
 }
 
+function renderProviderWithMethod(method: "pull" | "push") {
+  return render(
+    <SyncProvider>
+      <SyncMethodTrigger method={method} />
+    </SyncProvider>,
+  );
+}
+
+function renderProviderWithScheduler() {
+  return render(
+    <SyncProvider>
+      <SchedulePushTrigger />
+    </SyncProvider>,
+  );
+}
+
+beforeEach(() => {
+  vi.clearAllMocks();
+  vi.useFakeTimers();
+
+  mockPull.mockResolvedValue(undefined);
+  mockPush.mockResolvedValue(undefined);
+  mockPing.mockResolvedValue(VALID_PING_INITIALIZED);
+  mockInit.mockResolvedValue({ ok: true });
+  mockInitializeLocalCovers.mockResolvedValue(undefined);
+  mockCoverSync.mockResolvedValue(undefined);
+
+  Object.defineProperty(navigator, "onLine", {
+    value: true,
+    writable: true,
+    configurable: true,
+  });
+});
+
+afterEach(() => {
+  vi.useRealTimers();
+});
+
 describe("SyncProvider — ping reconnect", () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-    vi.useFakeTimers();
-
-    mockPull.mockResolvedValue(undefined);
-    mockPush.mockResolvedValue(undefined);
-    mockPing.mockResolvedValue(VALID_PING_INITIALIZED);
-    mockInit.mockResolvedValue({ ok: true });
-    mockInitializeLocalCovers.mockResolvedValue(undefined);
-    mockCoverSync.mockResolvedValue(undefined);
-
-    Object.defineProperty(navigator, "onLine", {
-      value: true,
-      writable: true,
-      configurable: true,
-    });
-  });
-
-  afterEach(() => {
-    vi.useRealTimers();
-  });
-
-  it("should start ping interval when navigator is offline on initial pull", async () => {
+  it("should start ping interval when navigator is offline on initial sync", async () => {
     Object.defineProperty(navigator, "onLine", { value: false, writable: true, configurable: true });
 
     renderProvider();
@@ -126,7 +160,7 @@ describe("SyncProvider — ping reconnect", () => {
     expect(mockPing).toHaveBeenCalledTimes(1);
   });
 
-  it("should start ping interval when pull throws a network error", async () => {
+  it("should start ping interval when sync throws a network error", async () => {
     mockPull.mockRejectedValue(new Error("Network error"));
 
     renderProvider();
@@ -150,7 +184,7 @@ describe("SyncProvider — ping reconnect", () => {
     expect(screen.getByTestId("status").textContent).toBe("offline");
   });
 
-  it("should show error status when pull throws a network error", async () => {
+  it("should show error status when sync throws a network error", async () => {
     mockPull.mockRejectedValue(new Error("Network error"));
 
     renderProvider();
@@ -181,7 +215,7 @@ describe("SyncProvider — ping reconnect", () => {
     renderProvider();
     await act(async () => {});
 
-    // Initial pull was skipped (offline), clear that call count
+    // Initial sync was skipped (offline), clear that call count
     vi.clearAllMocks();
     mockPull.mockResolvedValue(undefined);
     mockPush.mockResolvedValue(undefined);
@@ -275,7 +309,7 @@ describe("SyncProvider — ping reconnect", () => {
     expect(screen.getByTestId("version").textContent).toBe("0");
   });
 
-  it("should increment syncVersion after successful pull", async () => {
+  it("should increment syncVersion after successful sync", async () => {
     renderProviderWithVersion();
     await act(async () => {});
 
@@ -297,5 +331,181 @@ describe("SyncProvider — ping reconnect", () => {
     });
 
     expect(mockPing).not.toHaveBeenCalled();
+  });
+});
+
+describe("SyncProvider — push+pull pairing", () => {
+  it("should call push before pull on initial sync", async () => {
+    const callOrder: string[] = [];
+    mockPush.mockImplementation(async () => { callOrder.push("push"); });
+    mockPull.mockImplementation(async () => { callOrder.push("pull"); });
+
+    renderProvider();
+    await act(async () => {});
+
+    expect(callOrder).toEqual(["push", "pull"]);
+  });
+
+  it("should call push before pull on periodic interval sync", async () => {
+    renderProvider();
+    await act(async () => {});
+
+    const callOrder: string[] = [];
+    mockPush.mockImplementation(async () => { callOrder.push("push"); });
+    mockPull.mockImplementation(async () => { callOrder.push("pull"); });
+
+    await act(async () => {
+      vi.advanceTimersByTime(SYNC_INTERVAL_MS);
+    });
+
+    expect(callOrder).toEqual(["push", "pull"]);
+  });
+
+  it("should call push before pull when pull() context method is invoked", async () => {
+    renderProviderWithMethod("pull");
+    await act(async () => {});
+
+    const callOrder: string[] = [];
+    mockPush.mockImplementation(async () => { callOrder.push("push"); });
+    mockPull.mockImplementation(async () => { callOrder.push("pull"); });
+
+    await act(async () => {
+      fireEvent.click(screen.getByTestId("pull-btn"));
+    });
+
+    expect(callOrder).toEqual(["push", "pull"]);
+  });
+
+  it("should call pull after push when push() context method is invoked", async () => {
+    renderProviderWithMethod("push");
+    await act(async () => {});
+
+    const callOrder: string[] = [];
+    mockPush.mockImplementation(async () => { callOrder.push("push"); });
+    mockPull.mockImplementation(async () => { callOrder.push("pull"); });
+
+    await act(async () => {
+      fireEvent.click(screen.getByTestId("push-btn"));
+    });
+
+    expect(callOrder).toEqual(["push", "pull"]);
+  });
+
+  it("should increment syncVersion after periodic sync", async () => {
+    renderProviderWithVersion();
+    await act(async () => {});
+    // syncVersion is 1 after mount sync
+
+    await act(async () => {
+      vi.advanceTimersByTime(SYNC_INTERVAL_MS);
+    });
+
+    expect(screen.getByTestId("version").textContent).toBe("2");
+  });
+});
+
+describe("SyncProvider — schedulePush", () => {
+  it("should not call push immediately when schedulePush is triggered", async () => {
+    renderProviderWithScheduler();
+    await act(async () => {});
+
+    vi.clearAllMocks();
+    mockPush.mockResolvedValue(undefined);
+    mockPull.mockResolvedValue(undefined);
+
+    await act(async () => {
+      fireEvent.click(screen.getByTestId("schedule-btn"));
+    });
+
+    expect(mockPush).not.toHaveBeenCalled();
+  });
+
+  it("should call push and pull after SYNC_DEBOUNCE_MS when schedulePush is triggered", async () => {
+    renderProviderWithScheduler();
+    await act(async () => {});
+
+    vi.clearAllMocks();
+    mockPush.mockResolvedValue(undefined);
+    mockPull.mockResolvedValue(undefined);
+
+    await act(async () => {
+      fireEvent.click(screen.getByTestId("schedule-btn"));
+    });
+
+    await act(async () => {
+      vi.advanceTimersByTime(SYNC_DEBOUNCE_MS);
+    });
+
+    expect(mockPush).toHaveBeenCalledTimes(1);
+    expect(mockPull).toHaveBeenCalledTimes(1);
+  });
+
+  it("should call push before pull when schedulePush fires", async () => {
+    renderProviderWithScheduler();
+    await act(async () => {});
+
+    const callOrder: string[] = [];
+    mockPush.mockImplementation(async () => { callOrder.push("push"); });
+    mockPull.mockImplementation(async () => { callOrder.push("pull"); });
+
+    await act(async () => {
+      fireEvent.click(screen.getByTestId("schedule-btn"));
+    });
+
+    await act(async () => {
+      vi.advanceTimersByTime(SYNC_DEBOUNCE_MS);
+    });
+
+    expect(callOrder).toEqual(["push", "pull"]);
+  });
+
+  it("should reset debounce timer when schedulePush is called multiple times", async () => {
+    renderProviderWithScheduler();
+    await act(async () => {});
+
+    vi.clearAllMocks();
+    mockPush.mockResolvedValue(undefined);
+    mockPull.mockResolvedValue(undefined);
+
+    await act(async () => {
+      fireEvent.click(screen.getByTestId("schedule-btn"));
+    });
+
+    await act(async () => {
+      vi.advanceTimersByTime(SYNC_DEBOUNCE_MS - 1000);
+    });
+
+    await act(async () => {
+      fireEvent.click(screen.getByTestId("schedule-btn"));
+    });
+
+    // First debounce window has passed but timer was reset — push should not have fired
+    expect(mockPush).not.toHaveBeenCalled();
+
+    await act(async () => {
+      vi.advanceTimersByTime(SYNC_DEBOUNCE_MS);
+    });
+
+    expect(mockPush).toHaveBeenCalledTimes(1);
+  });
+
+  it("should clear debounce timer on unmount without triggering push", async () => {
+    const { unmount } = renderProviderWithScheduler();
+    await act(async () => {});
+
+    vi.clearAllMocks();
+    mockPush.mockResolvedValue(undefined);
+
+    await act(async () => {
+      fireEvent.click(screen.getByTestId("schedule-btn"));
+    });
+
+    unmount();
+
+    await act(async () => {
+      vi.advanceTimersByTime(SYNC_DEBOUNCE_MS);
+    });
+
+    expect(mockPush).not.toHaveBeenCalled();
   });
 });

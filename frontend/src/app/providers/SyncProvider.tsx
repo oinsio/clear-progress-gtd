@@ -7,7 +7,7 @@ import React, {
   useState,
 } from "react";
 import type { SyncStatus } from "@/types/common";
-import { SYNC_INTERVAL_MS, PING_INTERVAL_MS } from "@/constants";
+import { SYNC_INTERVAL_MS, PING_INTERVAL_MS, SYNC_DEBOUNCE_MS } from "@/constants";
 import { SyncService } from "@/services/SyncService";
 import { ApiClient } from "@/services/ApiClient";
 import { TaskRepository } from "@/db/repositories/TaskRepository";
@@ -23,6 +23,7 @@ interface SyncContextValue {
   syncVersion: number;
   pull: () => Promise<void>;
   push: () => Promise<void>;
+  schedulePush: () => void;
 }
 
 const SyncContext = createContext<SyncContextValue | null>(null);
@@ -44,6 +45,7 @@ export function SyncProvider({ children }: { children: React.ReactNode }) {
   const [syncVersion, setSyncVersion] = useState(0);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const pingIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const stopPingInterval = useCallback(() => {
     if (pingIntervalRef.current) {
@@ -52,13 +54,14 @@ export function SyncProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  const pull = useCallback(async (): Promise<void> => {
+  const sync = useCallback(async (): Promise<void> => {
     if (!navigator.onLine) {
       setSyncStatus("offline");
       return;
     }
     setSyncStatus("syncing");
     try {
+      await syncService.push();
       await syncService.pull();
       void defaultCoverSyncService.sync();
       setSyncStatus("idle");
@@ -69,20 +72,10 @@ export function SyncProvider({ children }: { children: React.ReactNode }) {
     }
   }, [stopPingInterval]);
 
-  const push = useCallback(async (): Promise<void> => {
-    if (!navigator.onLine) {
-      setSyncStatus("offline");
-      return;
-    }
-    setSyncStatus("syncing");
-    try {
-      await syncService.push();
-      setSyncStatus("idle");
-      stopPingInterval();
-    } catch {
-      setSyncStatus("error");
-    }
-  }, [stopPingInterval]);
+  const schedulePush = useCallback(() => {
+    if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
+    debounceTimerRef.current = setTimeout(() => void sync(), SYNC_DEBOUNCE_MS);
+  }, [sync]);
 
   const performPing = useCallback(async (): Promise<void> => {
     try {
@@ -95,6 +88,7 @@ export function SyncProvider({ children }: { children: React.ReactNode }) {
       await syncService.pull();
       void defaultCoverSyncService.sync();
       setSyncStatus("idle");
+      setSyncVersion((version) => version + 1);
     } catch {
       // Still unreachable — keep pinging
     }
@@ -108,8 +102,8 @@ export function SyncProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     void defaultCoverSyncService.initializeLocalCovers();
     void defaultCoverSyncService.sync();
-    void pull();
-    intervalRef.current = setInterval(() => void pull(), SYNC_INTERVAL_MS);
+    void sync();
+    intervalRef.current = setInterval(() => void sync(), SYNC_INTERVAL_MS);
 
     const handleOnline = () => {
       void performPing();
@@ -120,10 +114,13 @@ export function SyncProvider({ children }: { children: React.ReactNode }) {
       if (intervalRef.current) {
         clearInterval(intervalRef.current);
       }
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+      }
       stopPingInterval();
       window.removeEventListener("online", handleOnline);
     };
-  }, [pull, performPing, stopPingInterval]);
+  }, [sync, performPing, stopPingInterval]);
 
   useEffect(() => {
     if (syncStatus === "offline" || syncStatus === "error") {
@@ -132,7 +129,7 @@ export function SyncProvider({ children }: { children: React.ReactNode }) {
   }, [syncStatus, startPingInterval]);
 
   return (
-    <SyncContext.Provider value={{ syncStatus, syncVersion, pull, push }}>
+    <SyncContext.Provider value={{ syncStatus, syncVersion, pull: sync, push: sync, schedulePush }}>
       {children}
     </SyncContext.Provider>
   );
@@ -145,6 +142,7 @@ const SYNC_FALLBACK: SyncContextValue = {
   syncVersion: 0,
   pull: SYNC_NOOP,
   push: SYNC_NOOP,
+  schedulePush: () => {},
 };
 
 export function useSync(): SyncContextValue {

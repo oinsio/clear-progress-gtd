@@ -6,6 +6,18 @@ import { buildTask } from "@/test/factories/taskFactory";
 import { BOX } from "@/constants";
 import { createMockTaskService } from "@/test/mocks/taskServiceMock";
 
+const mockSchedulePush = vi.fn();
+
+vi.mock("@/app/providers/SyncProvider", () => ({
+  useSync: () => ({
+    syncVersion: 0,
+    syncStatus: "idle",
+    pull: vi.fn(),
+    push: vi.fn(),
+    schedulePush: mockSchedulePush,
+  }),
+}));
+
 describe("useTaskMutations", () => {
   let mockTaskService: TaskService;
   let onReload: ReturnType<typeof vi.fn>;
@@ -13,6 +25,7 @@ describe("useTaskMutations", () => {
   beforeEach(() => {
     mockTaskService = createMockTaskService();
     onReload = vi.fn().mockResolvedValue(undefined);
+    mockSchedulePush.mockClear();
   });
 
   describe("completeTask", () => {
@@ -86,6 +99,33 @@ describe("useTaskMutations", () => {
 
       expect(mockTaskService.getById).toHaveBeenCalledWith(task.id);
     });
+
+    it("should call schedulePush after completing a task", async () => {
+      const task = buildTask({ is_completed: false });
+      mockTaskService = createMockTaskService({
+        getById: vi.fn().mockResolvedValue(task),
+      });
+      const { result } = renderHook(() => useTaskMutations(mockTaskService, onReload));
+
+      await act(async () => {
+        await result.current.completeTask(task.id);
+      });
+
+      expect(mockSchedulePush).toHaveBeenCalledOnce();
+    });
+
+    it("should not call schedulePush when task is not found", async () => {
+      mockTaskService = createMockTaskService({
+        getById: vi.fn().mockResolvedValue(undefined),
+      });
+      const { result } = renderHook(() => useTaskMutations(mockTaskService, onReload));
+
+      await act(async () => {
+        await result.current.completeTask("nonexistent-id");
+      });
+
+      expect(mockSchedulePush).not.toHaveBeenCalled();
+    });
   });
 
   describe("updateTask", () => {
@@ -107,6 +147,16 @@ describe("useTaskMutations", () => {
       });
 
       expect(onReload).toHaveBeenCalledOnce();
+    });
+
+    it("should call schedulePush after updating a task", async () => {
+      const { result } = renderHook(() => useTaskMutations(mockTaskService, onReload));
+
+      await act(async () => {
+        await result.current.updateTask("task-1", { title: "New title" });
+      });
+
+      expect(mockSchedulePush).toHaveBeenCalledOnce();
     });
   });
 
@@ -140,6 +190,16 @@ describe("useTaskMutations", () => {
 
       expect(mockTaskService.moveToBox).toHaveBeenCalledWith("task-1", box);
     });
+
+    it("should call schedulePush after moving a task", async () => {
+      const { result } = renderHook(() => useTaskMutations(mockTaskService, onReload));
+
+      await act(async () => {
+        await result.current.moveTask("task-1", BOX.TODAY);
+      });
+
+      expect(mockSchedulePush).toHaveBeenCalledOnce();
+    });
   });
 
   describe("deleteTask", () => {
@@ -161,6 +221,16 @@ describe("useTaskMutations", () => {
       });
 
       expect(onReload).toHaveBeenCalledOnce();
+    });
+
+    it("should call schedulePush after deleting a task", async () => {
+      const { result } = renderHook(() => useTaskMutations(mockTaskService, onReload));
+
+      await act(async () => {
+        await result.current.deleteTask("task-1");
+      });
+
+      expect(mockSchedulePush).toHaveBeenCalledOnce();
     });
   });
 

@@ -1,6 +1,16 @@
 import { renderHook, waitFor, act } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { useSettings } from "./useSettings";
+
+vi.mock("@/app/providers/SyncProvider", () => ({
+  useSync: () => ({
+    syncVersion: 0,
+    syncStatus: "idle",
+    pull: vi.fn(),
+    push: vi.fn(),
+    schedulePush: vi.fn(),
+  }),
+}));
 import type { SettingsService } from "@/services/SettingsService";
 import { ACCENT_COLORS, BOX, DEFAULT_ACCENT_COLOR, SETTING_KEYS, STORAGE_KEYS } from "@/constants";
 import type { AccentColor } from "@/types/common";

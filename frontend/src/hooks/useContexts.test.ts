@@ -12,6 +12,7 @@ vi.mock("@/app/providers/SyncProvider", () => ({
     syncStatus: "idle",
     pull: vi.fn(),
     push: vi.fn(),
+    schedulePush: vi.fn(),
   }),
 }));
 

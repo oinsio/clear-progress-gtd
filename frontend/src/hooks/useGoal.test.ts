@@ -1,6 +1,16 @@
 import { renderHook, waitFor, act } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { useGoal } from "./useGoal";
+
+vi.mock("@/app/providers/SyncProvider", () => ({
+  useSync: () => ({
+    syncVersion: 0,
+    syncStatus: "idle",
+    pull: vi.fn(),
+    push: vi.fn(),
+    schedulePush: vi.fn(),
+  }),
+}));
 import type { GoalService } from "@/services/GoalService";
 import type { TaskService } from "@/services/TaskService";
 import { buildGoal } from "@/test/factories/goalFactory";
