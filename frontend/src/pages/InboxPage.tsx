@@ -521,7 +521,7 @@ export default function InboxPage() {
   return (
     <div
       data-testid="inbox-page"
-      className="flex h-screen overflow-hidden bg-white"
+      className="relative flex h-screen overflow-hidden bg-white"
     >
       {/* Main content column */}
       <div className="flex flex-1 flex-col overflow-hidden">

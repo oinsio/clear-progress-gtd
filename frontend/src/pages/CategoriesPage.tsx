@@ -145,7 +145,7 @@ export default function CategoriesPage() {
   );
 
   return (
-    <div data-testid="categories-page" className="flex h-screen overflow-hidden bg-white">
+    <div data-testid="categories-page" className="relative flex h-screen overflow-hidden bg-white">
       {/* Main content column */}
       <div className="flex flex-1 flex-col overflow-hidden">
         {/* Header */}

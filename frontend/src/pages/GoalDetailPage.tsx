@@ -100,7 +100,7 @@ export default function GoalDetailPage() {
   }
 
   return (
-    <div data-testid="goal-detail-page" className="flex h-screen overflow-hidden bg-white">
+    <div data-testid="goal-detail-page" className="relative flex h-screen overflow-hidden bg-white">
       <div className="flex flex-1 flex-col overflow-hidden">
         {/* Header */}
         <header className="flex items-center gap-2 px-4 py-3 border-b border-gray-100">

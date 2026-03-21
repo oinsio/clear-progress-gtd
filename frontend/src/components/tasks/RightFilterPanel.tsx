@@ -90,15 +90,23 @@ export function RightFilterPanel({
     >
       {/* Main panel */}
       {isOpen ? (
-        <div
-          className={cn("w-52 flex flex-col bg-accent overflow-hidden cursor-pointer", panelBorder)}
-          onClick={onToggle}
-          data-testid="right-panel-toggle"
-          aria-label={t("filter.close")}
-          role="button"
-          tabIndex={0}
-          onKeyDown={(e) => e.key === "Enter" && onToggle()}
-        >
+        <>
+          {/* Mobile placeholder: keeps flex layout stable while panel is an overlay */}
+          <div className={cn("sm:hidden w-14 flex-shrink-0 bg-accent", panelBorder)} />
+          <div
+            className={cn(
+              "w-52 flex flex-col bg-accent overflow-hidden cursor-pointer",
+              "absolute top-0 bottom-0 z-20 sm:relative sm:z-auto",
+              isLeft ? "left-0" : "right-0",
+              panelBorder,
+            )}
+            onClick={onToggle}
+            data-testid="right-panel-toggle"
+            aria-label={t("filter.close")}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => e.key === "Enter" && onToggle()}
+          >
           {/* Account / sync row */}
           <div className="flex items-center justify-between border-b border-white/20">
             {isBackendConnected ? (
@@ -188,6 +196,7 @@ export function RightFilterPanel({
             </button>
           </div>
         </div>
+        </>
       ) : (
         /* Collapsed strip */
         <div

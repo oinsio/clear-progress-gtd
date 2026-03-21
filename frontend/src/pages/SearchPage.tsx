@@ -106,7 +106,7 @@ export default function SearchPage() {
   const hasQuery = searchQuery.length > 0;
 
   return (
-    <div data-testid="search-page" className="flex h-screen overflow-hidden bg-white">
+    <div data-testid="search-page" className="relative flex h-screen overflow-hidden bg-white">
       {/* Main content column */}
       <div className="flex flex-1 flex-col overflow-hidden">
         {/* Search header */}
