@@ -9,6 +9,7 @@ const defaultChecklistService = new ChecklistService(new ChecklistRepository());
 export interface UseChecklistReturn {
   items: ChecklistItem[];
   progress: ChecklistProgress;
+  hasUnsyncedItems: boolean;
   isLoading: boolean;
   createItem: (title: string) => Promise<void>;
   toggleItem: (id: string) => Promise<void>;
@@ -26,7 +27,7 @@ export function useChecklist(
     total: 0,
   });
   const [isLoading, setIsLoading] = useState(true);
-  const { schedulePush } = useSync();
+  const { schedulePush, lastSyncedAt } = useSync();
 
   const loadItems = useCallback(async () => {
     const [taskItems, taskProgress] = await Promise.all([
@@ -78,5 +79,9 @@ export function useChecklist(
     [checklistService, loadItems, schedulePush],
   );
 
-  return { items, progress, isLoading, createItem, toggleItem, deleteItem, updateItem };
+  const hasUnsyncedItems = items.some(
+    (item) => lastSyncedAt === null || item.updated_at > lastSyncedAt,
+  );
+
+  return { items, progress, hasUnsyncedItems, isLoading, createItem, toggleItem, deleteItem, updateItem };
 }

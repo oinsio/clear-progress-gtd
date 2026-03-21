@@ -5,6 +5,8 @@ import type { GoalStatus } from "@/types/common";
 import { formatShortDateTime } from "@/shared/lib/utils";
 import { getCoverDisplayUrl } from "@/services/CoverService";
 import defaultCoverSvg from "@/assets/default-goal-cover.svg";
+import { useIsUnsynced } from "@/hooks/useIsUnsynced";
+import { cn } from "@/shared/lib/cn";
 
 const TASK_COUNT_LABEL = "Задач:";
 const FINISHED_GOAL_STATUSES = new Set<GoalStatus>(["completed", "cancelled"]);
@@ -20,12 +22,16 @@ interface GoalItemProps {
 
 export function GoalItem({ goal, taskCount, onNavigate, nodeRef, style, dragHandle }: GoalItemProps) {
   const isFinished = FINISHED_GOAL_STATUSES.has(goal.status);
+  const isUnsynced = useIsUnsynced(goal);
   return (
     <li
       ref={nodeRef}
       style={style}
       data-testid="goal-item"
-      className="flex items-center border-b border-gray-100 bg-white"
+      className={cn(
+        "flex items-center border-b border-gray-100 bg-white border-l-2 transition-colors",
+        isUnsynced ? "border-l-amber-400" : "border-l-transparent",
+      )}
     >
       {/* Main clickable area */}
       <button

@@ -9,6 +9,7 @@ import { formatCompletedAt } from "@/shared/lib/utils";
 import { TaskQuickActions } from "./TaskQuickActions";
 import { TaskEditModal } from "./TaskEditModal";
 import { useChecklist } from "@/hooks/useChecklist";
+import { useIsUnsynced } from "@/hooks/useIsUnsynced";
 import * as React from "react";
 
 export interface DragHandleProps {
@@ -31,7 +32,9 @@ interface TaskItemProps {
 
 export function TaskItem({ task, goals, contexts, categories, onComplete, onUpdate, onMove, onDelete, dragHandleProps }: TaskItemProps) {
   const { t } = useTranslation();
-  const { progress: checklistProgress } = useChecklist(task.id);
+  const { progress: checklistProgress, hasUnsyncedItems } = useChecklist(task.id);
+  const isTaskUnsynced = useIsUnsynced(task);
+  const isUnsynced = isTaskUnsynced || hasUnsyncedItems;
   const [isExpanded, setIsExpanded] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isConfirmingRestore, setIsConfirmingRestore] = useState(false);
@@ -76,7 +79,14 @@ export function TaskItem({ task, goals, contexts, categories, onComplete, onUpda
 
   return (
     <>
-      <div ref={containerRef} data-testid="task-item" className="border-b border-gray-100">
+      <div
+        ref={containerRef}
+        data-testid="task-item"
+        className={cn(
+          "border-b border-gray-100 border-l-2 transition-colors",
+          isUnsynced ? "border-l-amber-400" : "border-l-transparent",
+        )}
+      >
         {/* Main task row */}
         <div className="flex items-center gap-3 px-4 py-3">
           <button

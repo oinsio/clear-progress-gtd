@@ -21,6 +21,7 @@ import { defaultCoverSyncService } from "@/services/defaultServices";
 interface SyncContextValue {
   syncStatus: SyncStatus;
   syncVersion: number;
+  lastSyncedAt: string | null;
   pull: () => Promise<void>;
   push: () => Promise<void>;
   schedulePush: () => void;
@@ -43,6 +44,7 @@ const syncService = new SyncService(
 export function SyncProvider({ children }: { children: React.ReactNode }) {
   const [syncStatus, setSyncStatus] = useState<SyncStatus>("idle");
   const [syncVersion, setSyncVersion] = useState(0);
+  const [lastSyncedAt, setLastSyncedAt] = useState<string | null>(null);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const pingIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -61,11 +63,13 @@ export function SyncProvider({ children }: { children: React.ReactNode }) {
     }
     setSyncStatus("syncing");
     try {
+      const syncTimestamp = new Date().toISOString();
       await syncService.push();
       await syncService.pull();
       void defaultCoverSyncService.sync();
       setSyncStatus("idle");
       setSyncVersion((version) => version + 1);
+      setLastSyncedAt(syncTimestamp);
       stopPingInterval();
     } catch {
       setSyncStatus("error");
@@ -84,11 +88,13 @@ export function SyncProvider({ children }: { children: React.ReactNode }) {
       if (!pingResult.initialized) {
         await apiClient.init();
       }
+      const syncTimestamp = new Date().toISOString();
       await syncService.push();
       await syncService.pull();
       void defaultCoverSyncService.sync();
       setSyncStatus("idle");
       setSyncVersion((version) => version + 1);
+      setLastSyncedAt(syncTimestamp);
     } catch {
       // Still unreachable — keep pinging
     }
@@ -129,7 +135,7 @@ export function SyncProvider({ children }: { children: React.ReactNode }) {
   }, [syncStatus, startPingInterval]);
 
   return (
-    <SyncContext.Provider value={{ syncStatus, syncVersion, pull: sync, push: sync, schedulePush }}>
+    <SyncContext.Provider value={{ syncStatus, syncVersion, lastSyncedAt, pull: sync, push: sync, schedulePush }}>
       {children}
     </SyncContext.Provider>
   );
@@ -140,6 +146,7 @@ const SYNC_NOOP = async (): Promise<void> => {};
 const SYNC_FALLBACK: SyncContextValue = {
   syncStatus: "idle",
   syncVersion: 0,
+  lastSyncedAt: null,
   pull: SYNC_NOOP,
   push: SYNC_NOOP,
   schedulePush: () => {},

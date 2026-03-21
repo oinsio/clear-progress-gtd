@@ -24,6 +24,7 @@ import { useInlineAdd } from "@/hooks/useInlineAdd";
 import { BOX, ROUTES } from "@/constants";
 import { cn } from "@/shared/lib/cn";
 import type { Category } from "@/types/entities";
+import { useIsUnsynced } from "@/hooks/useIsUnsynced";
 import { TaskService } from "@/services/TaskService";
 import { TaskRepository } from "@/db/repositories/TaskRepository";
 
@@ -48,6 +49,7 @@ function SortableCategoryItem({
     transition,
     isDragging,
   } = useSortable({ id: category.id });
+  const isUnsynced = useIsUnsynced(category);
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -59,7 +61,10 @@ function SortableCategoryItem({
     <li
       ref={setNodeRef}
       style={style}
-      className="flex items-center border-b border-gray-100 bg-white"
+      className={cn(
+        "flex items-center border-b border-gray-100 bg-white border-l-2 transition-colors",
+        isUnsynced ? "border-l-amber-400" : "border-l-transparent",
+      )}
     >
       <button
         type="button"

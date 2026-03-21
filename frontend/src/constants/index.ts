@@ -77,7 +77,7 @@ export const API_ACTIONS = {
 } as const;
 
 export const SYNC_INTERVAL_MS = 5 * 60 * 1000;
-export const SYNC_DEBOUNCE_MS = 7500;
+export const SYNC_DEBOUNCE_MS = 15 * 1000;
 export const PING_INTERVAL_MS = 30 * 1000;
 
 export const BACKEND_CONNECTION_EVENT = "backend_connection_changed";
