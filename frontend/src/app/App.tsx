@@ -7,11 +7,11 @@ import { router } from "./router";
 export default function App() {
   return (
     <LanguageProvider>
-      <ThemeProvider>
-        <SyncProvider>
+      <SyncProvider>
+        <ThemeProvider>
           <RouterProvider router={router} />
-        </SyncProvider>
-      </ThemeProvider>
+        </ThemeProvider>
+      </SyncProvider>
     </LanguageProvider>
   );
 }

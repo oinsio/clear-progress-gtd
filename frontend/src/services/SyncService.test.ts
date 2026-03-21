@@ -7,7 +7,7 @@ import { ContextRepository } from "@/db/repositories/ContextRepository";
 import { CategoryRepository } from "@/db/repositories/CategoryRepository";
 import { ChecklistRepository } from "@/db/repositories/ChecklistRepository";
 import { SettingsRepository } from "@/db/repositories/SettingsRepository";
-import type { Goal } from "@/types/entities";
+import type { Goal, Context, Category, ChecklistItem } from "@/types/entities";
 import { LOCAL_COVER_ID_PREFIX } from "@/constants";
 
 function createMockApiClient(
@@ -62,6 +62,47 @@ function createGoal(overrides: Partial<Goal> = {}): Goal {
   };
 }
 
+function createContext(overrides: Partial<Context> = {}): Context {
+  return {
+    id: "context-id",
+    name: "Test Context",
+    sort_order: 0,
+    is_deleted: false,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+    version: 1,
+    ...overrides,
+  };
+}
+
+function createCategory(overrides: Partial<Category> = {}): Category {
+  return {
+    id: "category-id",
+    name: "Test Category",
+    sort_order: 0,
+    is_deleted: false,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+    version: 1,
+    ...overrides,
+  };
+}
+
+function createChecklistItem(overrides: Partial<ChecklistItem> = {}): ChecklistItem {
+  return {
+    id: "checklist-id",
+    task_id: "task-id",
+    title: "Test Item",
+    is_completed: false,
+    sort_order: 0,
+    is_deleted: false,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+    version: 1,
+    ...overrides,
+  };
+}
+
 describe("SyncService", () => {
   let mockApiClient: ApiClient;
   let taskRepository: TaskRepository;
@@ -84,24 +125,28 @@ describe("SyncService", () => {
     goalRepository = {
       getAll: vi.fn().mockResolvedValue([]),
       getMaxVersion: vi.fn().mockResolvedValue(0),
+      update: vi.fn().mockResolvedValue(undefined),
       bulkUpsert: vi.fn().mockResolvedValue(undefined),
     } as unknown as GoalRepository;
 
     contextRepository = {
       getAll: vi.fn().mockResolvedValue([]),
       getMaxVersion: vi.fn().mockResolvedValue(0),
+      update: vi.fn().mockResolvedValue(undefined),
       bulkUpsert: vi.fn().mockResolvedValue(undefined),
     } as unknown as ContextRepository;
 
     categoryRepository = {
       getAll: vi.fn().mockResolvedValue([]),
       getMaxVersion: vi.fn().mockResolvedValue(0),
+      update: vi.fn().mockResolvedValue(undefined),
       bulkUpsert: vi.fn().mockResolvedValue(undefined),
     } as unknown as CategoryRepository;
 
     checklistRepository = {
       getAll: vi.fn().mockResolvedValue([]),
       getMaxVersion: vi.fn().mockResolvedValue(0),
+      update: vi.fn().mockResolvedValue(undefined),
       bulkUpsert: vi.fn().mockResolvedValue(undefined),
     } as unknown as ChecklistRepository;
 
@@ -177,6 +222,91 @@ describe("SyncService", () => {
 
       const pushCall = (mockApiClient.push as ReturnType<typeof vi.fn>).mock.calls[0][0];
       expect(pushCall.changes.settings).toEqual(localSettings);
+    });
+
+    it("should apply server_record from goal conflict response to goalRepository", async () => {
+      const serverGoal = createGoal({ id: "goal-conflict-id", title: "Server Goal", version: 5 });
+      mockApiClient = createMockApiClient({
+        push: vi.fn().mockResolvedValue({
+          ok: true,
+          results: {
+            goals: [{ id: serverGoal.id, status: "conflict", server_record: serverGoal }],
+          },
+          server_time: new Date().toISOString(),
+        }),
+      });
+      (goalRepository.getAll as ReturnType<typeof vi.fn>).mockResolvedValue([createGoal({ id: serverGoal.id })]);
+
+      const service = new SyncService(
+        mockApiClient, taskRepository, goalRepository, contextRepository,
+        categoryRepository, checklistRepository, settingsRepository,
+      );
+      await service.push();
+
+      expect(goalRepository.update).toHaveBeenCalledWith(serverGoal);
+    });
+
+    it("should apply server_record from context conflict response to contextRepository", async () => {
+      const serverContext = createContext({ id: "ctx-conflict-id", name: "Server Context", version: 3 });
+      mockApiClient = createMockApiClient({
+        push: vi.fn().mockResolvedValue({
+          ok: true,
+          results: {
+            contexts: [{ id: serverContext.id, status: "conflict", server_record: serverContext }],
+          },
+          server_time: new Date().toISOString(),
+        }),
+      });
+
+      const service = new SyncService(
+        mockApiClient, taskRepository, goalRepository, contextRepository,
+        categoryRepository, checklistRepository, settingsRepository,
+      );
+      await service.push();
+
+      expect(contextRepository.update).toHaveBeenCalledWith(serverContext);
+    });
+
+    it("should apply server_record from category conflict response to categoryRepository", async () => {
+      const serverCategory = createCategory({ id: "cat-conflict-id", name: "Server Category", version: 4 });
+      mockApiClient = createMockApiClient({
+        push: vi.fn().mockResolvedValue({
+          ok: true,
+          results: {
+            categories: [{ id: serverCategory.id, status: "conflict", server_record: serverCategory }],
+          },
+          server_time: new Date().toISOString(),
+        }),
+      });
+
+      const service = new SyncService(
+        mockApiClient, taskRepository, goalRepository, contextRepository,
+        categoryRepository, checklistRepository, settingsRepository,
+      );
+      await service.push();
+
+      expect(categoryRepository.update).toHaveBeenCalledWith(serverCategory);
+    });
+
+    it("should apply server_record from checklist_item conflict response to checklistRepository", async () => {
+      const serverItem = createChecklistItem({ id: "item-conflict-id", title: "Server Item", version: 2 });
+      mockApiClient = createMockApiClient({
+        push: vi.fn().mockResolvedValue({
+          ok: true,
+          results: {
+            checklist_items: [{ id: serverItem.id, status: "conflict", server_record: serverItem }],
+          },
+          server_time: new Date().toISOString(),
+        }),
+      });
+
+      const service = new SyncService(
+        mockApiClient, taskRepository, goalRepository, contextRepository,
+        categoryRepository, checklistRepository, settingsRepository,
+      );
+      await service.push();
+
+      expect(checklistRepository.update).toHaveBeenCalledWith(serverItem);
     });
 
     it.each([

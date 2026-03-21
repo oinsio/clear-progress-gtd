@@ -1,4 +1,5 @@
 import type { VersionMap } from "@/types/api";
+import type { Goal, Context, Category, ChecklistItem } from "@/types/entities";
 import { ApiClient } from "./ApiClient";
 import { TaskRepository } from "@/db/repositories/TaskRepository";
 import { GoalRepository } from "@/db/repositories/GoalRepository";
@@ -69,20 +70,28 @@ export class SyncService {
   private async resolveConflicts(
     responseData: Awaited<ReturnType<ApiClient["push"]>>["results"],
   ): Promise<void> {
-    const conflictedTasks =
-      responseData.tasks?.filter(
-        (result) => result.status === PUSH_RESULT_STATUS.CONFLICT,
-      ) ?? [];
+    const conflictedWithRecord = (results: typeof responseData.tasks) =>
+      results?.filter((r) => r.status === PUSH_RESULT_STATUS.CONFLICT && r.server_record) ?? [];
 
-    for (const conflictResult of conflictedTasks) {
-      if (conflictResult.server_record) {
-        await this.taskRepository.update(
-          conflictResult.server_record as Parameters<
-            TaskRepository["update"]
-          >[0],
-        );
-      }
-    }
+    await Promise.all([
+      ...conflictedWithRecord(responseData.tasks).map((r) =>
+        this.taskRepository.update(
+          r.server_record as Parameters<TaskRepository["update"]>[0],
+        ),
+      ),
+      ...conflictedWithRecord(responseData.goals).map((r) =>
+        this.goalRepository.update(r.server_record as Goal),
+      ),
+      ...conflictedWithRecord(responseData.contexts).map((r) =>
+        this.contextRepository.update(r.server_record as Context),
+      ),
+      ...conflictedWithRecord(responseData.categories).map((r) =>
+        this.categoryRepository.update(r.server_record as Category),
+      ),
+      ...conflictedWithRecord(responseData.checklist_items).map((r) =>
+        this.checklistRepository.update(r.server_record as ChecklistItem),
+      ),
+    ]);
   }
 
   private async getLocalVersions(): Promise<VersionMap> {

@@ -48,7 +48,7 @@ export function useSettings(
   const [accentColor, setAccentColorState] =
     useState<AccentColor>(getCachedAccentColor);
   const [isLoading, setIsLoading] = useState(true);
-  const { schedulePush } = useSync();
+  const { schedulePush, syncVersion } = useSync();
 
   const loadSettings = useCallback(async () => {
     const [box, color] = await Promise.all([
@@ -68,7 +68,7 @@ export function useSettings(
 
   useEffect(() => {
     void loadSettings();
-  }, [loadSettings]);
+  }, [loadSettings, syncVersion]);
 
   const setDefaultBox = useCallback(
     async (box: Box) => {

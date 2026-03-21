@@ -2,9 +2,11 @@ import { renderHook, waitFor, act } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { useSettings } from "./useSettings";
 
+const syncVersionStore = vi.hoisted(() => ({ version: 0 }));
+
 vi.mock("@/app/providers/SyncProvider", () => ({
   useSync: () => ({
-    syncVersion: 0,
+    syncVersion: syncVersionStore.version,
     syncStatus: "idle",
     pull: vi.fn(),
     push: vi.fn(),
@@ -32,6 +34,7 @@ describe("useSettings", () => {
 
   beforeEach(() => {
     mockSettingsService = createMockSettingsService();
+    syncVersionStore.version = 0;
   });
 
   it("should set isLoading to true on initial render", () => {
@@ -163,5 +166,20 @@ describe("useSettings", () => {
     const { result } = renderHook(() => useSettings(mockSettingsService));
     await waitFor(() => expect(result.current.isLoading).toBe(false));
     expect(result.current.defaultBox).toBe(box);
+  });
+
+  it("should reload settings when syncVersion changes after sync", async () => {
+    mockSettingsService = createMockSettingsService({
+      getDefaultBox: vi.fn()
+        .mockResolvedValueOnce(BOX.LATER)
+        .mockResolvedValueOnce(BOX.WEEK),
+    });
+    const { result, rerender } = renderHook(() => useSettings(mockSettingsService));
+    await waitFor(() => expect(result.current.defaultBox).toBe(BOX.LATER));
+
+    syncVersionStore.version = 1;
+    rerender();
+
+    await waitFor(() => expect(result.current.defaultBox).toBe(BOX.WEEK));
   });
 });

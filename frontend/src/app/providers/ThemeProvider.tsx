@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useState } from "react";
 import type { AccentColor } from "@/types/common";
 import { ACCENT_COLORS, DEFAULT_ACCENT_COLOR, SETTING_KEYS, STORAGE_KEYS } from "@/constants";
 import { SettingsRepository } from "@/db/repositories/SettingsRepository";
+import { useSync } from "@/app/providers/SyncProvider";
 import * as React from "react";
 
 interface ThemeContextValue {
@@ -27,6 +28,7 @@ function getInitialAccentColor(): AccentColor {
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [accentColor, setAccentColorState] = useState<AccentColor>(getInitialAccentColor);
+  const { syncVersion } = useSync();
 
   useEffect(() => {
     settingsRepository
@@ -40,7 +42,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
         }
       })
       .catch(console.error);
-  }, []);
+  }, [syncVersion]);
 
   const setAccentColor = async (color: AccentColor): Promise<void> => {
     applyAccentColor(color);
