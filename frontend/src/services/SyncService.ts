@@ -39,13 +39,14 @@ export class SyncService {
   }
 
   async push(): Promise<void> {
-    const [tasks, goals, contexts, categories, checklist_items] =
+    const [tasks, goals, contexts, categories, checklist_items, settings] =
       await Promise.all([
         this.taskRepository.getAll(),
         this.goalRepository.getAll(),
         this.contextRepository.getAll(),
         this.categoryRepository.getAll(),
         this.checklistRepository.getAll(),
+        this.settingsRepository.getAll(),
       ]);
 
     const goalsForPush = goals.map((goal) =>
@@ -55,7 +56,7 @@ export class SyncService {
     );
 
     const pushResponse = await this.apiClient.push({
-      changes: { tasks, goals: goalsForPush, contexts, categories, checklist_items },
+      changes: { tasks, goals: goalsForPush, contexts, categories, checklist_items, settings },
     });
 
     if (!pushResponse.ok) {

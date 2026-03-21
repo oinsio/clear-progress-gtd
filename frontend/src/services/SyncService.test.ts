@@ -106,6 +106,7 @@ describe("SyncService", () => {
     } as unknown as ChecklistRepository;
 
     settingsRepository = {
+      getAll: vi.fn().mockResolvedValue([]),
       bulkUpsert: vi.fn().mockResolvedValue(undefined),
     } as unknown as SettingsRepository;
   });
@@ -139,6 +140,45 @@ describe("SyncService", () => {
   });
 
   describe("push", () => {
+    it("should call settingsRepository.getAll during push", async () => {
+      const service = new SyncService(
+        mockApiClient,
+        taskRepository,
+        goalRepository,
+        contextRepository,
+        categoryRepository,
+        checklistRepository,
+        settingsRepository,
+      );
+
+      await service.push();
+
+      expect(settingsRepository.getAll).toHaveBeenCalledOnce();
+    });
+
+    it("should include settings in push payload", async () => {
+      const localSettings = [
+        { key: "default_box", value: "today", updated_at: "2026-03-21T10:00:00.000Z" },
+        { key: "accent_color", value: "orange", updated_at: "2026-03-21T10:00:00.000Z" },
+      ];
+      (settingsRepository.getAll as ReturnType<typeof vi.fn>).mockResolvedValue(localSettings);
+
+      const service = new SyncService(
+        mockApiClient,
+        taskRepository,
+        goalRepository,
+        contextRepository,
+        categoryRepository,
+        checklistRepository,
+        settingsRepository,
+      );
+
+      await service.push();
+
+      const pushCall = (mockApiClient.push as ReturnType<typeof vi.fn>).mock.calls[0][0];
+      expect(pushCall.changes.settings).toEqual(localSettings);
+    });
+
     it.each([
       {
         description: "local cover_file_id",
