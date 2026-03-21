@@ -71,7 +71,8 @@
     "delete": "Delete",
     "back": "Back",
     "notFound": "Goal not found",
-    "deleteConfirmTitle": "Delete goal?"
+    "deleteConfirmTitle": "Delete goal?",
+    "taskCount": "Tasks:"
   },
   "context": {
     "empty": "No contexts yet",

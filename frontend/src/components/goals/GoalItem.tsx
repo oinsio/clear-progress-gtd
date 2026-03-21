@@ -1,4 +1,5 @@
 import type React from "react";
+import { useTranslation } from "react-i18next";
 import { GoalStatusBadge } from "./GoalStatusBadge";
 import type { Goal } from "@/types/entities";
 import type { GoalStatus } from "@/types/common";
@@ -7,8 +8,6 @@ import { getCoverDisplayUrl } from "@/services/CoverService";
 import defaultCoverSvg from "@/assets/default-goal-cover.svg";
 import { useIsUnsynced } from "@/hooks/useIsUnsynced";
 import { cn } from "@/shared/lib/cn";
-
-const TASK_COUNT_LABEL = "Задач:";
 const FINISHED_GOAL_STATUSES = new Set<GoalStatus>(["completed", "cancelled"]);
 
 interface GoalItemProps {
@@ -21,6 +20,7 @@ interface GoalItemProps {
 }
 
 export function GoalItem({ goal, taskCount, onNavigate, nodeRef, style, dragHandle }: GoalItemProps) {
+  const { t } = useTranslation();
   const isFinished = FINISHED_GOAL_STATUSES.has(goal.status);
   const isUnsynced = useIsUnsynced(goal);
   return (
@@ -61,7 +61,7 @@ export function GoalItem({ goal, taskCount, onNavigate, nodeRef, style, dragHand
               data-testid="goal-task-count"
               className="text-xs text-gray-400 mt-0.5 block"
             >
-              {TASK_COUNT_LABEL} {taskCount}
+              {t("goal.taskCount")} {taskCount}
             </span>
           )}
           {isFinished && goal.updated_at && (
@@ -73,12 +73,12 @@ export function GoalItem({ goal, taskCount, onNavigate, nodeRef, style, dragHand
             </span>
           )}
         </div>
-      </button>
 
-      {/* Status badge — right side */}
-      <div className="flex-shrink-0 px-2">
-        <GoalStatusBadge status={goal.status} />
-      </div>
+        {/* Status badge — right side, inside clickable area */}
+        <div className="flex-shrink-0 pl-2">
+          <GoalStatusBadge status={goal.status} />
+        </div>
+      </button>
 
       {/* Drag handle (injected from parent when DnD is active) */}
       {dragHandle}

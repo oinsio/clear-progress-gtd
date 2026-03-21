@@ -71,7 +71,8 @@
     "delete": "Удалить",
     "back": "Назад",
     "notFound": "Цель не найдена",
-    "deleteConfirmTitle": "Удалить цель?"
+    "deleteConfirmTitle": "Удалить цель?",
+    "taskCount": "Задач:"
   },
   "context": {
     "empty": "Нет ни одного контекста",
