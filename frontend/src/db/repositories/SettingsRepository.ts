@@ -21,6 +21,18 @@ export class SettingsRepository {
   }
 
   async bulkUpsert(settings: Setting[]): Promise<void> {
-    await db.settings.bulkPut(settings);
+    if (settings.length === 0) return;
+
+    const existingSettings = await this.getAll();
+    const existingByKey = new Map(existingSettings.map((s) => [s.key, s]));
+
+    const settingsToUpsert = settings.filter((incoming) => {
+      const existing = existingByKey.get(incoming.key);
+      return !existing || incoming.updated_at > existing.updated_at;
+    });
+
+    if (settingsToUpsert.length > 0) {
+      await db.settings.bulkPut(settingsToUpsert);
+    }
   }
 }
