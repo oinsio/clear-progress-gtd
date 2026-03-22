@@ -571,13 +571,6 @@ describe("CoverSyncService", () => {
       };
     }
 
-    beforeEach(() => {
-      global.fetch = vi.fn().mockResolvedValue({
-        ok: true,
-        blob: vi.fn().mockResolvedValue(new Blob(["img"], { type: "image/jpeg" })),
-      });
-    });
-
     it("should skip goals with empty cover_file_id", async () => {
       mockGoalRepository = createMockGoalRepository({
         getActive: vi.fn().mockResolvedValue([createActiveGoal("")]),
@@ -628,15 +621,7 @@ describe("CoverSyncService", () => {
         });
       });
 
-      it("should skip cover download", async () => {
-        const service = createService();
-
-        await service.fullSync();
-
-        expect(global.fetch).not.toHaveBeenCalled();
-      });
-
-      it("should populate localCoverCache without re-downloading", async () => {
+      it("should populate localCoverCache from existing blob", async () => {
         const service = createService();
 
         await service.fullSync();
@@ -655,46 +640,24 @@ describe("CoverSyncService", () => {
         });
       });
 
-      it("should download and save cover", async () => {
+      it("should not attempt to download cover (Service Worker handles caching)", async () => {
         const service = createService();
 
         await service.fullSync();
 
-        expect(mockCoverRepository.save).toHaveBeenCalledWith(
-          expect.objectContaining({ file_id: REMOTE_FILE_ID }),
-        );
+        expect(mockCoverRepository.save).not.toHaveBeenCalled();
       });
 
-      it("should add downloaded cover to localCoverCache", async () => {
+      it("should not add cover to localCoverCache when no local blob exists", async () => {
         const service = createService();
 
         await service.fullSync();
 
-        expect(localCoverCache.get(REMOTE_FILE_ID)).toBeDefined();
-      });
-
-      describe("when cover download fails", () => {
-        beforeEach(() => {
-          global.fetch = vi.fn().mockRejectedValue(new Error("Network error"));
-        });
-
-        it("should not throw (best-effort)", async () => {
-          const service = createService();
-
-          await expect(service.fullSync()).resolves.not.toThrow();
-        });
-
-        it("should not save cover to repository", async () => {
-          const service = createService();
-
-          await service.fullSync();
-
-          expect(mockCoverRepository.save).not.toHaveBeenCalled();
-        });
+        expect(localCoverCache.get(REMOTE_FILE_ID)).toBeUndefined();
       });
     });
 
-    it("should also download cover when CoverRecord exists without blob data", async () => {
+    it("should not attempt download when CoverRecord exists without blob data", async () => {
       const coverWithoutBlob = {
         file_id: REMOTE_FILE_ID,
         thumbnail_url: "https://example.com/thumb",
@@ -711,7 +674,7 @@ describe("CoverSyncService", () => {
 
       await service.fullSync();
 
-      expect(global.fetch).toHaveBeenCalled();
+      expect(mockCoverRepository.save).not.toHaveBeenCalled();
     });
   });
 });

@@ -5,7 +5,7 @@ import type { GoalRepository } from "@/db/repositories/GoalRepository";
 import type { ApiClient } from "./ApiClient";
 import { localCoverCache } from "./LocalCoverCache";
 import { LOCAL_COVER_ID_PREFIX, FALLBACK_COVER_MIME_TYPE } from "@/constants";
-import { arrayBufferToBase64, buildCoverFilename, buildCoverThumbnailUrl, computeSha256Hex } from "./CoverService";
+import { arrayBufferToBase64, buildCoverFilename } from "./CoverService";
 
 export class CoverSyncService {
   constructor(
@@ -107,28 +107,10 @@ export class CoverSyncService {
       if (existingCover?.data) {
         const url = URL.createObjectURL(existingCover.data);
         localCoverCache.set(goal.cover_file_id, url);
-        continue;
       }
-      try {
-        await this.downloadAndCacheCover(goal.cover_file_id);
-      } catch {
-        // best-effort: cover will display from thumbnail URL when online
-      }
+      // Covers from other devices are cached by the Service Worker
+      // when the <img> element loads the thumbnail URL (no CORS restriction for img tags).
     }
-  }
-
-  private async downloadAndCacheCover(fileId: string): Promise<void> {
-    const thumbnailUrl = buildCoverThumbnailUrl(fileId);
-    const response = await fetch(thumbnailUrl);
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}`);
-    }
-    const blob = await response.blob();
-    const buffer = await blob.arrayBuffer();
-    const dataHash = await computeSha256Hex(buffer);
-    await this.coverRepository.save({ file_id: fileId, thumbnail_url: thumbnailUrl, data_hash: dataHash, data: blob });
-    const url = URL.createObjectURL(blob);
-    localCoverCache.set(fileId, url);
   }
 
   private async uploadPendingCover(pendingCover: PendingCoverRecord): Promise<void> {
