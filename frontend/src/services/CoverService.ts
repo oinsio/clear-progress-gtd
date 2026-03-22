@@ -89,11 +89,15 @@ export class CoverService {
         data: base64Data,
       });
 
+      const blob = new Blob([buffer], { type: file.type });
       await this.coverRepository.save({
         file_id: response.file_id,
         thumbnail_url: response.thumbnail_url,
         data_hash: dataHash,
+        data: blob,
       });
+      const blobUrl = URL.createObjectURL(blob);
+      localCoverCache.set(response.file_id, blobUrl);
 
       return { file_id: response.file_id, thumbnail_url: response.thumbnail_url };
     } catch (error) {

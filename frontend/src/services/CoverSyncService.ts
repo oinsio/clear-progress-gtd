@@ -1,11 +1,11 @@
-import type { PendingCoverRecord } from "@/types/entities";
+import type { PendingCoverRecord, CoverRecord } from "@/types/entities";
 import type { PendingCoverRepository } from "@/db/repositories/PendingCoverRepository";
 import type { CoverRepository } from "@/db/repositories/CoverRepository";
 import type { GoalRepository } from "@/db/repositories/GoalRepository";
 import type { ApiClient } from "./ApiClient";
 import { localCoverCache } from "./LocalCoverCache";
 import { LOCAL_COVER_ID_PREFIX, FALLBACK_COVER_MIME_TYPE } from "@/constants";
-import { arrayBufferToBase64, buildCoverFilename } from "./CoverService";
+import { arrayBufferToBase64, buildCoverFilename, buildCoverThumbnailUrl, computeSha256Hex } from "./CoverService";
 
 export class CoverSyncService {
   constructor(
@@ -58,10 +58,13 @@ export class CoverSyncService {
       if (!goal.cover_file_id || goal.cover_file_id.startsWith(LOCAL_COVER_ID_PREFIX)) {
         continue;
       }
-      const existingCover = await this.coverRepository.getByFileId(goal.cover_file_id);
+      let existingCover = await this.coverRepository.getByFileId(goal.cover_file_id);
       if (!existingCover?.data) {
-        continue;
+        const fetchedCover = await this.fetchAndStoreCoverBlob(goal.cover_file_id);
+        if (!fetchedCover) continue;
+        existingCover = fetchedCover;
       }
+      if (!existingCover?.data) continue;
       try {
         const buffer = await existingCover.data.arrayBuffer();
         const base64Data = arrayBufferToBase64(buffer);
@@ -110,6 +113,27 @@ export class CoverSyncService {
       }
       // Covers from other devices are cached by the Service Worker
       // when the <img> element loads the thumbnail URL (no CORS restriction for img tags).
+    }
+  }
+
+  private async fetchAndStoreCoverBlob(fileId: string): Promise<CoverRecord | null> {
+    try {
+      const thumbnailUrl = buildCoverThumbnailUrl(fileId);
+      const response = await fetch(thumbnailUrl, { credentials: "include" });
+      if (!response.ok) return null;
+      const blob = await response.blob();
+      const buffer = await blob.arrayBuffer();
+      const dataHash = await computeSha256Hex(buffer);
+      const coverRecord: CoverRecord = {
+        file_id: fileId,
+        thumbnail_url: thumbnailUrl,
+        data_hash: dataHash,
+        data: blob,
+      };
+      await this.coverRepository.save(coverRecord);
+      return coverRecord;
+    } catch {
+      return null;
     }
   }
 

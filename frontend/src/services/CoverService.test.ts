@@ -163,6 +163,26 @@ describe("CoverService", () => {
       );
     });
 
+    it("should save blob data to cover record after successful online upload", async () => {
+      const service = new CoverService(mockApiClient, mockCoverRepository, mockPendingCoverRepository);
+
+      await service.uploadCover(createImageFile(), "goal-1");
+
+      expect(mockCoverRepository.save).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.any(Blob),
+        }),
+      );
+    });
+
+    it("should add blob URL to localCoverCache after successful online upload", async () => {
+      const service = new CoverService(mockApiClient, mockCoverRepository, mockPendingCoverRepository);
+
+      await service.uploadCover(createImageFile(), "goal-1");
+
+      expect(localCoverCache.get("new-file-id")).toBeDefined();
+    });
+
     it("should return file_id and thumbnail_url from API response", async () => {
       const service = new CoverService(mockApiClient, mockCoverRepository, mockPendingCoverRepository);
 

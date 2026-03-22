@@ -323,7 +323,12 @@ describe("CoverSyncService", () => {
       };
     }
 
+    let fetchMock: ReturnType<typeof vi.fn>;
+
     beforeEach(() => {
+      fetchMock = vi.fn().mockRejectedValue(new Error("CORS blocked"));
+      vi.stubGlobal("fetch", fetchMock);
+
       mockGoalRepository = createMockGoalRepository({
         getActive: vi.fn().mockResolvedValue([createGoalWithServerCover()]),
       });
@@ -337,6 +342,10 @@ describe("CoverSyncService", () => {
           reused: true,
         }),
       });
+    });
+
+    afterEach(() => {
+      vi.unstubAllGlobals();
     });
 
     it("should skip goals with empty cover_file_id", async () => {
@@ -475,6 +484,77 @@ describe("CoverSyncService", () => {
       await service.reuploadLocalCovers();
 
       expect(mockGoalRepository.update).not.toHaveBeenCalled();
+    });
+
+    describe("when cover has no local blob — fetch from Google Drive", () => {
+      const FETCHED_BLOB = new Blob(["fetched image"], { type: "image/jpeg" });
+
+      function mockFetchSuccess() {
+        fetchMock.mockResolvedValue({
+          ok: true,
+          blob: vi.fn().mockResolvedValue(FETCHED_BLOB),
+        });
+      }
+
+      beforeEach(() => {
+        mockGoalRepository = createMockGoalRepository({
+          getActive: vi.fn().mockResolvedValue([createGoalWithServerCover()]),
+        });
+        mockCoverRepository = createMockCoverRepository({
+          getByFileId: vi.fn().mockResolvedValue(undefined),
+        });
+        mockApiClient = createMockApiClient({
+          uploadCover: vi.fn().mockResolvedValue({
+            file_id: EXISTING_SERVER_FILE_ID,
+            thumbnail_url: buildCoverThumbnailUrl(EXISTING_SERVER_FILE_ID),
+            reused: true,
+          }),
+        });
+      });
+
+      it("should call uploadCover when fetch from Drive succeeds", async () => {
+        mockFetchSuccess();
+        const service = createService();
+
+        await service.reuploadLocalCovers();
+
+        expect(mockApiClient.uploadCover).toHaveBeenCalledWith(
+          expect.objectContaining({ goal_id: "goal-reupload" }),
+        );
+      });
+
+      it("should save fetched blob to coverRepository", async () => {
+        mockFetchSuccess();
+        const service = createService();
+
+        await service.reuploadLocalCovers();
+
+        expect(mockCoverRepository.save).toHaveBeenCalledWith(
+          expect.objectContaining({
+            file_id: EXISTING_SERVER_FILE_ID,
+            data: FETCHED_BLOB,
+            data_hash: expect.any(String),
+          }),
+        );
+      });
+
+      it("should skip cover gracefully when fetch fails (CORS/network error)", async () => {
+        // fetchMock already throws from outer beforeEach
+        const service = createService();
+
+        await service.reuploadLocalCovers();
+
+        expect(mockApiClient.uploadCover).not.toHaveBeenCalled();
+      });
+
+      it("should skip cover when fetch returns non-ok response", async () => {
+        fetchMock.mockResolvedValue({ ok: false, status: 403 });
+        const service = createService();
+
+        await service.reuploadLocalCovers();
+
+        expect(mockApiClient.uploadCover).not.toHaveBeenCalled();
+      });
     });
 
     describe("when server returns a different file_id", () => {
