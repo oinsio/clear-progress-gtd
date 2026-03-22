@@ -187,38 +187,46 @@ export default function SettingsPage() {
               <h2 className="text-sm font-medium text-gray-500 uppercase tracking-wide">
                 {t("settings.syncSection")}
               </h2>
-              <div className="flex items-center justify-between rounded-lg border border-gray-200 px-4 py-3">
-                <span
-                  data-testid="settings-sync-status"
-                  className={cn(
-                    "text-sm font-medium",
-                    isBackendConnected ? "text-green-600" : "text-gray-400",
-                  )}
-                >
-                  {isBackendConnected ? t("settings.syncConnected") : t("settings.syncNotConnected")}
-                </span>
+              <div className="rounded-lg border border-gray-200 px-4 py-3 space-y-3">
+                <div className="flex items-center gap-2">
+                  <span
+                    className={cn(
+                      "size-2 rounded-full",
+                      isBackendConnected ? "bg-green-500" : "bg-gray-300",
+                    )}
+                  />
+                  <span
+                    data-testid="settings-sync-status"
+                    className={cn(
+                      "text-sm font-medium",
+                      isBackendConnected ? "text-green-600" : "text-gray-400",
+                    )}
+                  >
+                    {isBackendConnected ? t("settings.syncConnected") : t("settings.syncNotConnected")}
+                  </span>
+                </div>
                 {isBackendConnected ? (
-                  <div className="flex items-center gap-2">
+                  <>
                     <button
                       data-testid="settings-full-sync-btn"
                       onClick={handleFullSyncOpen}
-                      className="rounded-lg bg-accent px-3 py-1.5 text-xs font-medium text-white transition-colors"
+                      className="w-full rounded-lg bg-accent py-2 text-sm font-medium text-white transition-colors"
                     >
                       {t("settings.fullSync")}
                     </button>
                     <button
                       data-testid="settings-sync-disconnect"
                       onClick={handleDisconnect}
-                      className="rounded-lg bg-red-500 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-red-600"
+                      className="w-full text-sm font-medium text-red-500 transition-colors hover:text-red-600"
                     >
                       {t("settings.syncDisconnect")}
                     </button>
-                  </div>
+                  </>
                 ) : (
                   <button
                     data-testid="settings-sync-connect"
                     onClick={() => navigate(ROUTES.SETUP)}
-                    className="rounded-lg bg-accent px-3 py-1.5 text-xs font-medium text-white transition-colors"
+                    className="w-full rounded-lg bg-accent py-2 text-sm font-medium text-white transition-colors"
                   >
                     {t("settings.syncConnect")}
                   </button>
