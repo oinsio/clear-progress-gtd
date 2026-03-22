@@ -5,7 +5,7 @@ import type { GoalRepository } from "@/db/repositories/GoalRepository";
 import type { ApiClient } from "./ApiClient";
 import { localCoverCache } from "./LocalCoverCache";
 import { LOCAL_COVER_ID_PREFIX, FALLBACK_COVER_MIME_TYPE } from "@/constants";
-import { arrayBufferToBase64, buildCoverThumbnailUrl, computeSha256Hex } from "./CoverService";
+import { arrayBufferToBase64, buildCoverFilename, buildCoverThumbnailUrl, computeSha256Hex } from "./CoverService";
 
 export class CoverSyncService {
   constructor(
@@ -67,7 +67,7 @@ export class CoverSyncService {
         const base64Data = arrayBufferToBase64(buffer);
         const response = await this.apiClient.uploadCover({
           goal_id: goal.id,
-          filename: `cover_${goal.id}`,
+          filename: buildCoverFilename(existingCover.data_hash, existingCover.data.type || FALLBACK_COVER_MIME_TYPE),
           mime_type: existingCover.data.type || FALLBACK_COVER_MIME_TYPE,
           data: base64Data,
         });

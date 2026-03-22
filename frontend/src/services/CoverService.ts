@@ -1,4 +1,4 @@
-import { MAX_COVER_SIZE_BYTES, COVER_THUMBNAIL_BASE_URL, COVER_THUMBNAIL_SIZE, LOCAL_COVER_ID_PREFIX } from "@/constants";
+import { MAX_COVER_SIZE_BYTES, COVER_THUMBNAIL_BASE_URL, COVER_THUMBNAIL_SIZE, LOCAL_COVER_ID_PREFIX, COVER_HASH_PREFIX_LENGTH, DEFAULT_COVER_EXTENSION } from "@/constants";
 import type { ApiClient } from "./ApiClient";
 import type { CoverRepository } from "@/db/repositories/CoverRepository";
 import type { PendingCoverRepository } from "@/db/repositories/PendingCoverRepository";
@@ -28,6 +28,12 @@ export async function computeSha256Hex(buffer: ArrayBuffer): Promise<string> {
   return Array.from(new Uint8Array(hashBuffer))
     .map((byte) => byte.toString(16).padStart(2, "0"))
     .join("");
+}
+
+export function buildCoverFilename(dataHash: string, mimeType: string): string {
+  const subtype = mimeType.split("/")[1] ?? "";
+  const ext = subtype === "jpeg" ? DEFAULT_COVER_EXTENSION : subtype || DEFAULT_COVER_EXTENSION;
+  return `${dataHash.substring(0, COVER_HASH_PREFIX_LENGTH)}.${ext}`;
 }
 
 export function getCoverDisplayUrl(fileId: string): string | null {

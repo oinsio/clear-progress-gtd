@@ -395,6 +395,17 @@ describe("CoverSyncService", () => {
       );
     });
 
+    it("should form filename as hash prefix + extension matching server format", async () => {
+      // cover-hash-xyz → first 12 chars: "cover-hash-x", image/jpeg → jpg
+      const service = createService();
+
+      await service.reuploadLocalCovers();
+
+      expect(mockApiClient.uploadCover).toHaveBeenCalledWith(
+        expect.objectContaining({ filename: "cover-hash-x.jpg" }),
+      );
+    });
+
     it("should use blob.type as mime_type in upload request", async () => {
       const coverWithType = { ...createCoverRecord(), data: new Blob(["img"], { type: "image/png" }) };
       mockCoverRepository = createMockCoverRepository({
