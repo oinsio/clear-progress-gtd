@@ -20,6 +20,10 @@ export class SettingsRepository {
     await db.settings.put({ key, value, updated_at: updatedAt });
   }
 
+  async getChangedSince(since: string): Promise<Setting[]> {
+    return db.settings.where("updated_at").above(since).toArray();
+  }
+
   async bulkUpsert(settings: Setting[]): Promise<void> {
     if (settings.length === 0) return;
 

@@ -75,6 +75,10 @@ export class TaskRepository {
       .toArray();
   }
 
+  async getChangedSince(since: string): Promise<Task[]> {
+    return db.tasks.where("updated_at").above(since).toArray();
+  }
+
   async getMaxVersion(): Promise<number> {
     const tasks = await db.tasks
       .orderBy("version")

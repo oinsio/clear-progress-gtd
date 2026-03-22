@@ -30,6 +30,10 @@ export class ChecklistRepository {
     await db.checklist_items.bulkPut(items);
   }
 
+  async getChangedSince(since: string): Promise<ChecklistItem[]> {
+    return db.checklist_items.where("updated_at").above(since).toArray();
+  }
+
   async getMaxVersion(): Promise<number> {
     const items = await db.checklist_items
       .orderBy("version")

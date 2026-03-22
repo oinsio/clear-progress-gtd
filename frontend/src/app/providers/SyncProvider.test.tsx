@@ -334,6 +334,27 @@ describe("SyncProvider — ping reconnect", () => {
   });
 });
 
+describe("SyncProvider — push since argument", () => {
+  it("should call push with null on the first sync when no previous sync exists", async () => {
+    localStorage.removeItem("last_sync");
+
+    renderProvider();
+    await act(async () => {});
+
+    expect(mockPush).toHaveBeenCalledWith(null);
+  });
+
+  it("should call push with the lastSyncedAt timestamp on subsequent syncs", async () => {
+    const previousSyncTime = "2026-03-01T10:00:00.000Z";
+    localStorage.setItem("last_sync", previousSyncTime);
+
+    renderProvider();
+    await act(async () => {});
+
+    expect(mockPush).toHaveBeenCalledWith(previousSyncTime);
+  });
+});
+
 describe("SyncProvider — push+pull pairing", () => {
   it("should call push before pull on initial sync", async () => {
     const callOrder: string[] = [];

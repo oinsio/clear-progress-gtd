@@ -26,6 +26,10 @@ export class ContextRepository {
     await db.contexts.bulkPut(contexts);
   }
 
+  async getChangedSince(since: string): Promise<Context[]> {
+    return db.contexts.where("updated_at").above(since).toArray();
+  }
+
   async getMaxVersion(): Promise<number> {
     const contexts = await db.contexts
       .orderBy("version")

@@ -26,6 +26,10 @@ export class CategoryRepository {
     await db.categories.bulkPut(categories);
   }
 
+  async getChangedSince(since: string): Promise<Category[]> {
+    return db.categories.where("updated_at").above(since).toArray();
+  }
+
   async getMaxVersion(): Promise<number> {
     const categories = await db.categories
       .orderBy("version")

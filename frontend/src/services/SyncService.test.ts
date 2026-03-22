@@ -117,6 +117,7 @@ describe("SyncService", () => {
 
     taskRepository = {
       getAll: vi.fn().mockResolvedValue([]),
+      getChangedSince: vi.fn().mockResolvedValue([]),
       getMaxVersion: vi.fn().mockResolvedValue(0),
       update: vi.fn().mockResolvedValue(undefined),
       bulkUpsert: vi.fn().mockResolvedValue(undefined),
@@ -124,6 +125,7 @@ describe("SyncService", () => {
 
     goalRepository = {
       getAll: vi.fn().mockResolvedValue([]),
+      getChangedSince: vi.fn().mockResolvedValue([]),
       getMaxVersion: vi.fn().mockResolvedValue(0),
       update: vi.fn().mockResolvedValue(undefined),
       bulkUpsert: vi.fn().mockResolvedValue(undefined),
@@ -131,6 +133,7 @@ describe("SyncService", () => {
 
     contextRepository = {
       getAll: vi.fn().mockResolvedValue([]),
+      getChangedSince: vi.fn().mockResolvedValue([]),
       getMaxVersion: vi.fn().mockResolvedValue(0),
       update: vi.fn().mockResolvedValue(undefined),
       bulkUpsert: vi.fn().mockResolvedValue(undefined),
@@ -138,6 +141,7 @@ describe("SyncService", () => {
 
     categoryRepository = {
       getAll: vi.fn().mockResolvedValue([]),
+      getChangedSince: vi.fn().mockResolvedValue([]),
       getMaxVersion: vi.fn().mockResolvedValue(0),
       update: vi.fn().mockResolvedValue(undefined),
       bulkUpsert: vi.fn().mockResolvedValue(undefined),
@@ -145,6 +149,7 @@ describe("SyncService", () => {
 
     checklistRepository = {
       getAll: vi.fn().mockResolvedValue([]),
+      getChangedSince: vi.fn().mockResolvedValue([]),
       getMaxVersion: vi.fn().mockResolvedValue(0),
       update: vi.fn().mockResolvedValue(undefined),
       bulkUpsert: vi.fn().mockResolvedValue(undefined),
@@ -152,6 +157,7 @@ describe("SyncService", () => {
 
     settingsRepository = {
       getAll: vi.fn().mockResolvedValue([]),
+      getChangedSince: vi.fn().mockResolvedValue([]),
       bulkUpsert: vi.fn().mockResolvedValue(undefined),
     } as unknown as SettingsRepository;
   });
@@ -196,7 +202,7 @@ describe("SyncService", () => {
         settingsRepository,
       );
 
-      await service.push();
+      await service.push(null);
 
       expect(settingsRepository.getAll).toHaveBeenCalledOnce();
     });
@@ -218,7 +224,7 @@ describe("SyncService", () => {
         settingsRepository,
       );
 
-      await service.push();
+      await service.push(null);
 
       const pushCall = (mockApiClient.push as ReturnType<typeof vi.fn>).mock.calls[0][0];
       expect(pushCall.changes.settings).toEqual(localSettings);
@@ -241,7 +247,7 @@ describe("SyncService", () => {
         mockApiClient, taskRepository, goalRepository, contextRepository,
         categoryRepository, checklistRepository, settingsRepository,
       );
-      await service.push();
+      await service.push(null);
 
       expect(goalRepository.update).toHaveBeenCalledWith(serverGoal);
     });
@@ -262,7 +268,7 @@ describe("SyncService", () => {
         mockApiClient, taskRepository, goalRepository, contextRepository,
         categoryRepository, checklistRepository, settingsRepository,
       );
-      await service.push();
+      await service.push(null);
 
       expect(contextRepository.update).toHaveBeenCalledWith(serverContext);
     });
@@ -283,7 +289,7 @@ describe("SyncService", () => {
         mockApiClient, taskRepository, goalRepository, contextRepository,
         categoryRepository, checklistRepository, settingsRepository,
       );
-      await service.push();
+      await service.push(null);
 
       expect(categoryRepository.update).toHaveBeenCalledWith(serverCategory);
     });
@@ -304,7 +310,7 @@ describe("SyncService", () => {
         mockApiClient, taskRepository, goalRepository, contextRepository,
         categoryRepository, checklistRepository, settingsRepository,
       );
-      await service.push();
+      await service.push(null);
 
       expect(checklistRepository.update).toHaveBeenCalledWith(serverItem);
     });
@@ -342,11 +348,103 @@ describe("SyncService", () => {
           settingsRepository,
         );
 
-        await service.push();
+        await service.push(null);
 
         const pushCall = (mockApiClient.push as ReturnType<typeof vi.fn>).mock.calls[0][0];
         expect(pushCall.changes.goals[0].cover_file_id).toBe(expectedCoverFileId);
       },
     );
+  });
+
+  describe("push — with since timestamp", () => {
+    function createService() {
+      return new SyncService(
+        mockApiClient,
+        taskRepository,
+        goalRepository,
+        contextRepository,
+        categoryRepository,
+        checklistRepository,
+        settingsRepository,
+      );
+    }
+
+    it("should call getChangedSince on all repositories when since is provided", async () => {
+      const since = "2026-03-01T00:00:00.000Z";
+      const service = createService();
+
+      await service.push(since);
+
+      expect(taskRepository.getChangedSince).toHaveBeenCalledWith(since);
+      expect(goalRepository.getChangedSince).toHaveBeenCalledWith(since);
+      expect(contextRepository.getChangedSince).toHaveBeenCalledWith(since);
+      expect(categoryRepository.getChangedSince).toHaveBeenCalledWith(since);
+      expect(checklistRepository.getChangedSince).toHaveBeenCalledWith(since);
+      expect(settingsRepository.getChangedSince).toHaveBeenCalledWith(since);
+    });
+
+    it("should not call getAll on any repository when since is provided", async () => {
+      const service = createService();
+
+      await service.push("2026-03-01T00:00:00.000Z");
+
+      expect(taskRepository.getAll).not.toHaveBeenCalled();
+      expect(goalRepository.getAll).not.toHaveBeenCalled();
+      expect(contextRepository.getAll).not.toHaveBeenCalled();
+      expect(categoryRepository.getAll).not.toHaveBeenCalled();
+      expect(checklistRepository.getAll).not.toHaveBeenCalled();
+      expect(settingsRepository.getAll).not.toHaveBeenCalled();
+    });
+
+    it("should send only the records returned by getChangedSince to apiClient.push", async () => {
+      const changedTask = { id: "task-1", title: "Changed Task" };
+      (taskRepository.getChangedSince as ReturnType<typeof vi.fn>).mockResolvedValue([changedTask]);
+
+      const service = createService();
+      await service.push("2026-03-01T00:00:00.000Z");
+
+      const pushCall = (mockApiClient.push as ReturnType<typeof vi.fn>).mock.calls[0][0];
+      expect(pushCall.changes.tasks).toEqual([changedTask]);
+    });
+  });
+
+  describe("push — null since (first sync)", () => {
+    function createService() {
+      return new SyncService(
+        mockApiClient,
+        taskRepository,
+        goalRepository,
+        contextRepository,
+        categoryRepository,
+        checklistRepository,
+        settingsRepository,
+      );
+    }
+
+    it("should call getAll on all repositories when since is null", async () => {
+      const service = createService();
+
+      await service.push(null);
+
+      expect(taskRepository.getAll).toHaveBeenCalled();
+      expect(goalRepository.getAll).toHaveBeenCalled();
+      expect(contextRepository.getAll).toHaveBeenCalled();
+      expect(categoryRepository.getAll).toHaveBeenCalled();
+      expect(checklistRepository.getAll).toHaveBeenCalled();
+      expect(settingsRepository.getAll).toHaveBeenCalled();
+    });
+
+    it("should not call getChangedSince on any repository when since is null", async () => {
+      const service = createService();
+
+      await service.push(null);
+
+      expect(taskRepository.getChangedSince).not.toHaveBeenCalled();
+      expect(goalRepository.getChangedSince).not.toHaveBeenCalled();
+      expect(contextRepository.getChangedSince).not.toHaveBeenCalled();
+      expect(categoryRepository.getChangedSince).not.toHaveBeenCalled();
+      expect(checklistRepository.getChangedSince).not.toHaveBeenCalled();
+      expect(settingsRepository.getChangedSince).not.toHaveBeenCalled();
+    });
   });
 });

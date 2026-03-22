@@ -26,6 +26,10 @@ export class GoalRepository {
     await db.goals.bulkPut(goals);
   }
 
+  async getChangedSince(since: string): Promise<Goal[]> {
+    return db.goals.where("updated_at").above(since).toArray();
+  }
+
   async getMaxVersion(): Promise<number> {
     const goals = await db.goals
       .orderBy("version")

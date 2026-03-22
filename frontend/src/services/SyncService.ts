@@ -39,16 +39,25 @@ export class SyncService {
     ]);
   }
 
-  async push(): Promise<void> {
+  async push(since: string | null): Promise<void> {
     const [tasks, goals, contexts, categories, checklist_items, settings] =
-      await Promise.all([
-        this.taskRepository.getAll(),
-        this.goalRepository.getAll(),
-        this.contextRepository.getAll(),
-        this.categoryRepository.getAll(),
-        this.checklistRepository.getAll(),
-        this.settingsRepository.getAll(),
-      ]);
+      since === null
+        ? await Promise.all([
+            this.taskRepository.getAll(),
+            this.goalRepository.getAll(),
+            this.contextRepository.getAll(),
+            this.categoryRepository.getAll(),
+            this.checklistRepository.getAll(),
+            this.settingsRepository.getAll(),
+          ])
+        : await Promise.all([
+            this.taskRepository.getChangedSince(since),
+            this.goalRepository.getChangedSince(since),
+            this.contextRepository.getChangedSince(since),
+            this.categoryRepository.getChangedSince(since),
+            this.checklistRepository.getChangedSince(since),
+            this.settingsRepository.getChangedSince(since),
+          ]);
 
     const goalsForPush = goals.map((goal) =>
       goal.cover_file_id.startsWith(LOCAL_COVER_ID_PREFIX)

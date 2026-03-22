@@ -50,6 +50,11 @@ export function SyncProvider({ children }: { children: React.ReactNode }) {
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const pingIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const lastSyncedAtRef = useRef<string | null>(lastSyncedAt);
+
+  useEffect(() => {
+    lastSyncedAtRef.current = lastSyncedAt;
+  }, [lastSyncedAt]);
 
   const stopPingInterval = useCallback(() => {
     if (pingIntervalRef.current) {
@@ -60,7 +65,7 @@ export function SyncProvider({ children }: { children: React.ReactNode }) {
 
   const applySyncResult = useCallback(async (): Promise<void> => {
     const syncTimestamp = new Date().toISOString();
-    await syncService.push();
+    await syncService.push(lastSyncedAtRef.current);
     await syncService.pull();
     void defaultCoverSyncService.sync();
     setSyncStatus("idle");
