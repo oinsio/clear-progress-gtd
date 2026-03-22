@@ -6,7 +6,7 @@ import type { CoverRepository } from "@/db/repositories/CoverRepository";
 import type { GoalRepository } from "@/db/repositories/GoalRepository";
 import type { PendingCoverRecord } from "@/types/entities";
 import { localCoverCache } from "./LocalCoverCache";
-import { LOCAL_COVER_ID_PREFIX } from "@/constants";
+import { LOCAL_COVER_ID_PREFIX, FALLBACK_COVER_MIME_TYPE } from "@/constants";
 import { buildCoverThumbnailUrl } from "./CoverService";
 
 // jsdom does not implement Blob.prototype.arrayBuffer — polyfill for tests
@@ -294,6 +294,254 @@ describe("CoverSyncService", () => {
 
   });
 
+  describe("reuploadLocalCovers", () => {
+    const EXISTING_SERVER_FILE_ID = "existing-server-file-id";
+    const NEW_SERVER_FILE_ID = "new-server-file-id";
+
+    function createGoalWithServerCover(overrides: Record<string, unknown> = {}) {
+      return {
+        id: "goal-reupload",
+        title: "Test Goal",
+        description: "",
+        cover_file_id: EXISTING_SERVER_FILE_ID,
+        status: "in_progress" as const,
+        sort_order: 0,
+        is_deleted: false,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        version: 3,
+        ...overrides,
+      };
+    }
+
+    function createCoverRecord(fileId = EXISTING_SERVER_FILE_ID) {
+      return {
+        file_id: fileId,
+        thumbnail_url: buildCoverThumbnailUrl(fileId),
+        data_hash: "cover-hash-xyz",
+        data: new Blob(["img data"], { type: "image/jpeg" }),
+      };
+    }
+
+    beforeEach(() => {
+      mockGoalRepository = createMockGoalRepository({
+        getActive: vi.fn().mockResolvedValue([createGoalWithServerCover()]),
+      });
+      mockCoverRepository = createMockCoverRepository({
+        getByFileId: vi.fn().mockResolvedValue(createCoverRecord()),
+      });
+      mockApiClient = createMockApiClient({
+        uploadCover: vi.fn().mockResolvedValue({
+          file_id: EXISTING_SERVER_FILE_ID,
+          thumbnail_url: buildCoverThumbnailUrl(EXISTING_SERVER_FILE_ID),
+          reused: true,
+        }),
+      });
+    });
+
+    it("should skip goals with empty cover_file_id", async () => {
+      mockGoalRepository = createMockGoalRepository({
+        getActive: vi.fn().mockResolvedValue([createGoalWithServerCover({ cover_file_id: "" })]),
+      });
+      const service = createService();
+
+      await service.reuploadLocalCovers();
+
+      expect(mockApiClient.uploadCover).not.toHaveBeenCalled();
+    });
+
+    it("should skip goals with local: cover_file_id prefix", async () => {
+      mockGoalRepository = createMockGoalRepository({
+        getActive: vi.fn().mockResolvedValue([
+          createGoalWithServerCover({ cover_file_id: `${LOCAL_COVER_ID_PREFIX}some-uuid` }),
+        ]),
+      });
+      const service = createService();
+
+      await service.reuploadLocalCovers();
+
+      expect(mockApiClient.uploadCover).not.toHaveBeenCalled();
+    });
+
+    it("should skip goals without a cover blob in CoverRepository", async () => {
+      mockCoverRepository = createMockCoverRepository({
+        getByFileId: vi.fn().mockResolvedValue({ file_id: EXISTING_SERVER_FILE_ID, data_hash: "h", thumbnail_url: "", data: undefined }),
+      });
+      const service = createService();
+
+      await service.reuploadLocalCovers();
+
+      expect(mockApiClient.uploadCover).not.toHaveBeenCalled();
+    });
+
+    it("should skip goals with no CoverRecord at all", async () => {
+      mockCoverRepository = createMockCoverRepository({
+        getByFileId: vi.fn().mockResolvedValue(undefined),
+      });
+      const service = createService();
+
+      await service.reuploadLocalCovers();
+
+      expect(mockApiClient.uploadCover).not.toHaveBeenCalled();
+    });
+
+    it("should call uploadCover with goal_id and base64 data when blob exists", async () => {
+      const service = createService();
+
+      await service.reuploadLocalCovers();
+
+      expect(mockApiClient.uploadCover).toHaveBeenCalledWith(
+        expect.objectContaining({ goal_id: "goal-reupload" }),
+      );
+    });
+
+    it("should use blob.type as mime_type in upload request", async () => {
+      const coverWithType = { ...createCoverRecord(), data: new Blob(["img"], { type: "image/png" }) };
+      mockCoverRepository = createMockCoverRepository({
+        getByFileId: vi.fn().mockResolvedValue(coverWithType),
+      });
+      const service = createService();
+
+      await service.reuploadLocalCovers();
+
+      expect(mockApiClient.uploadCover).toHaveBeenCalledWith(
+        expect.objectContaining({ mime_type: "image/png" }),
+      );
+    });
+
+    it("should use FALLBACK_COVER_MIME_TYPE when blob.type is empty", async () => {
+      const coverWithEmptyType = { ...createCoverRecord(), data: new Blob(["img"], { type: "" }) };
+      mockCoverRepository = createMockCoverRepository({
+        getByFileId: vi.fn().mockResolvedValue(coverWithEmptyType),
+      });
+      const service = createService();
+
+      await service.reuploadLocalCovers();
+
+      expect(mockApiClient.uploadCover).toHaveBeenCalledWith(
+        expect.objectContaining({ mime_type: FALLBACK_COVER_MIME_TYPE }),
+      );
+    });
+
+    it("should not update goal when server returns the same file_id (file still alive)", async () => {
+      const service = createService();
+
+      await service.reuploadLocalCovers();
+
+      expect(mockGoalRepository.update).not.toHaveBeenCalled();
+    });
+
+    it("should continue processing other goals when one upload fails", async () => {
+      const goals = [
+        createGoalWithServerCover({ id: "goal-fail", cover_file_id: "file-fail" }),
+        createGoalWithServerCover({ id: "goal-ok", cover_file_id: "file-ok" }),
+      ];
+      mockGoalRepository = createMockGoalRepository({
+        getActive: vi.fn().mockResolvedValue(goals),
+      });
+      mockApiClient = createMockApiClient({
+        uploadCover: vi.fn()
+          .mockRejectedValueOnce(new Error("Network error"))
+          .mockResolvedValueOnce({
+            file_id: "file-ok",
+            thumbnail_url: buildCoverThumbnailUrl("file-ok"),
+            reused: true,
+          }),
+      });
+      const service = createService();
+
+      await service.reuploadLocalCovers();
+
+      expect(mockApiClient.uploadCover).toHaveBeenCalledTimes(2);
+    });
+
+    it("should not update goal when upload fails", async () => {
+      mockApiClient = createMockApiClient({
+        uploadCover: vi.fn().mockRejectedValue(new Error("Network error")),
+      });
+      const service = createService();
+
+      await service.reuploadLocalCovers();
+
+      expect(mockGoalRepository.update).not.toHaveBeenCalled();
+    });
+
+    describe("when server returns a different file_id", () => {
+      let coverRecord: ReturnType<typeof createCoverRecord>;
+
+      beforeEach(() => {
+        coverRecord = createCoverRecord();
+        mockCoverRepository = createMockCoverRepository({
+          getByFileId: vi.fn().mockResolvedValue(coverRecord),
+        });
+        mockApiClient = createMockApiClient({
+          uploadCover: vi.fn().mockResolvedValue({
+            file_id: NEW_SERVER_FILE_ID,
+            thumbnail_url: buildCoverThumbnailUrl(NEW_SERVER_FILE_ID),
+            reused: false,
+          }),
+        });
+      });
+
+      it("should update goal cover_file_id (file was lost)", async () => {
+        const service = createService();
+
+        await service.reuploadLocalCovers();
+
+        expect(mockGoalRepository.update).toHaveBeenCalledWith(
+          expect.objectContaining({ cover_file_id: NEW_SERVER_FILE_ID }),
+        );
+      });
+
+      it("should increment goal version", async () => {
+        const goalWithVersion = createGoalWithServerCover({ version: 5 });
+        mockGoalRepository = createMockGoalRepository({
+          getActive: vi.fn().mockResolvedValue([goalWithVersion]),
+        });
+        const service = createService();
+
+        await service.reuploadLocalCovers();
+
+        expect(mockGoalRepository.update).toHaveBeenCalledWith(
+          expect.objectContaining({ version: 6 }),
+        );
+      });
+
+      it("should save new CoverRecord", async () => {
+        const service = createService();
+
+        await service.reuploadLocalCovers();
+
+        expect(mockCoverRepository.save).toHaveBeenCalledWith(
+          expect.objectContaining({
+            file_id: NEW_SERVER_FILE_ID,
+            data: coverRecord.data,
+            data_hash: coverRecord.data_hash,
+          }),
+        );
+      });
+
+      it("should delete old CoverRecord", async () => {
+        const service = createService();
+
+        await service.reuploadLocalCovers();
+
+        expect(mockCoverRepository.delete).toHaveBeenCalledWith(EXISTING_SERVER_FILE_ID);
+      });
+
+      it("should transfer localCoverCache entry", async () => {
+        const originalUrl = "blob:http://localhost/cover-original";
+        localCoverCache.set(EXISTING_SERVER_FILE_ID, originalUrl);
+        const service = createService();
+
+        await service.reuploadLocalCovers();
+
+        expect(localCoverCache.get(NEW_SERVER_FILE_ID)).toBe(originalUrl);
+        expect(localCoverCache.get(EXISTING_SERVER_FILE_ID)).toBeUndefined();
+      });
+    });
+  });
+
   describe("fullSync — ensureServerCoversAreCached", () => {
     const REMOTE_FILE_ID = "remote-file-id-abc";
 
@@ -386,39 +634,8 @@ describe("CoverSyncService", () => {
       });
     });
 
-    it("should download and save cover when CoverRecord is missing", async () => {
-      mockGoalRepository = createMockGoalRepository({
-        getActive: vi.fn().mockResolvedValue([createActiveGoal(REMOTE_FILE_ID)]),
-      });
-      mockCoverRepository = createMockCoverRepository({
-        getByFileId: vi.fn().mockResolvedValue(undefined),
-      });
-      const service = createService();
-
-      await service.fullSync();
-
-      expect(mockCoverRepository.save).toHaveBeenCalledWith(
-        expect.objectContaining({ file_id: REMOTE_FILE_ID }),
-      );
-    });
-
-    it("should add downloaded cover to localCoverCache", async () => {
-      mockGoalRepository = createMockGoalRepository({
-        getActive: vi.fn().mockResolvedValue([createActiveGoal(REMOTE_FILE_ID)]),
-      });
-      mockCoverRepository = createMockCoverRepository({
-        getByFileId: vi.fn().mockResolvedValue(undefined),
-      });
-      const service = createService();
-
-      await service.fullSync();
-
-      expect(localCoverCache.get(REMOTE_FILE_ID)).toBeDefined();
-    });
-
-    describe("when cover download fails", () => {
+    describe("when CoverRecord is missing from repository", () => {
       beforeEach(() => {
-        global.fetch = vi.fn().mockRejectedValue(new Error("Network error"));
         mockGoalRepository = createMockGoalRepository({
           getActive: vi.fn().mockResolvedValue([createActiveGoal(REMOTE_FILE_ID)]),
         });
@@ -427,18 +644,42 @@ describe("CoverSyncService", () => {
         });
       });
 
-      it("should not throw (best-effort)", async () => {
-        const service = createService();
-
-        await expect(service.fullSync()).resolves.not.toThrow();
-      });
-
-      it("should not save cover to repository", async () => {
+      it("should download and save cover", async () => {
         const service = createService();
 
         await service.fullSync();
 
-        expect(mockCoverRepository.save).not.toHaveBeenCalled();
+        expect(mockCoverRepository.save).toHaveBeenCalledWith(
+          expect.objectContaining({ file_id: REMOTE_FILE_ID }),
+        );
+      });
+
+      it("should add downloaded cover to localCoverCache", async () => {
+        const service = createService();
+
+        await service.fullSync();
+
+        expect(localCoverCache.get(REMOTE_FILE_ID)).toBeDefined();
+      });
+
+      describe("when cover download fails", () => {
+        beforeEach(() => {
+          global.fetch = vi.fn().mockRejectedValue(new Error("Network error"));
+        });
+
+        it("should not throw (best-effort)", async () => {
+          const service = createService();
+
+          await expect(service.fullSync()).resolves.not.toThrow();
+        });
+
+        it("should not save cover to repository", async () => {
+          const service = createService();
+
+          await service.fullSync();
+
+          expect(mockCoverRepository.save).not.toHaveBeenCalled();
+        });
       });
     });
 

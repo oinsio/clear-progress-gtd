@@ -104,7 +104,10 @@ describe("ConfirmFullSyncDialog", () => {
     renderDialog({ onSync });
 
     await act(async () => { fireEvent.click(screen.getByTestId("full-sync-start-btn")); });
-    act(() => { sendProgress("push"); });
+    act(() => {
+      sendProgress("upload_covers");
+      sendProgress("push");
+    });
 
     expect(screen.getByTestId("full-sync-step-push")).toHaveAttribute("data-active", "true");
   });
@@ -115,6 +118,7 @@ describe("ConfirmFullSyncDialog", () => {
 
     await act(async () => { fireEvent.click(screen.getByTestId("full-sync-start-btn")); });
     act(() => {
+      sendProgress("upload_covers");
       sendProgress("push");
       sendProgress("pull");
     });
@@ -122,22 +126,33 @@ describe("ConfirmFullSyncDialog", () => {
     expect(screen.getByTestId("full-sync-step-pull")).toHaveAttribute("data-active", "true");
   });
 
-  it("should show covers step as active during covers progress", async () => {
+  it("should show upload_covers step as active during upload_covers progress", async () => {
+    const { onSync, sendProgress } = createHangingOnSync();
+    renderDialog({ onSync });
+
+    await act(async () => { fireEvent.click(screen.getByTestId("full-sync-start-btn")); });
+    act(() => { sendProgress("upload_covers"); });
+
+    expect(screen.getByTestId("full-sync-step-upload-covers")).toHaveAttribute("data-active", "true");
+  });
+
+  it("should show download_covers step as active during download_covers progress", async () => {
     const { onSync, sendProgress } = createHangingOnSync();
     renderDialog({ onSync });
 
     await act(async () => { fireEvent.click(screen.getByTestId("full-sync-start-btn")); });
     act(() => {
+      sendProgress("upload_covers");
       sendProgress("push");
       sendProgress("pull");
-      sendProgress("covers");
+      sendProgress("download_covers");
     });
 
-    expect(screen.getByTestId("full-sync-step-covers")).toHaveAttribute("data-active", "true");
+    expect(screen.getByTestId("full-sync-step-download-covers")).toHaveAttribute("data-active", "true");
   });
 
   it("should show success message when done", async () => {
-    const onSync = createResolvingOnSync(["push", "pull", "covers", "done"]);
+    const onSync = createResolvingOnSync(["upload_covers", "push", "pull", "download_covers", "done"]);
     renderDialog({ onSync });
 
     await act(async () => {
@@ -187,7 +202,7 @@ describe("ConfirmFullSyncDialog", () => {
     renderDialog({ onSync });
 
     await act(async () => { fireEvent.click(screen.getByTestId("full-sync-start-btn")); });
-    act(() => { sendProgress("push"); });
+    act(() => { sendProgress("upload_covers"); });
 
     expect(screen.getByTestId("full-sync-start-btn")).toBeDisabled();
   });

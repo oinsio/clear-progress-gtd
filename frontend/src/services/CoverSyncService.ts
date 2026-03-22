@@ -4,7 +4,7 @@ import type { CoverRepository } from "@/db/repositories/CoverRepository";
 import type { GoalRepository } from "@/db/repositories/GoalRepository";
 import type { ApiClient } from "./ApiClient";
 import { localCoverCache } from "./LocalCoverCache";
-import { LOCAL_COVER_ID_PREFIX } from "@/constants";
+import { LOCAL_COVER_ID_PREFIX, FALLBACK_COVER_MIME_TYPE } from "@/constants";
 import { arrayBufferToBase64, buildCoverThumbnailUrl, computeSha256Hex } from "./CoverService";
 
 export class CoverSyncService {
@@ -52,7 +52,49 @@ export class CoverSyncService {
     await this.ensureServerCoversAreCached();
   }
 
-  private async ensureServerCoversAreCached(): Promise<void> {
+  async reuploadLocalCovers(): Promise<void> {
+    const activeGoals = await this.goalRepository.getActive();
+    for (const goal of activeGoals) {
+      if (!goal.cover_file_id || goal.cover_file_id.startsWith(LOCAL_COVER_ID_PREFIX)) {
+        continue;
+      }
+      const existingCover = await this.coverRepository.getByFileId(goal.cover_file_id);
+      if (!existingCover?.data) {
+        continue;
+      }
+      try {
+        const buffer = await existingCover.data.arrayBuffer();
+        const base64Data = arrayBufferToBase64(buffer);
+        const response = await this.apiClient.uploadCover({
+          goal_id: goal.id,
+          filename: `cover_${goal.id}`,
+          mime_type: existingCover.data.type || FALLBACK_COVER_MIME_TYPE,
+          data: base64Data,
+        });
+        if (response.file_id !== goal.cover_file_id) {
+          const now = new Date().toISOString();
+          await this.goalRepository.update({
+            ...goal,
+            cover_file_id: response.file_id,
+            version: goal.version + 1,
+            updated_at: now,
+          });
+          await this.coverRepository.save({
+            file_id: response.file_id,
+            thumbnail_url: response.thumbnail_url,
+            data_hash: existingCover.data_hash,
+            data: existingCover.data,
+          });
+          await this.coverRepository.delete(goal.cover_file_id);
+          localCoverCache.transfer(goal.cover_file_id, response.file_id);
+        }
+      } catch {
+        // best-effort: continue with next cover
+      }
+    }
+  }
+
+  async ensureServerCoversAreCached(): Promise<void> {
     const activeGoals = await this.goalRepository.getActive();
     for (const goal of activeGoals) {
       if (!goal.cover_file_id || goal.cover_file_id.startsWith(LOCAL_COVER_ID_PREFIX)) {

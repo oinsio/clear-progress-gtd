@@ -19,7 +19,7 @@ export type AccentColor =
 
 export type SyncStatus = "idle" | "syncing" | "error" | "offline";
 
-export type FullSyncStep = "idle" | "push" | "pull" | "covers" | "done" | "error";
+export type FullSyncStep = "idle" | "upload_covers" | "push" | "pull" | "download_covers" | "done" | "error";
 
 export type PushResultStatus = "created" | "accepted" | "conflict" | "rejected";
 

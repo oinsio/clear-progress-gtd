@@ -10,7 +10,8 @@ const {
   mockPush,
   mockInitializeLocalCovers,
   mockCoverSync,
-  mockCoverFullSync,
+  mockCoverReuploadLocalCovers,
+  mockCoverEnsureServerCovers,
 } = vi.hoisted(() => ({
   mockPing: vi.fn(),
   mockInit: vi.fn(),
@@ -18,7 +19,8 @@ const {
   mockPush: vi.fn(),
   mockInitializeLocalCovers: vi.fn(),
   mockCoverSync: vi.fn(),
-  mockCoverFullSync: vi.fn(),
+  mockCoverReuploadLocalCovers: vi.fn(),
+  mockCoverEnsureServerCovers: vi.fn(),
 }));
 
 vi.mock("@/services/ApiClient", () => ({
@@ -39,7 +41,8 @@ vi.mock("@/services/defaultServices", () => ({
   defaultCoverSyncService: {
     initializeLocalCovers: mockInitializeLocalCovers,
     sync: mockCoverSync,
-    fullSync: mockCoverFullSync,
+    reuploadLocalCovers: mockCoverReuploadLocalCovers,
+    ensureServerCoversAreCached: mockCoverEnsureServerCovers,
   },
 }));
 
@@ -136,7 +139,8 @@ beforeEach(() => {
   mockInit.mockResolvedValue({ ok: true });
   mockInitializeLocalCovers.mockResolvedValue(undefined);
   mockCoverSync.mockResolvedValue(undefined);
-  mockCoverFullSync.mockResolvedValue(undefined);
+  mockCoverReuploadLocalCovers.mockResolvedValue(undefined);
+  mockCoverEnsureServerCovers.mockResolvedValue(undefined);
 
   Object.defineProperty(navigator, "onLine", {
     value: true,
@@ -576,15 +580,17 @@ describe("SyncProvider — triggerFullSync", () => {
     );
   });
 
-  it("should call coverSyncService.fullSync during full sync", async () => {
+  it("should call coverSyncService.sync, reuploadLocalCovers and ensureServerCoversAreCached during full sync", async () => {
     await setupAndTriggerFullSync();
-    expect(mockCoverFullSync).toHaveBeenCalledTimes(1);
+    expect(mockCoverSync).toHaveBeenCalledTimes(1);
+    expect(mockCoverReuploadLocalCovers).toHaveBeenCalledTimes(1);
+    expect(mockCoverEnsureServerCovers).toHaveBeenCalledTimes(1);
   });
 
-  it("should report progress steps push, pull, covers, done in order", async () => {
+  it("should report progress steps upload_covers, push, pull, download_covers, done in order", async () => {
     const steps: FullSyncStep[] = [];
     await setupAndTriggerFullSync((step) => { steps.push(step); });
-    expect(steps).toEqual(["push", "pull", "covers", "done"]);
+    expect(steps).toEqual(["upload_covers", "push", "pull", "download_covers", "done"]);
   });
 
   it("should report error step when push fails during full sync", async () => {

@@ -10,15 +10,16 @@ interface ConfirmFullSyncDialogProps {
   onSync: (onProgress: (step: FullSyncStep) => void) => Promise<void>;
 }
 
-const PROGRESS_STEPS: Array<{ key: "push" | "pull" | "covers"; labelKey: string; testId: string }> = [
+const PROGRESS_STEPS: Array<{ key: "upload_covers" | "push" | "pull" | "download_covers"; labelKey: string; testId: string }> = [
+  { key: "upload_covers", labelKey: "settings.fullSyncStepUploadCovers", testId: "full-sync-step-upload-covers" },
   { key: "push", labelKey: "settings.fullSyncStepPush", testId: "full-sync-step-push" },
   { key: "pull", labelKey: "settings.fullSyncStepPull", testId: "full-sync-step-pull" },
-  { key: "covers", labelKey: "settings.fullSyncStepCovers", testId: "full-sync-step-covers" },
+  { key: "download_covers", labelKey: "settings.fullSyncStepDownloadCovers", testId: "full-sync-step-download-covers" },
 ];
 
-const STEP_ORDER: FullSyncStep[] = ["push", "pull", "covers"];
+const STEP_ORDER: FullSyncStep[] = ["upload_covers", "push", "pull", "download_covers"];
 
-function isStepDone(currentStep: FullSyncStep, stepKey: "push" | "pull" | "covers"): boolean {
+function isStepDone(currentStep: FullSyncStep, stepKey: "upload_covers" | "push" | "pull" | "download_covers"): boolean {
   const currentIndex = STEP_ORDER.indexOf(currentStep);
   const stepIndex = STEP_ORDER.indexOf(stepKey);
   return currentIndex > stepIndex || currentStep === "done";

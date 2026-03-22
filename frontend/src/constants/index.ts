@@ -108,6 +108,7 @@ export const SETTING_KEYS = {
 } as const;
 
 export const MAX_COVER_SIZE_BYTES = 2 * 1024 * 1024;
+export const FALLBACK_COVER_MIME_TYPE = "image/jpeg";
 
 export const PUSH_RESULT_STATUS = {
   CREATED: "created",
