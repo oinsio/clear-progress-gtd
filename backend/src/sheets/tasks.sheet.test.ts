@@ -1,19 +1,11 @@
 import {beforeEach, describe, expect, it, vi} from 'vitest';
-import {deleteTasksByIds, getAllTasks, getTasksByVersion, upsertTask} from './tasks.sheet';
+import {deleteTasksByIds, getAllTasks, getTasksByVersion} from './tasks.sheet';
 import {SHEET_HEADERS, SHEET_NAMES} from '../helpers/constants';
-import type {Task} from '../types';
 import {getSheet} from './client';
 
 vi.mock('./client', () => ({ getSheet: vi.fn() }));
 
 const TASK_HEADERS = SHEET_HEADERS[SHEET_NAMES.TASKS];
-const NUM_COLS = TASK_HEADERS.length;
-
-// Column indices matching SHEET_HEADERS[TASKS] order
-const COL = TASK_HEADERS.reduce<Record<string, number>>((acc, col, i) => {
-  acc[col] = i;
-  return acc;
-}, {});
 
 function makeTaskRow(overrides: Partial<Record<string, unknown>> = {}): unknown[] {
   const defaults: Record<string, unknown> = {
@@ -35,27 +27,6 @@ function makeTaskRow(overrides: Partial<Record<string, unknown>> = {}): unknown[
   };
   const merged = { ...defaults, ...overrides };
   return TASK_HEADERS.map(col => merged[col]);
-}
-
-function makeTask(overrides: Partial<Task> = {}): Task {
-  return {
-    id: 'task-1',
-    title: 'Test task',
-    notes: '',
-    box: 'inbox',
-    goal_id: '',
-    context_id: '',
-    category_id: '',
-    is_completed: false,
-    completed_at: '',
-    repeat_rule: '',
-    sort_order: 0,
-    is_deleted: false,
-    created_at: '2025-01-01T00:00:00.000Z',
-    updated_at: '2025-01-01T00:00:00.000Z',
-    version: 1,
-    ...overrides,
-  };
 }
 
 function makeSheetMock(rows: unknown[][] = []) {
@@ -284,97 +255,6 @@ describe('getTasksByVersion', () => {
     vi.mocked(getSheet).mockReturnValue(sheetMock as never);
 
     expect(getTasksByVersion(10)).toEqual([]);
-  });
-});
-
-describe('upsertTask', () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-  });
-
-  it('should call appendRow when task id is not found in sheet', () => {
-    const sheetMock = makeSheetMock([TASK_HEADERS]);
-    vi.mocked(getSheet).mockReturnValue(sheetMock as never);
-
-    upsertTask(makeTask({ id: 'task-new' }));
-
-    expect(sheetMock.appendRow).toHaveBeenCalledTimes(1);
-  });
-
-  it('should not call getRange when inserting a new task', () => {
-    const sheetMock = makeSheetMock([TASK_HEADERS]);
-    vi.mocked(getSheet).mockReturnValue(sheetMock as never);
-
-    upsertTask(makeTask({ id: 'task-new' }));
-
-    expect(sheetMock.getRange).not.toHaveBeenCalled();
-  });
-
-  it('should append row with task data in correct column order', () => {
-    const sheetMock = makeSheetMock([TASK_HEADERS]);
-    vi.mocked(getSheet).mockReturnValue(sheetMock as never);
-    const task = makeTask({ id: 'task-new', title: 'New task', version: 2 });
-
-    upsertTask(task);
-
-    const appendedRow = sheetMock.appendRow.mock.calls[0][0] as unknown[];
-    expect(appendedRow[COL.id]).toBe('task-new');
-    expect(appendedRow[COL.title]).toBe('New task');
-    expect(appendedRow[COL.version]).toBe(2);
-  });
-
-  it('should call getRange and setValues when task id already exists', () => {
-    const sheetMock = makeSheetMock([TASK_HEADERS, makeTaskRow({ id: 'task-1' })]);
-    vi.mocked(getSheet).mockReturnValue(sheetMock as never);
-
-    upsertTask(makeTask({ id: 'task-1', title: 'Updated title' }));
-
-    expect(sheetMock.getRange).toHaveBeenCalledTimes(1);
-    expect(sheetMock._setValues).toHaveBeenCalledTimes(1);
-  });
-
-  it('should not call appendRow when updating an existing task', () => {
-    const sheetMock = makeSheetMock([TASK_HEADERS, makeTaskRow({ id: 'task-1' })]);
-    vi.mocked(getSheet).mockReturnValue(sheetMock as never);
-
-    upsertTask(makeTask({ id: 'task-1' }));
-
-    expect(sheetMock.appendRow).not.toHaveBeenCalled();
-  });
-
-  it('should update the correct 1-based row index', () => {
-    // Header at index 0, task at index 1 → sheet row 2
-    const sheetMock = makeSheetMock([TASK_HEADERS, makeTaskRow({ id: 'task-1' })]);
-    vi.mocked(getSheet).mockReturnValue(sheetMock as never);
-
-    upsertTask(makeTask({ id: 'task-1' }));
-
-    expect(sheetMock.getRange).toHaveBeenCalledWith(2, 1, 1, NUM_COLS);
-  });
-
-  it('should update the correct row when target is the third data row', () => {
-    // Header, task-1, task-2, task-3 → task-3 is at sheet row 4
-    const sheetMock = makeSheetMock([
-      TASK_HEADERS,
-      makeTaskRow({ id: 'task-1' }),
-      makeTaskRow({ id: 'task-2' }),
-      makeTaskRow({ id: 'task-3' }),
-    ]);
-    vi.mocked(getSheet).mockReturnValue(sheetMock as never);
-
-    upsertTask(makeTask({ id: 'task-3' }));
-
-    expect(sheetMock.getRange).toHaveBeenCalledWith(4, 1, 1, NUM_COLS);
-  });
-
-  it('should write updated task data when updating existing row', () => {
-    const sheetMock = makeSheetMock([TASK_HEADERS, makeTaskRow({ id: 'task-1', title: 'Old title' })]);
-    vi.mocked(getSheet).mockReturnValue(sheetMock as never);
-
-    upsertTask(makeTask({ id: 'task-1', title: 'New title' }));
-
-    const writtenRow = sheetMock._setValues.mock.calls[0][0][0] as unknown[];
-    expect(writtenRow[COL.title]).toBe('New title');
   });
 });
 

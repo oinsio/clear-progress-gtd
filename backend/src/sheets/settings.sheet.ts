@@ -35,6 +35,42 @@ export function upsertSetting(setting: Setting): void {
   sheet.appendRow(settingToRow(setting));
 }
 
+export function upsertSettings(settings: Setting[]): void {
+  if (settings.length === 0) return;
+
+  const sheet = getSheet(SHEET_NAMES.SETTINGS);
+  const data = sheet.getDataRange().getValues();
+  const numCols = SHEET_HEADERS[SHEET_NAMES.SETTINGS].length;
+
+  const keyToRowIndex = new Map<string, number>();
+  for (let i = 1; i < data.length; i++) {
+    if (data[i][SET_COLS.key]) keyToRowIndex.set(String(data[i][SET_COLS.key]), i);
+  }
+
+  const updatedRows = data.map(row => [...row] as unknown[]);
+  const newRows: unknown[][] = [];
+  let hasUpdates = false;
+
+  for (const setting of settings) {
+    const row = settingToRow(setting);
+    const existingIndex = keyToRowIndex.get(setting.key);
+    if (existingIndex !== undefined) {
+      updatedRows[existingIndex] = row;
+      hasUpdates = true;
+    } else {
+      newRows.push(row);
+    }
+  }
+
+  if (hasUpdates) {
+    sheet.getRange(1, 1, updatedRows.length, numCols).setValues(updatedRows);
+  }
+
+  for (const newRow of newRows) {
+    sheet.appendRow(newRow);
+  }
+}
+
 export function initDefaults(): void {
   const existingKeys = getAllSettings().map(s => s.key);
   DEFAULTS.forEach(def => {

@@ -4,19 +4,19 @@ import { ERROR_CODES } from '../helpers/response';
 import { PUSH_STATUSES } from '../helpers/constants';
 import type { Task, Goal, Context, Category, ChecklistItem, Setting } from '../types';
 
-vi.mock('../sheets/tasks.sheet', () => ({ getAllTasks: vi.fn(), upsertTask: vi.fn() }));
-vi.mock('../sheets/goals.sheet', () => ({ getAllGoals: vi.fn(), upsertGoal: vi.fn() }));
-vi.mock('../sheets/contexts.sheet', () => ({ getAllContexts: vi.fn(), upsertContext: vi.fn() }));
-vi.mock('../sheets/categories.sheet', () => ({ getAllCategories: vi.fn(), upsertCategory: vi.fn() }));
-vi.mock('../sheets/checklists.sheet', () => ({ getAllChecklistItems: vi.fn(), upsertChecklistItem: vi.fn() }));
-vi.mock('../sheets/settings.sheet', () => ({ upsertSetting: vi.fn(), getAllSettings: vi.fn() }));
+vi.mock('../sheets/tasks.sheet', () => ({ getAllTasks: vi.fn(), upsertTasks: vi.fn() }));
+vi.mock('../sheets/goals.sheet', () => ({ getAllGoals: vi.fn(), upsertGoals: vi.fn() }));
+vi.mock('../sheets/contexts.sheet', () => ({ getAllContexts: vi.fn(), upsertContexts: vi.fn() }));
+vi.mock('../sheets/categories.sheet', () => ({ getAllCategories: vi.fn(), upsertCategories: vi.fn() }));
+vi.mock('../sheets/checklists.sheet', () => ({ getAllChecklistItems: vi.fn(), upsertChecklistItems: vi.fn() }));
+vi.mock('../sheets/settings.sheet', () => ({ upsertSettings: vi.fn(), getAllSettings: vi.fn() }));
 
-import { getAllTasks, upsertTask } from '../sheets/tasks.sheet';
-import { getAllGoals, upsertGoal } from '../sheets/goals.sheet';
-import { getAllContexts, upsertContext } from '../sheets/contexts.sheet';
-import { getAllCategories, upsertCategory } from '../sheets/categories.sheet';
-import { getAllChecklistItems, upsertChecklistItem } from '../sheets/checklists.sheet';
-import { upsertSetting, getAllSettings } from '../sheets/settings.sheet';
+import { getAllTasks, upsertTasks } from '../sheets/tasks.sheet';
+import { getAllGoals, upsertGoals } from '../sheets/goals.sheet';
+import { getAllContexts, upsertContexts } from '../sheets/contexts.sheet';
+import { getAllCategories, upsertCategories } from '../sheets/categories.sheet';
+import { getAllChecklistItems, upsertChecklistItems } from '../sheets/checklists.sheet';
+import { upsertSettings, getAllSettings } from '../sheets/settings.sheet';
 
 function parseResponse(): Record<string, unknown> {
   const calls = (ContentService.createTextOutput as ReturnType<typeof vi.fn>).mock.calls;
@@ -165,7 +165,8 @@ describe('push', () => {
 
       push({ tasks: [newTask] });
 
-      expect(upsertTask).toHaveBeenCalledWith(expect.objectContaining({ id: 'aaaaaaaa-aaaa-4aaa-aaaa-aaaaaaaaaaaa' }));
+      expect(upsertTasks).toHaveBeenCalledWith(expect.arrayContaining([expect.objectContaining({ id: 'aaaaaaaa-aaaa-4aaa-aaaa-aaaaaaaaaaaa' })]));
+
     });
 
     it('should return the client version for a created record', () => {
@@ -198,7 +199,8 @@ describe('push', () => {
 
       push({ tasks: [clientTask] });
 
-      expect(upsertTask).toHaveBeenCalledWith(expect.objectContaining({ version: 6 }));
+      expect(upsertTasks).toHaveBeenCalledWith(expect.arrayContaining([expect.objectContaining({ version: 6 })]));
+
     });
 
     it('should return new version (serverVersion + 1) in accepted result', () => {
@@ -237,14 +239,14 @@ describe('push', () => {
       expect(results.tasks[0]).toMatchObject({ id: '11111111-1111-4111-a111-111111111111', status: PUSH_STATUSES.CONFLICT });
     });
 
-    it('should not call upsertTask on conflict', () => {
+    it('should not upsert any task on conflict', () => {
       const serverTask = makeTask({ id: '11111111-1111-4111-a111-111111111111', updated_at: '2025-01-02T00:00:00.000Z', version: 3 });
       const clientTask = makeTask({ id: '11111111-1111-4111-a111-111111111111', updated_at: '2025-01-01T00:00:00.000Z', version: 1 });
       vi.mocked(getAllTasks).mockReturnValue([serverTask]);
 
       push({ tasks: [clientTask] });
 
-      expect(upsertTask).not.toHaveBeenCalled();
+      expect(upsertTasks).toHaveBeenCalledWith([]);
     });
 
     it('should return server_record in conflict result', () => {
@@ -280,7 +282,8 @@ describe('push', () => {
 
       push({ goals: [newGoal] });
 
-      expect(upsertGoal).toHaveBeenCalledWith(expect.objectContaining({ id: 'eeeeeeee-eeee-4eee-aeee-eeeeeeeeeeee' }));
+      expect(upsertGoals).toHaveBeenCalledWith(expect.arrayContaining([expect.objectContaining({ id: 'eeeeeeee-eeee-4eee-aeee-eeeeeeeeeeee' })]));
+
       const results = parseResponse().results as Record<string, unknown[]>;
       expect(results.goals[0]).toMatchObject({ id: 'eeeeeeee-eeee-4eee-aeee-eeeeeeeeeeee', status: PUSH_STATUSES.CREATED });
     });
@@ -291,7 +294,8 @@ describe('push', () => {
 
       push({ contexts: [newContext] });
 
-      expect(upsertContext).toHaveBeenCalledWith(expect.objectContaining({ id: 'a1a1a1a1-a1a1-4a1a-8a1a-a1a1a1a1a1a1' }));
+      expect(upsertContexts).toHaveBeenCalledWith(expect.arrayContaining([expect.objectContaining({ id: 'a1a1a1a1-a1a1-4a1a-8a1a-a1a1a1a1a1a1' })]));
+
       const results = parseResponse().results as Record<string, unknown[]>;
       expect(results.contexts[0]).toMatchObject({ status: PUSH_STATUSES.CREATED });
     });
@@ -302,7 +306,8 @@ describe('push', () => {
 
       push({ categories: [newCategory] });
 
-      expect(upsertCategory).toHaveBeenCalledWith(expect.objectContaining({ id: 'c3c3c3c3-c3c3-4c3c-8c3c-c3c3c3c3c3c3' }));
+      expect(upsertCategories).toHaveBeenCalledWith(expect.arrayContaining([expect.objectContaining({ id: 'c3c3c3c3-c3c3-4c3c-8c3c-c3c3c3c3c3c3' })]));
+
       const results = parseResponse().results as Record<string, unknown[]>;
       expect(results.categories[0]).toMatchObject({ status: PUSH_STATUSES.CREATED });
     });
@@ -313,14 +318,15 @@ describe('push', () => {
 
       push({ checklist_items: [newItem] });
 
-      expect(upsertChecklistItem).toHaveBeenCalledWith(expect.objectContaining({ id: 'e5e5e5e5-e5e5-4e5e-8e5e-e5e5e5e5e5e5' }));
+      expect(upsertChecklistItems).toHaveBeenCalledWith(expect.arrayContaining([expect.objectContaining({ id: 'e5e5e5e5-e5e5-4e5e-8e5e-e5e5e5e5e5e5' })]));
+
       const results = parseResponse().results as Record<string, unknown[]>;
       expect(results.checklist_items[0]).toMatchObject({ status: PUSH_STATUSES.CREATED });
     });
   });
 
   describe('settings', () => {
-    it('should call upsertSetting for each setting', () => {
+    it('should call upsertSettings once with all accepted settings', () => {
       const settings: Setting[] = [
         { key: 'default_box', value: 'today', updated_at: '2025-01-01T00:00:00.000Z' },
         { key: 'accent_color', value: 'purple', updated_at: '2025-01-01T00:00:00.000Z' },
@@ -328,9 +334,8 @@ describe('push', () => {
 
       push({ settings });
 
-      expect(upsertSetting).toHaveBeenCalledTimes(2);
-      expect(upsertSetting).toHaveBeenCalledWith(settings[0]);
-      expect(upsertSetting).toHaveBeenCalledWith(settings[1]);
+      expect(upsertSettings).toHaveBeenCalledTimes(1);
+      expect(upsertSettings).toHaveBeenCalledWith(settings);
     });
 
     it('should return accepted status for each setting using key as id', () => {
@@ -344,9 +349,9 @@ describe('push', () => {
       expect(results.settings[0]).toMatchObject({ id: 'default_box', status: PUSH_STATUSES.ACCEPTED });
     });
 
-    it('should not call upsertSetting when settings array is empty', () => {
+    it('should not call upsertSettings when settings array is empty', () => {
       push({ settings: [] });
-      expect(upsertSetting).not.toHaveBeenCalled();
+      expect(upsertSettings).not.toHaveBeenCalled();
     });
 
     it('should upsert setting when server does not have it yet', () => {
@@ -355,7 +360,7 @@ describe('push', () => {
 
       push({ settings: [clientSetting] });
 
-      expect(upsertSetting).toHaveBeenCalledWith(clientSetting);
+      expect(upsertSettings).toHaveBeenCalledWith([clientSetting]);
     });
 
     it('should upsert setting when client updated_at is newer than server', () => {
@@ -366,7 +371,7 @@ describe('push', () => {
 
       push({ settings: [clientSetting] });
 
-      expect(upsertSetting).toHaveBeenCalledWith(clientSetting);
+      expect(upsertSettings).toHaveBeenCalledWith([clientSetting]);
     });
 
     it('should return accepted when client updated_at is newer than server', () => {
@@ -381,7 +386,7 @@ describe('push', () => {
       expect(results.settings[0]).toMatchObject({ id: 'default_box', status: PUSH_STATUSES.ACCEPTED });
     });
 
-    it('should not call upsertSetting when server updated_at is newer than client', () => {
+    it('should not upsert any setting when server updated_at is newer than client', () => {
       const clientSetting: Setting = { key: 'default_box', value: 'today', updated_at: '2026-03-21T10:00:00.000Z' };
       vi.mocked(getAllSettings).mockReturnValue([
         { key: 'default_box', value: 'week', updated_at: '2026-03-21T12:00:00.000Z' },
@@ -389,7 +394,7 @@ describe('push', () => {
 
       push({ settings: [clientSetting] });
 
-      expect(upsertSetting).not.toHaveBeenCalled();
+      expect(upsertSettings).toHaveBeenCalledWith([]);
     });
 
     it('should return conflict when server updated_at is newer than client', () => {
@@ -416,13 +421,13 @@ describe('push', () => {
       expect(results.tasks[0]).toMatchObject({ id: 'cccccccc-cccc-4ccc-accc-cccccccccccc', status: 'rejected' });
     });
 
-    it('should not call upsertTask when task title is empty', () => {
+    it('should not upsert any task when task title is empty', () => {
       const blankTask = makeTask({ title: '' });
       vi.mocked(getAllTasks).mockReturnValue([]);
 
       push({ tasks: [blankTask] });
 
-      expect(upsertTask).not.toHaveBeenCalled();
+      expect(upsertTasks).toHaveBeenCalledWith([]);
     });
 
     it('should return status: rejected for task with whitespace-only title', () => {
@@ -445,13 +450,13 @@ describe('push', () => {
       expect(results.goals[0]).toMatchObject({ id: 'ffffffff-ffff-4fff-afff-ffffffffffff', status: 'rejected' });
     });
 
-    it('should not call upsertGoal when goal title is empty', () => {
+    it('should not upsert any goal when goal title is empty', () => {
       const blankGoal = makeGoal({ title: '' });
       vi.mocked(getAllGoals).mockReturnValue([]);
 
       push({ goals: [blankGoal] });
 
-      expect(upsertGoal).not.toHaveBeenCalled();
+      expect(upsertGoals).toHaveBeenCalledWith([]);
     });
 
     it('should return status: rejected for context with empty name', () => {
@@ -464,13 +469,13 @@ describe('push', () => {
       expect(results.contexts[0]).toMatchObject({ id: 'b2b2b2b2-b2b2-4b2b-8b2b-b2b2b2b2b2b2', status: 'rejected' });
     });
 
-    it('should not call upsertContext when context name is empty', () => {
+    it('should not upsert any context when context name is empty', () => {
       const blankContext = makeContext({ name: '' });
       vi.mocked(getAllContexts).mockReturnValue([]);
 
       push({ contexts: [blankContext] });
 
-      expect(upsertContext).not.toHaveBeenCalled();
+      expect(upsertContexts).toHaveBeenCalledWith([]);
     });
 
     it('should return status: rejected for category with empty name', () => {
@@ -483,13 +488,13 @@ describe('push', () => {
       expect(results.categories[0]).toMatchObject({ id: 'd4d4d4d4-d4d4-4d4d-8d4d-d4d4d4d4d4d4', status: 'rejected' });
     });
 
-    it('should not call upsertCategory when category name is empty', () => {
+    it('should not upsert any category when category name is empty', () => {
       const blankCategory = makeCategory({ name: '' });
       vi.mocked(getAllCategories).mockReturnValue([]);
 
       push({ categories: [blankCategory] });
 
-      expect(upsertCategory).not.toHaveBeenCalled();
+      expect(upsertCategories).toHaveBeenCalledWith([]);
     });
 
     it('should return status: rejected for checklist_item with empty title', () => {
@@ -502,13 +507,13 @@ describe('push', () => {
       expect(results.checklist_items[0]).toMatchObject({ id: 'f0f0f0f0-f0f0-4f0f-8f0f-f0f0f0f0f0f0', status: 'rejected' });
     });
 
-    it('should not call upsertChecklistItem when checklist item title is empty', () => {
+    it('should not upsert any checklist item when checklist item title is empty', () => {
       const blankItem = makeChecklistItem({ title: '' });
       vi.mocked(getAllChecklistItems).mockReturnValue([]);
 
       push({ checklist_items: [blankItem] });
 
-      expect(upsertChecklistItem).not.toHaveBeenCalled();
+      expect(upsertChecklistItems).toHaveBeenCalledWith([]);
     });
 
     it('should include reason field in rejected result', () => {
@@ -562,13 +567,13 @@ describe('push', () => {
       },
     );
 
-    it('should not call upsertTask when task has invalid box', () => {
+    it('should not upsert any task when task has invalid box', () => {
       const task = makeTask({ box: 'invalid' as Task['box'] });
       vi.mocked(getAllTasks).mockReturnValue([]);
 
       push({ tasks: [task] });
 
-      expect(upsertTask).not.toHaveBeenCalled();
+      expect(upsertTasks).toHaveBeenCalledWith([]);
     });
 
     it('should include reason field when box is invalid', () => {
@@ -622,13 +627,13 @@ describe('push', () => {
         expect(results.tasks[0]).toMatchObject({ status: 'rejected' });
       });
 
-      it('should not call upsertTask when task has invalid goal_id', () => {
+      it('should not upsert any task when task has invalid goal_id', () => {
         const task = makeTask({ goal_id: 'not-a-uuid' });
         vi.mocked(getAllTasks).mockReturnValue([]);
 
         push({ tasks: [task] });
 
-        expect(upsertTask).not.toHaveBeenCalled();
+        expect(upsertTasks).toHaveBeenCalledWith([]);
       });
 
       it('should return status: rejected for task with invalid context_id', () => {
@@ -693,13 +698,13 @@ describe('push', () => {
         expect(results.checklist_items[0]).toMatchObject({ status: 'rejected' });
       });
 
-      it('should not call upsertChecklistItem when task_id is empty', () => {
+      it('should not upsert any checklist item when task_id is empty', () => {
         const item = makeChecklistItem({ task_id: '' });
         vi.mocked(getAllChecklistItems).mockReturnValue([]);
 
         push({ checklist_items: [item] });
 
-        expect(upsertChecklistItem).not.toHaveBeenCalled();
+        expect(upsertChecklistItems).toHaveBeenCalledWith([]);
       });
 
       it('should return status: rejected for checklist_item with invalid task_id format', () => {
@@ -774,13 +779,13 @@ describe('push', () => {
       expect(results.tasks[0]).toMatchObject({ status: 'rejected' });
     });
 
-    it('should not call upsertTask when task id is empty', () => {
+    it('should not upsert any task when task id is empty', () => {
       const task = makeTask({ id: '', title: 'Valid title' });
       vi.mocked(getAllTasks).mockReturnValue([]);
 
       push({ tasks: [task] });
 
-      expect(upsertTask).not.toHaveBeenCalled();
+      expect(upsertTasks).toHaveBeenCalledWith([]);
     });
 
     it('should return status: rejected for task with unreadable id', () => {
@@ -813,13 +818,13 @@ describe('push', () => {
       expect(results.goals[0]).toMatchObject({ status: 'rejected' });
     });
 
-    it('should not call upsertGoal when goal id is invalid', () => {
+    it('should not upsert any goal when goal id is invalid', () => {
       const goal = makeGoal({ id: 'bad-id', title: 'Valid title' });
       vi.mocked(getAllGoals).mockReturnValue([]);
 
       push({ goals: [goal] });
 
-      expect(upsertGoal).not.toHaveBeenCalled();
+      expect(upsertGoals).toHaveBeenCalledWith([]);
     });
 
     it('should return status: rejected for context with invalid id', () => {
@@ -832,13 +837,13 @@ describe('push', () => {
       expect(results.contexts[0]).toMatchObject({ status: 'rejected' });
     });
 
-    it('should not call upsertContext when context id is invalid', () => {
+    it('should not upsert any context when context id is invalid', () => {
       const context = makeContext({ id: '!!!', name: 'Valid name' });
       vi.mocked(getAllContexts).mockReturnValue([]);
 
       push({ contexts: [context] });
 
-      expect(upsertContext).not.toHaveBeenCalled();
+      expect(upsertContexts).toHaveBeenCalledWith([]);
     });
 
     it('should return status: rejected for category with invalid id', () => {
@@ -851,13 +856,13 @@ describe('push', () => {
       expect(results.categories[0]).toMatchObject({ status: 'rejected' });
     });
 
-    it('should not call upsertCategory when category id is invalid', () => {
+    it('should not upsert any category when category id is invalid', () => {
       const category = makeCategory({ id: '', name: 'Valid name' });
       vi.mocked(getAllCategories).mockReturnValue([]);
 
       push({ categories: [category] });
 
-      expect(upsertCategory).not.toHaveBeenCalled();
+      expect(upsertCategories).toHaveBeenCalledWith([]);
     });
 
     it('should return status: rejected for checklist_item with invalid id', () => {
@@ -870,13 +875,13 @@ describe('push', () => {
       expect(results.checklist_items[0]).toMatchObject({ status: 'rejected' });
     });
 
-    it('should not call upsertChecklistItem when checklist item id is invalid', () => {
+    it('should not upsert any checklist item when checklist item id is invalid', () => {
       const item = makeChecklistItem({ id: 'bad-id', title: 'Valid title' });
       vi.mocked(getAllChecklistItems).mockReturnValue([]);
 
       push({ checklist_items: [item] });
 
-      expect(upsertChecklistItem).not.toHaveBeenCalled();
+      expect(upsertChecklistItems).toHaveBeenCalledWith([]);
     });
 
     it('should include reason field in rejected result', () => {

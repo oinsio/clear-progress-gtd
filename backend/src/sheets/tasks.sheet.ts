@@ -1,5 +1,5 @@
 import { SHEET_NAMES, coerceSheetBool, coerceSheetBox, colMap } from '../helpers/constants';
-import { getAllRecords, upsertRecord, deleteRecordsByIds } from './base';
+import { getAllRecords, upsertRecords, deleteRecordsByIds } from './base';
 import type { Task } from '../types';
 
 const COLS = colMap(SHEET_NAMES.TASKS);
@@ -26,5 +26,5 @@ function rowToTask(row: unknown[]): Task {
 
 export const getAllTasks = (): Task[] => getAllRecords(SHEET_NAMES.TASKS, rowToTask);
 export const getTasksByVersion = (minVersion: number): Task[] => getAllTasks().filter(task => task.version > minVersion);
-export const upsertTask = (task: Task): void => upsertRecord(SHEET_NAMES.TASKS, task);
+export const upsertTasks = (tasks: Task[]): void => upsertRecords(SHEET_NAMES.TASKS, tasks);
 export const deleteTasksByIds = (ids: string[]): number => deleteRecordsByIds(SHEET_NAMES.TASKS, ids);

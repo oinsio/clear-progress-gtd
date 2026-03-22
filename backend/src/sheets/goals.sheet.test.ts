@@ -1,18 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { getAllGoals, getGoalsByVersion, upsertGoal, getCoverFileIds, deleteGoalsByIds } from './goals.sheet';
+import { getAllGoals, getGoalsByVersion, getCoverFileIds, deleteGoalsByIds } from './goals.sheet';
 import { SHEET_HEADERS, SHEET_NAMES } from '../helpers/constants';
-import type { Goal } from '../types';
 import { getSheet } from './client';
 
 vi.mock('./client', () => ({ getSheet: vi.fn() }));
 
 const GOAL_HEADERS = SHEET_HEADERS[SHEET_NAMES.GOALS];
-const NUM_COLS = GOAL_HEADERS.length;
-
-const COL = GOAL_HEADERS.reduce<Record<string, number>>((acc, col, i) => {
-  acc[col] = i;
-  return acc;
-}, {});
 
 function makeGoalRow(overrides: Partial<Record<string, unknown>> = {}): unknown[] {
   const defaults: Record<string, unknown> = {
@@ -31,21 +24,6 @@ function makeGoalRow(overrides: Partial<Record<string, unknown>> = {}): unknown[
   return GOAL_HEADERS.map(col => merged[col]);
 }
 
-function makeGoal(overrides: Partial<Goal> = {}): Goal {
-  return {
-    id: 'goal-1',
-    title: 'Test goal',
-    description: '',
-    cover_file_id: '',
-    status: 'planning',
-    sort_order: 0,
-    is_deleted: false,
-    created_at: '2025-01-01T00:00:00.000Z',
-    updated_at: '2025-01-01T00:00:00.000Z',
-    version: 1,
-    ...overrides,
-  };
-}
 
 function makeSheetMock(rows: unknown[][] = []) {
   const setValuesMock = vi.fn();
@@ -253,97 +231,6 @@ describe('getGoalsByVersion', () => {
     ]) as never);
 
     expect(getGoalsByVersion(10)).toEqual([]);
-  });
-});
-
-describe('upsertGoal', () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-  });
-
-  it('should call appendRow when goal id is not found in sheet', () => {
-    const sheetMock = makeSheetMock([GOAL_HEADERS]);
-    vi.mocked(getSheet).mockReturnValue(sheetMock as never);
-
-    upsertGoal(makeGoal({ id: 'goal-new' }));
-
-    expect(sheetMock.appendRow).toHaveBeenCalledTimes(1);
-  });
-
-  it('should not call getRange when inserting a new goal', () => {
-    const sheetMock = makeSheetMock([GOAL_HEADERS]);
-    vi.mocked(getSheet).mockReturnValue(sheetMock as never);
-
-    upsertGoal(makeGoal({ id: 'goal-new' }));
-
-    expect(sheetMock.getRange).not.toHaveBeenCalled();
-  });
-
-  it('should append row with goal data in correct column order', () => {
-    const sheetMock = makeSheetMock([GOAL_HEADERS]);
-    vi.mocked(getSheet).mockReturnValue(sheetMock as never);
-    const goal = makeGoal({ id: 'goal-new', title: 'New goal', version: 4 });
-
-    upsertGoal(goal);
-
-    const appendedRow = sheetMock.appendRow.mock.calls[0][0] as unknown[];
-    expect(appendedRow[COL.id]).toBe('goal-new');
-    expect(appendedRow[COL.title]).toBe('New goal');
-    expect(appendedRow[COL.version]).toBe(4);
-  });
-
-  it('should call getRange and setValues when goal id already exists', () => {
-    const sheetMock = makeSheetMock([GOAL_HEADERS, makeGoalRow({ id: 'goal-1' })]);
-    vi.mocked(getSheet).mockReturnValue(sheetMock as never);
-
-    upsertGoal(makeGoal({ id: 'goal-1', title: 'Updated title' }));
-
-    expect(sheetMock.getRange).toHaveBeenCalledTimes(1);
-    expect(sheetMock._setValues).toHaveBeenCalledTimes(1);
-  });
-
-  it('should not call appendRow when updating an existing goal', () => {
-    const sheetMock = makeSheetMock([GOAL_HEADERS, makeGoalRow({ id: 'goal-1' })]);
-    vi.mocked(getSheet).mockReturnValue(sheetMock as never);
-
-    upsertGoal(makeGoal({ id: 'goal-1' }));
-
-    expect(sheetMock.appendRow).not.toHaveBeenCalled();
-  });
-
-  it('should update the correct 1-based row index', () => {
-    // Header at index 0, goal at index 1 → sheet row 2
-    const sheetMock = makeSheetMock([GOAL_HEADERS, makeGoalRow({ id: 'goal-1' })]);
-    vi.mocked(getSheet).mockReturnValue(sheetMock as never);
-
-    upsertGoal(makeGoal({ id: 'goal-1' }));
-
-    expect(sheetMock.getRange).toHaveBeenCalledWith(2, 1, 1, NUM_COLS);
-  });
-
-  it('should update the correct row when target is the third data row', () => {
-    // Header, goal-1, goal-2, goal-3 → goal-3 is at sheet row 4
-    const sheetMock = makeSheetMock([
-      GOAL_HEADERS,
-      makeGoalRow({ id: 'goal-1' }),
-      makeGoalRow({ id: 'goal-2' }),
-      makeGoalRow({ id: 'goal-3' }),
-    ]);
-    vi.mocked(getSheet).mockReturnValue(sheetMock as never);
-
-    upsertGoal(makeGoal({ id: 'goal-3' }));
-
-    expect(sheetMock.getRange).toHaveBeenCalledWith(4, 1, 1, NUM_COLS);
-  });
-
-  it('should write updated goal data when updating existing row', () => {
-    const sheetMock = makeSheetMock([GOAL_HEADERS, makeGoalRow({ id: 'goal-1', title: 'Old title' })]);
-    vi.mocked(getSheet).mockReturnValue(sheetMock as never);
-
-    upsertGoal(makeGoal({ id: 'goal-1', title: 'New title' }));
-
-    const writtenRow = sheetMock._setValues.mock.calls[0][0][0] as unknown[];
-    expect(writtenRow[COL.title]).toBe('New title');
   });
 });
 

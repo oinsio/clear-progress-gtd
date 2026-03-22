@@ -1,6 +1,6 @@
 /// <reference lib="esnext" />
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { recordToRow, getAllRecords, upsertRecord, deleteRecordsByIds } from './base';
+import { recordToRow, getAllRecords, upsertRecord, upsertRecords, deleteRecordsByIds } from './base';
 import { SHEET_HEADERS, SHEET_NAMES } from '../helpers/constants';
 import { getSheet } from './client';
 
@@ -205,6 +205,119 @@ describe('upsertRecord', () => {
     setupSheet([TASK_HEADERS]);
 
     upsertRecord(SHEET_NAMES.TASKS, { id: 'new-id' });
+
+    expect(getSheet).toHaveBeenCalledWith(SHEET_NAMES.TASKS);
+  });
+});
+
+// --- upsertRecords ---
+
+describe('upsertRecords', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('should do nothing when records array is empty', () => {
+    const sheetMock = setupSheet([TASK_HEADERS]);
+
+    upsertRecords(SHEET_NAMES.TASKS, []);
+
+    expect(sheetMock.getDataRange).not.toHaveBeenCalled();
+    expect(sheetMock.appendRow).not.toHaveBeenCalled();
+    expect(sheetMock.getRange).not.toHaveBeenCalled();
+  });
+
+  it('should read the sheet exactly once regardless of record count', () => {
+    const sheetMock = setupSheetWithTasks('task-1', 'task-2', 'task-3');
+
+    upsertRecords(SHEET_NAMES.TASKS, [
+      { id: 'task-1' },
+      { id: 'task-2' },
+      { id: 'task-3' },
+    ]);
+
+    expect(sheetMock.getDataRange).toHaveBeenCalledTimes(1);
+  });
+
+  it('should call appendRow for each new record when sheet is empty', () => {
+    const sheetMock = setupSheet([TASK_HEADERS]);
+
+    upsertRecords(SHEET_NAMES.TASKS, [{ id: 'new-1' }, { id: 'new-2' }, { id: 'new-3' }]);
+
+    expect(sheetMock.appendRow).toHaveBeenCalledTimes(3);
+  });
+
+  it('should not call setValues when all records are new', () => {
+    const sheetMock = setupSheet([TASK_HEADERS]);
+
+    upsertRecords(SHEET_NAMES.TASKS, [{ id: 'new-1' }, { id: 'new-2' }]);
+
+    expect(sheetMock.getRange).not.toHaveBeenCalled();
+  });
+
+  it('should call setValues once for all existing record updates', () => {
+    const sheetMock = setupSheetWithTasks('task-1', 'task-2', 'task-3');
+
+    upsertRecords(SHEET_NAMES.TASKS, [
+      { id: 'task-1', title: 'A' },
+      { id: 'task-2', title: 'B' },
+      { id: 'task-3', title: 'C' },
+    ]);
+
+    expect(sheetMock._setValues).toHaveBeenCalledTimes(1);
+    expect(sheetMock.appendRow).not.toHaveBeenCalled();
+  });
+
+  it('should write the full data range including header on update', () => {
+    // 1 header + 2 data rows = 3 total rows
+    const sheetMock = setupSheetWithTasks('task-1', 'task-2');
+
+    upsertRecords(SHEET_NAMES.TASKS, [{ id: 'task-1' }]);
+
+    expect(sheetMock.getRange).toHaveBeenCalledWith(1, 1, 3, NUM_TASK_COLS);
+  });
+
+  it('should write updated data into the correct row index', () => {
+    const sheetMock = setupSheet([
+      TASK_HEADERS,
+      makeTaskRow('task-1', { title: 'Old' }),
+      makeTaskRow('task-2', { title: 'Keep' }),
+    ]);
+
+    upsertRecords(SHEET_NAMES.TASKS, [{ id: 'task-1', title: 'New' }]);
+
+    const writtenMatrix = sheetMock._setValues.mock.calls[0][0] as unknown[][];
+    expect(writtenMatrix[1][TASK_COL.title]).toBe('New');
+    expect(writtenMatrix[2][TASK_COL.title]).toBe('Keep');
+  });
+
+  it('should handle mixed batch: update existing + append new', () => {
+    const sheetMock = setupSheetWithTasks('task-existing');
+
+    upsertRecords(SHEET_NAMES.TASKS, [
+      { id: 'task-existing', title: 'Updated' },
+      { id: 'task-new', title: 'Created' },
+    ]);
+
+    expect(sheetMock._setValues).toHaveBeenCalledTimes(1);
+    expect(sheetMock.appendRow).toHaveBeenCalledTimes(1);
+  });
+
+  it('should append new rows with correct data', () => {
+    const sheetMock = setupSheet([TASK_HEADERS]);
+
+    upsertRecords(SHEET_NAMES.TASKS, [{ id: 'task-new', title: 'My new task', version: 7 }]);
+
+    const appendedRow = sheetMock.appendRow.mock.calls[0][0] as unknown[];
+    expect(appendedRow[TASK_COL.id]).toBe('task-new');
+    expect(appendedRow[TASK_COL.title]).toBe('My new task');
+    expect(appendedRow[TASK_COL.version]).toBe(7);
+  });
+
+  it('should call getSheet with the given sheet name', () => {
+    setupSheet([TASK_HEADERS]);
+
+    upsertRecords(SHEET_NAMES.TASKS, [{ id: 'x' }]);
 
     expect(getSheet).toHaveBeenCalledWith(SHEET_NAMES.TASKS);
   });

@@ -1,5 +1,5 @@
 import { SHEET_NAMES, coerceSheetBool, colMap } from '../helpers/constants';
-import { getAllRecords, upsertRecord, deleteRecordsByIds } from './base';
+import { getAllRecords, upsertRecords, deleteRecordsByIds } from './base';
 import type { ChecklistItem } from '../types';
 
 const COLS = colMap(SHEET_NAMES.CHECKLIST_ITEMS);
@@ -20,5 +20,5 @@ function rowToItem(row: unknown[]): ChecklistItem {
 
 export const getAllChecklistItems = (): ChecklistItem[] => getAllRecords(SHEET_NAMES.CHECKLIST_ITEMS, rowToItem);
 export const getChecklistItemsByVersion = (minVersion: number): ChecklistItem[] => getAllChecklistItems().filter(item => item.version > minVersion);
-export const upsertChecklistItem = (item: ChecklistItem): void => upsertRecord(SHEET_NAMES.CHECKLIST_ITEMS, item);
+export const upsertChecklistItems = (items: ChecklistItem[]): void => upsertRecords(SHEET_NAMES.CHECKLIST_ITEMS, items);
 export const deleteChecklistItemsByIds = (ids: string[]): number => deleteRecordsByIds(SHEET_NAMES.CHECKLIST_ITEMS, ids);

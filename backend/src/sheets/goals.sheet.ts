@@ -1,5 +1,5 @@
 import { SHEET_NAMES, coerceSheetBool, coerceSheetGoalStatus, colMap } from '../helpers/constants';
-import { getAllRecords, upsertRecord, deleteRecordsByIds } from './base';
+import { getAllRecords, upsertRecords, deleteRecordsByIds } from './base';
 import type { Goal } from '../types';
 
 const COLS = colMap(SHEET_NAMES.GOALS);
@@ -21,6 +21,6 @@ function rowToGoal(row: unknown[]): Goal {
 
 export const getAllGoals = (): Goal[] => getAllRecords(SHEET_NAMES.GOALS, rowToGoal);
 export const getGoalsByVersion = (minVersion: number): Goal[] => getAllGoals().filter(goal => goal.version > minVersion);
-export const upsertGoal = (goal: Goal): void => upsertRecord(SHEET_NAMES.GOALS, goal);
+export const upsertGoals = (goals: Goal[]): void => upsertRecords(SHEET_NAMES.GOALS, goals);
 export const deleteGoalsByIds = (ids: string[]): number => deleteRecordsByIds(SHEET_NAMES.GOALS, ids);
 export const getCoverFileIds = (): string[] => getAllGoals().map(goal => goal.cover_file_id).filter(Boolean);

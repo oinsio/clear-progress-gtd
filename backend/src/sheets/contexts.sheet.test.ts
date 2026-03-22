@@ -1,18 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { getAllContexts, getContextsByVersion, upsertContext, deleteContextsByIds } from './contexts.sheet';
+import { getAllContexts, getContextsByVersion, deleteContextsByIds } from './contexts.sheet';
 import { SHEET_HEADERS, SHEET_NAMES } from '../helpers/constants';
-import type { Context } from '../types';
 import { getSheet } from './client';
 
 vi.mock('./client', () => ({ getSheet: vi.fn() }));
 
 const CTX_HEADERS = SHEET_HEADERS[SHEET_NAMES.CONTEXTS];
-const NUM_COLS = CTX_HEADERS.length;
-
-const COL = CTX_HEADERS.reduce<Record<string, number>>((acc, col, i) => {
-  acc[col] = i;
-  return acc;
-}, {});
 
 function makeContextRow(overrides: Partial<Record<string, unknown>> = {}): unknown[] {
   const defaults: Record<string, unknown> = {
@@ -26,19 +19,6 @@ function makeContextRow(overrides: Partial<Record<string, unknown>> = {}): unkno
   };
   const merged = { ...defaults, ...overrides };
   return CTX_HEADERS.map(col => merged[col]);
-}
-
-function makeContext(overrides: Partial<Context> = {}): Context {
-  return {
-    id: 'context-1',
-    name: '@Home',
-    sort_order: 0,
-    is_deleted: false,
-    created_at: '2025-01-01T00:00:00.000Z',
-    updated_at: '2025-01-01T00:00:00.000Z',
-    version: 1,
-    ...overrides,
-  };
 }
 
 function makeSheetMock(rows: unknown[][] = []) {
@@ -221,94 +201,6 @@ describe('getContextsByVersion', () => {
     ]) as never);
 
     expect(getContextsByVersion(10)).toEqual([]);
-  });
-});
-
-describe('upsertContext', () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-  });
-
-  it('should call appendRow when context id is not found in sheet', () => {
-    const sheetMock = makeSheetMock([CTX_HEADERS]);
-    vi.mocked(getSheet).mockReturnValue(sheetMock as never);
-
-    upsertContext(makeContext({ id: 'ctx-new' }));
-
-    expect(sheetMock.appendRow).toHaveBeenCalledTimes(1);
-  });
-
-  it('should not call getRange when inserting a new context', () => {
-    const sheetMock = makeSheetMock([CTX_HEADERS]);
-    vi.mocked(getSheet).mockReturnValue(sheetMock as never);
-
-    upsertContext(makeContext({ id: 'ctx-new' }));
-
-    expect(sheetMock.getRange).not.toHaveBeenCalled();
-  });
-
-  it('should append row with context data in correct column order', () => {
-    const sheetMock = makeSheetMock([CTX_HEADERS]);
-    vi.mocked(getSheet).mockReturnValue(sheetMock as never);
-
-    upsertContext(makeContext({ id: 'ctx-new', name: '@Errands', version: 2 }));
-
-    const appendedRow = sheetMock.appendRow.mock.calls[0][0] as unknown[];
-    expect(appendedRow[COL.id]).toBe('ctx-new');
-    expect(appendedRow[COL.name]).toBe('@Errands');
-    expect(appendedRow[COL.version]).toBe(2);
-  });
-
-  it('should call getRange and setValues when context id already exists', () => {
-    const sheetMock = makeSheetMock([CTX_HEADERS, makeContextRow({ id: 'ctx-1' })]);
-    vi.mocked(getSheet).mockReturnValue(sheetMock as never);
-
-    upsertContext(makeContext({ id: 'ctx-1', name: 'Updated name' }));
-
-    expect(sheetMock.getRange).toHaveBeenCalledTimes(1);
-    expect(sheetMock._setValues).toHaveBeenCalledTimes(1);
-  });
-
-  it('should not call appendRow when updating an existing context', () => {
-    const sheetMock = makeSheetMock([CTX_HEADERS, makeContextRow({ id: 'ctx-1' })]);
-    vi.mocked(getSheet).mockReturnValue(sheetMock as never);
-
-    upsertContext(makeContext({ id: 'ctx-1' }));
-
-    expect(sheetMock.appendRow).not.toHaveBeenCalled();
-  });
-
-  it('should update the correct 1-based row index', () => {
-    const sheetMock = makeSheetMock([CTX_HEADERS, makeContextRow({ id: 'ctx-1' })]);
-    vi.mocked(getSheet).mockReturnValue(sheetMock as never);
-
-    upsertContext(makeContext({ id: 'ctx-1' }));
-
-    expect(sheetMock.getRange).toHaveBeenCalledWith(2, 1, 1, NUM_COLS);
-  });
-
-  it('should update the correct row when target is the third data row', () => {
-    const sheetMock = makeSheetMock([
-      CTX_HEADERS,
-      makeContextRow({ id: 'ctx-1' }),
-      makeContextRow({ id: 'ctx-2' }),
-      makeContextRow({ id: 'ctx-3' }),
-    ]);
-    vi.mocked(getSheet).mockReturnValue(sheetMock as never);
-
-    upsertContext(makeContext({ id: 'ctx-3' }));
-
-    expect(sheetMock.getRange).toHaveBeenCalledWith(4, 1, 1, NUM_COLS);
-  });
-
-  it('should write updated context data when updating existing row', () => {
-    const sheetMock = makeSheetMock([CTX_HEADERS, makeContextRow({ id: 'ctx-1', name: '@Home' })]);
-    vi.mocked(getSheet).mockReturnValue(sheetMock as never);
-
-    upsertContext(makeContext({ id: 'ctx-1', name: '@Work' }));
-
-    const writtenRow = sheetMock._setValues.mock.calls[0][0][0] as unknown[];
-    expect(writtenRow[COL.name]).toBe('@Work');
   });
 });
 

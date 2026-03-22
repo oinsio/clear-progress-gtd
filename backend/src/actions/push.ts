@@ -1,12 +1,12 @@
 import { PUSH_STATUSES, CONFLICT_RESOLUTION, ERROR_MESSAGES, VALID_BOXES, isBlankString, isValidUuid } from '../helpers/constants';
 import { jsonOk, jsonError, jsonNotInitialized, ERROR_CODES } from '../helpers/response';
 import { resolveConflict } from '../helpers/conflict';
-import { getAllTasks, upsertTask } from '../sheets/tasks.sheet';
-import { getAllGoals, upsertGoal } from '../sheets/goals.sheet';
-import { getAllContexts, upsertContext } from '../sheets/contexts.sheet';
-import { getAllCategories, upsertCategory } from '../sheets/categories.sheet';
-import { getAllChecklistItems, upsertChecklistItem } from '../sheets/checklists.sheet';
-import { getAllSettings, upsertSetting } from '../sheets/settings.sheet';
+import { getAllTasks, upsertTasks } from '../sheets/tasks.sheet';
+import { getAllGoals, upsertGoals } from '../sheets/goals.sheet';
+import { getAllContexts, upsertContexts } from '../sheets/contexts.sheet';
+import { getAllCategories, upsertCategories } from '../sheets/categories.sheet';
+import { getAllChecklistItems, upsertChecklistItems } from '../sheets/checklists.sheet';
+import { getAllSettings, upsertSettings } from '../sheets/settings.sheet';
 import type { Task, Goal, Context, Category, ChecklistItem, Setting, PushItemResult } from '../types';
 
 type AnyEntity = Task | Goal | Context | Category | ChecklistItem;
@@ -38,9 +38,11 @@ function getInvalidForeignKeyReason(record: AnyEntity): string | null {
 function processRecords<T extends AnyEntity>(
   incoming: T[],
   existing: T[],
-  upsertFn: (record: T) => void
+  batchUpsertFn: (records: T[]) => void
 ): PushItemResult[] {
-  return incoming.map(record => {
+  const recordsToUpsert: T[] = [];
+
+  const results = incoming.map(record => {
     if (!isValidUuid(record.id)) {
       return { id: record.id, status: PUSH_STATUSES.REJECTED, reason: ERROR_MESSAGES.INVALID_ID };
     }
@@ -61,19 +63,22 @@ function processRecords<T extends AnyEntity>(
     const serverRecord = existing.find(e => e.id === record.id);
 
     if (!serverRecord) {
-      upsertFn({ ...record, version: record.version });
+      recordsToUpsert.push({ ...record });
       return { id: record.id, status: PUSH_STATUSES.CREATED, version: record.version };
     }
 
     const resolution = resolveConflict(record.updated_at, serverRecord.updated_at);
     if (resolution === CONFLICT_RESOLUTION.ACCEPT) {
       const updated = { ...record, version: serverRecord.version + 1 };
-      upsertFn(updated);
+      recordsToUpsert.push(updated);
       return { id: record.id, status: PUSH_STATUSES.ACCEPTED, version: updated.version };
     }
 
     return { id: record.id, status: PUSH_STATUSES.CONFLICT, server_record: serverRecord };
   });
+
+  batchUpsertFn(recordsToUpsert);
+  return results;
 }
 
 export function push(changes: {
@@ -88,22 +93,23 @@ export function push(changes: {
     const results: Record<string, PushItemResult[]> = {};
 
     if (changes.tasks?.length) {
-      results.tasks = processRecords(changes.tasks, getAllTasks(), upsertTask);
+      results.tasks = processRecords(changes.tasks, getAllTasks(), upsertTasks);
     }
     if (changes.goals?.length) {
-      results.goals = processRecords(changes.goals, getAllGoals(), upsertGoal);
+      results.goals = processRecords(changes.goals, getAllGoals(), upsertGoals);
     }
     if (changes.contexts?.length) {
-      results.contexts = processRecords(changes.contexts, getAllContexts(), upsertContext);
+      results.contexts = processRecords(changes.contexts, getAllContexts(), upsertContexts);
     }
     if (changes.categories?.length) {
-      results.categories = processRecords(changes.categories, getAllCategories(), upsertCategory);
+      results.categories = processRecords(changes.categories, getAllCategories(), upsertCategories);
     }
     if (changes.checklist_items?.length) {
-      results.checklist_items = processRecords(changes.checklist_items, getAllChecklistItems(), upsertChecklistItem);
+      results.checklist_items = processRecords(changes.checklist_items, getAllChecklistItems(), upsertChecklistItems);
     }
     if (changes.settings?.length) {
       const serverSettings = getAllSettings();
+      const settingsToUpsert: typeof changes.settings = [];
       results.settings = changes.settings.map(clientSetting => {
         const serverSetting = serverSettings.find(s => s.key === clientSetting.key);
         const resolution = serverSetting
@@ -111,12 +117,13 @@ export function push(changes: {
           : CONFLICT_RESOLUTION.ACCEPT;
 
         if (resolution === CONFLICT_RESOLUTION.ACCEPT) {
-          upsertSetting(clientSetting);
+          settingsToUpsert.push(clientSetting);
           return { id: clientSetting.key, status: PUSH_STATUSES.ACCEPTED };
         }
 
         return { id: clientSetting.key, status: PUSH_STATUSES.CONFLICT };
       });
+      upsertSettings(settingsToUpsert);
     }
 
     return jsonOk({ results, server_time: new Date().toISOString() });

@@ -1,18 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { getAllCategories, getCategoriesByVersion, upsertCategory, deleteCategoriesByIds } from './categories.sheet';
+import { getAllCategories, getCategoriesByVersion, deleteCategoriesByIds } from './categories.sheet';
 import { SHEET_HEADERS, SHEET_NAMES } from '../helpers/constants';
-import type { Category } from '../types';
 import { getSheet } from './client';
 
 vi.mock('./client', () => ({ getSheet: vi.fn() }));
 
 const CAT_HEADERS = SHEET_HEADERS[SHEET_NAMES.CATEGORIES];
-const NUM_COLS = CAT_HEADERS.length;
-
-const COL = CAT_HEADERS.reduce<Record<string, number>>((acc, col, i) => {
-  acc[col] = i;
-  return acc;
-}, {});
 
 function makeCategoryRow(overrides: Partial<Record<string, unknown>> = {}): unknown[] {
   const defaults: Record<string, unknown> = {
@@ -26,19 +19,6 @@ function makeCategoryRow(overrides: Partial<Record<string, unknown>> = {}): unkn
   };
   const merged = { ...defaults, ...overrides };
   return CAT_HEADERS.map(col => merged[col]);
-}
-
-function makeCategory(overrides: Partial<Category> = {}): Category {
-  return {
-    id: 'category-1',
-    name: 'Work',
-    sort_order: 0,
-    is_deleted: false,
-    created_at: '2025-01-01T00:00:00.000Z',
-    updated_at: '2025-01-01T00:00:00.000Z',
-    version: 1,
-    ...overrides,
-  };
 }
 
 function makeSheetMock(rows: unknown[][] = []) {
@@ -221,94 +201,6 @@ describe('getCategoriesByVersion', () => {
     ]) as never);
 
     expect(getCategoriesByVersion(10)).toEqual([]);
-  });
-});
-
-describe('upsertCategory', () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-  });
-
-  it('should call appendRow when category id is not found in sheet', () => {
-    const sheetMock = makeSheetMock([CAT_HEADERS]);
-    vi.mocked(getSheet).mockReturnValue(sheetMock as never);
-
-    upsertCategory(makeCategory({ id: 'cat-new' }));
-
-    expect(sheetMock.appendRow).toHaveBeenCalledTimes(1);
-  });
-
-  it('should not call getRange when inserting a new category', () => {
-    const sheetMock = makeSheetMock([CAT_HEADERS]);
-    vi.mocked(getSheet).mockReturnValue(sheetMock as never);
-
-    upsertCategory(makeCategory({ id: 'cat-new' }));
-
-    expect(sheetMock.getRange).not.toHaveBeenCalled();
-  });
-
-  it('should append row with category data in correct column order', () => {
-    const sheetMock = makeSheetMock([CAT_HEADERS]);
-    vi.mocked(getSheet).mockReturnValue(sheetMock as never);
-
-    upsertCategory(makeCategory({ id: 'cat-new', name: 'Health', version: 3 }));
-
-    const appendedRow = sheetMock.appendRow.mock.calls[0][0] as unknown[];
-    expect(appendedRow[COL.id]).toBe('cat-new');
-    expect(appendedRow[COL.name]).toBe('Health');
-    expect(appendedRow[COL.version]).toBe(3);
-  });
-
-  it('should call getRange and setValues when category id already exists', () => {
-    const sheetMock = makeSheetMock([CAT_HEADERS, makeCategoryRow({ id: 'cat-1' })]);
-    vi.mocked(getSheet).mockReturnValue(sheetMock as never);
-
-    upsertCategory(makeCategory({ id: 'cat-1', name: 'Updated name' }));
-
-    expect(sheetMock.getRange).toHaveBeenCalledTimes(1);
-    expect(sheetMock._setValues).toHaveBeenCalledTimes(1);
-  });
-
-  it('should not call appendRow when updating an existing category', () => {
-    const sheetMock = makeSheetMock([CAT_HEADERS, makeCategoryRow({ id: 'cat-1' })]);
-    vi.mocked(getSheet).mockReturnValue(sheetMock as never);
-
-    upsertCategory(makeCategory({ id: 'cat-1' }));
-
-    expect(sheetMock.appendRow).not.toHaveBeenCalled();
-  });
-
-  it('should update the correct 1-based row index', () => {
-    const sheetMock = makeSheetMock([CAT_HEADERS, makeCategoryRow({ id: 'cat-1' })]);
-    vi.mocked(getSheet).mockReturnValue(sheetMock as never);
-
-    upsertCategory(makeCategory({ id: 'cat-1' }));
-
-    expect(sheetMock.getRange).toHaveBeenCalledWith(2, 1, 1, NUM_COLS);
-  });
-
-  it('should update the correct row when target is the third data row', () => {
-    const sheetMock = makeSheetMock([
-      CAT_HEADERS,
-      makeCategoryRow({ id: 'cat-1' }),
-      makeCategoryRow({ id: 'cat-2' }),
-      makeCategoryRow({ id: 'cat-3' }),
-    ]);
-    vi.mocked(getSheet).mockReturnValue(sheetMock as never);
-
-    upsertCategory(makeCategory({ id: 'cat-3' }));
-
-    expect(sheetMock.getRange).toHaveBeenCalledWith(4, 1, 1, NUM_COLS);
-  });
-
-  it('should write updated category data when updating existing row', () => {
-    const sheetMock = makeSheetMock([CAT_HEADERS, makeCategoryRow({ id: 'cat-1', name: 'Old name' })]);
-    vi.mocked(getSheet).mockReturnValue(sheetMock as never);
-
-    upsertCategory(makeCategory({ id: 'cat-1', name: 'New name' }));
-
-    const writtenRow = sheetMock._setValues.mock.calls[0][0][0] as unknown[];
-    expect(writtenRow[COL.name]).toBe('New name');
   });
 });
 

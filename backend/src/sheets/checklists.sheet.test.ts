@@ -1,18 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { getAllChecklistItems, getChecklistItemsByVersion, upsertChecklistItem, deleteChecklistItemsByIds } from './checklists.sheet';
+import { getAllChecklistItems, getChecklistItemsByVersion, deleteChecklistItemsByIds } from './checklists.sheet';
 import { SHEET_HEADERS, SHEET_NAMES } from '../helpers/constants';
-import type { ChecklistItem } from '../types';
 import { getSheet } from './client';
 
 vi.mock('./client', () => ({ getSheet: vi.fn() }));
 
 const ITEM_HEADERS = SHEET_HEADERS[SHEET_NAMES.CHECKLIST_ITEMS];
-const NUM_COLS = ITEM_HEADERS.length;
-
-const COL = ITEM_HEADERS.reduce<Record<string, number>>((acc, col, i) => {
-  acc[col] = i;
-  return acc;
-}, {});
 
 function makeItemRow(overrides: Partial<Record<string, unknown>> = {}): unknown[] {
   const defaults: Record<string, unknown> = {
@@ -28,21 +21,6 @@ function makeItemRow(overrides: Partial<Record<string, unknown>> = {}): unknown[
   };
   const merged = { ...defaults, ...overrides };
   return ITEM_HEADERS.map(col => merged[col]);
-}
-
-function makeItem(overrides: Partial<ChecklistItem> = {}): ChecklistItem {
-  return {
-    id: 'item-1',
-    task_id: 'task-1',
-    title: 'Subtask',
-    is_completed: false,
-    sort_order: 0,
-    is_deleted: false,
-    created_at: '2025-01-01T00:00:00.000Z',
-    updated_at: '2025-01-01T00:00:00.000Z',
-    version: 1,
-    ...overrides,
-  };
 }
 
 function makeSheetMock(rows: unknown[][] = []) {
@@ -246,95 +224,6 @@ describe('getChecklistItemsByVersion', () => {
     ]) as never);
 
     expect(getChecklistItemsByVersion(10)).toEqual([]);
-  });
-});
-
-describe('upsertChecklistItem', () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-  });
-
-  it('should call appendRow when item id is not found in sheet', () => {
-    const sheetMock = makeSheetMock([ITEM_HEADERS]);
-    vi.mocked(getSheet).mockReturnValue(sheetMock as never);
-
-    upsertChecklistItem(makeItem({ id: 'item-new' }));
-
-    expect(sheetMock.appendRow).toHaveBeenCalledTimes(1);
-  });
-
-  it('should not call getRange when inserting a new item', () => {
-    const sheetMock = makeSheetMock([ITEM_HEADERS]);
-    vi.mocked(getSheet).mockReturnValue(sheetMock as never);
-
-    upsertChecklistItem(makeItem({ id: 'item-new' }));
-
-    expect(sheetMock.getRange).not.toHaveBeenCalled();
-  });
-
-  it('should append row with item data in correct column order', () => {
-    const sheetMock = makeSheetMock([ITEM_HEADERS]);
-    vi.mocked(getSheet).mockReturnValue(sheetMock as never);
-
-    upsertChecklistItem(makeItem({ id: 'item-new', task_id: 'task-99', title: 'Call dentist', version: 3 }));
-
-    const appendedRow = sheetMock.appendRow.mock.calls[0][0] as unknown[];
-    expect(appendedRow[COL.id]).toBe('item-new');
-    expect(appendedRow[COL.task_id]).toBe('task-99');
-    expect(appendedRow[COL.title]).toBe('Call dentist');
-    expect(appendedRow[COL.version]).toBe(3);
-  });
-
-  it('should call getRange and setValues when item id already exists', () => {
-    const sheetMock = makeSheetMock([ITEM_HEADERS, makeItemRow({ id: 'item-1' })]);
-    vi.mocked(getSheet).mockReturnValue(sheetMock as never);
-
-    upsertChecklistItem(makeItem({ id: 'item-1', title: 'Updated title' }));
-
-    expect(sheetMock.getRange).toHaveBeenCalledTimes(1);
-    expect(sheetMock._setValues).toHaveBeenCalledTimes(1);
-  });
-
-  it('should not call appendRow when updating an existing item', () => {
-    const sheetMock = makeSheetMock([ITEM_HEADERS, makeItemRow({ id: 'item-1' })]);
-    vi.mocked(getSheet).mockReturnValue(sheetMock as never);
-
-    upsertChecklistItem(makeItem({ id: 'item-1' }));
-
-    expect(sheetMock.appendRow).not.toHaveBeenCalled();
-  });
-
-  it('should update the correct 1-based row index', () => {
-    const sheetMock = makeSheetMock([ITEM_HEADERS, makeItemRow({ id: 'item-1' })]);
-    vi.mocked(getSheet).mockReturnValue(sheetMock as never);
-
-    upsertChecklistItem(makeItem({ id: 'item-1' }));
-
-    expect(sheetMock.getRange).toHaveBeenCalledWith(2, 1, 1, NUM_COLS);
-  });
-
-  it('should update the correct row when target is the third data row', () => {
-    const sheetMock = makeSheetMock([
-      ITEM_HEADERS,
-      makeItemRow({ id: 'item-1' }),
-      makeItemRow({ id: 'item-2' }),
-      makeItemRow({ id: 'item-3' }),
-    ]);
-    vi.mocked(getSheet).mockReturnValue(sheetMock as never);
-
-    upsertChecklistItem(makeItem({ id: 'item-3' }));
-
-    expect(sheetMock.getRange).toHaveBeenCalledWith(4, 1, 1, NUM_COLS);
-  });
-
-  it('should write updated item data when updating existing row', () => {
-    const sheetMock = makeSheetMock([ITEM_HEADERS, makeItemRow({ id: 'item-1', title: 'Old title' })]);
-    vi.mocked(getSheet).mockReturnValue(sheetMock as never);
-
-    upsertChecklistItem(makeItem({ id: 'item-1', title: 'New title' }));
-
-    const writtenRow = sheetMock._setValues.mock.calls[0][0][0] as unknown[];
-    expect(writtenRow[COL.title]).toBe('New title');
   });
 });
 
