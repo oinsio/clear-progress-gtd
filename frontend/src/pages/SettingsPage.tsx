@@ -6,7 +6,9 @@ import { useTheme } from "@/app/providers/ThemeProvider";
 import { useLanguage } from "@/hooks/useLanguage";
 import { usePanelSide } from "@/hooks/usePanelSide";
 import { usePanelOpen } from "@/hooks/usePanelOpen";
+import { useSync } from "@/app/providers/SyncProvider";
 import { RightFilterPanel, type RightPanelMode } from "@/components/tasks/RightFilterPanel";
+import { ConfirmFullSyncDialog } from "@/components/settings/ConfirmFullSyncDialog";
 import { BOX_ORDER, ACCENT_COLORS, ACCENT_COLOR_VALUES, PANEL_SIDES, ROUTES, STORAGE_KEYS, SUPPORTED_LANGUAGES, BACKEND_CONNECTION_EVENT } from "@/constants";
 import type { Box, AccentColor, PanelSide } from "@/types/common";
 import type { Language } from "@/constants";
@@ -16,6 +18,8 @@ export default function SettingsPage() {
   const { t } = useTranslation();
   const [filterMode, setFilterMode] = useState<RightPanelMode>(null);
   const { isPanelOpen, togglePanelOpen } = usePanelOpen();
+  const [isFullSyncDialogOpen, setIsFullSyncDialogOpen] = useState(false);
+  const { triggerFullSync } = useSync();
 
   const navigate = useNavigate();
   const { defaultBox, setDefaultBox } = useSettings();
@@ -61,6 +65,14 @@ export default function SettingsPage() {
     window.dispatchEvent(new Event(BACKEND_CONNECTION_EVENT));
     setIsBackendConnected(false);
   };
+
+  const handleFullSyncOpen = useCallback((): void => {
+    setIsFullSyncDialogOpen(true);
+  }, []);
+
+  const handleFullSyncClose = useCallback((): void => {
+    setIsFullSyncDialogOpen(false);
+  }, []);
 
   return (
     <div data-testid="settings-page" className="relative flex h-screen overflow-hidden bg-white">
@@ -186,13 +198,22 @@ export default function SettingsPage() {
                   {isBackendConnected ? t("settings.syncConnected") : t("settings.syncNotConnected")}
                 </span>
                 {isBackendConnected ? (
-                  <button
-                    data-testid="settings-sync-disconnect"
-                    onClick={handleDisconnect}
-                    className="rounded-lg bg-red-500 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-red-600"
-                  >
-                    {t("settings.syncDisconnect")}
-                  </button>
+                  <div className="flex items-center gap-2">
+                    <button
+                      data-testid="settings-full-sync-btn"
+                      onClick={handleFullSyncOpen}
+                      className="rounded-lg bg-accent px-3 py-1.5 text-xs font-medium text-white transition-colors"
+                    >
+                      {t("settings.fullSync")}
+                    </button>
+                    <button
+                      data-testid="settings-sync-disconnect"
+                      onClick={handleDisconnect}
+                      className="rounded-lg bg-red-500 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-red-600"
+                    >
+                      {t("settings.syncDisconnect")}
+                    </button>
+                  </div>
                 ) : (
                   <button
                     data-testid="settings-sync-connect"
@@ -207,6 +228,12 @@ export default function SettingsPage() {
           </div>
         </main>
       </div>
+
+      <ConfirmFullSyncDialog
+        isOpen={isFullSyncDialogOpen}
+        onClose={handleFullSyncClose}
+        onSync={triggerFullSync}
+      />
 
       {/* Right panel — same as on main page */}
       <RightFilterPanel

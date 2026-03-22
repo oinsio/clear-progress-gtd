@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, act, screen, fireEvent } from "@testing-library/react";
 import { PING_INTERVAL_MS, SYNC_INTERVAL_MS, SYNC_DEBOUNCE_MS } from "@/constants";
+import type { FullSyncStep } from "@/types/common";
 
 const {
   mockPing,
@@ -9,6 +10,7 @@ const {
   mockPush,
   mockInitializeLocalCovers,
   mockCoverSync,
+  mockCoverFullSync,
 } = vi.hoisted(() => ({
   mockPing: vi.fn(),
   mockInit: vi.fn(),
@@ -16,6 +18,7 @@ const {
   mockPush: vi.fn(),
   mockInitializeLocalCovers: vi.fn(),
   mockCoverSync: vi.fn(),
+  mockCoverFullSync: vi.fn(),
 }));
 
 vi.mock("@/services/ApiClient", () => ({
@@ -36,6 +39,7 @@ vi.mock("@/services/defaultServices", () => ({
   defaultCoverSyncService: {
     initializeLocalCovers: mockInitializeLocalCovers,
     sync: mockCoverSync,
+    fullSync: mockCoverFullSync,
   },
 }));
 
@@ -132,6 +136,7 @@ beforeEach(() => {
   mockInit.mockResolvedValue({ ok: true });
   mockInitializeLocalCovers.mockResolvedValue(undefined);
   mockCoverSync.mockResolvedValue(undefined);
+  mockCoverFullSync.mockResolvedValue(undefined);
 
   Object.defineProperty(navigator, "onLine", {
     value: true,
@@ -528,5 +533,81 @@ describe("SyncProvider — schedulePush", () => {
     });
 
     expect(mockPush).not.toHaveBeenCalled();
+  });
+});
+
+describe("SyncProvider — triggerFullSync", () => {
+  function FullSyncTrigger({ onProgress }: { onProgress: (step: FullSyncStep) => void }) {
+    const { triggerFullSync } = useSync();
+    return (
+      <button data-testid="full-sync-btn" onClick={() => void triggerFullSync(onProgress)}>
+        full sync
+      </button>
+    );
+  }
+
+  function renderProviderWithFullSync(onProgress: (step: FullSyncStep) => void) {
+    return render(
+      <SyncProvider>
+        <SyncVersionDisplay />
+        <FullSyncTrigger onProgress={onProgress} />
+      </SyncProvider>,
+    );
+  }
+
+  async function setupAndTriggerFullSync(onProgress: (step: FullSyncStep) => void = vi.fn()) {
+    renderProviderWithFullSync(onProgress);
+    await act(async () => {});
+    vi.clearAllMocks();
+    mockPush.mockResolvedValue(undefined);
+    mockPull.mockResolvedValue(undefined);
+    await act(async () => { fireEvent.click(screen.getByTestId("full-sync-btn")); });
+  }
+
+  it("should call push with null during full sync", async () => {
+    await setupAndTriggerFullSync();
+    expect(mockPush).toHaveBeenCalledWith(null);
+  });
+
+  it("should call pull with zero versions during full sync", async () => {
+    await setupAndTriggerFullSync();
+    expect(mockPull).toHaveBeenCalledWith(
+      { tasks: 0, goals: 0, contexts: 0, categories: 0, checklist_items: 0 },
+    );
+  });
+
+  it("should call coverSyncService.fullSync during full sync", async () => {
+    await setupAndTriggerFullSync();
+    expect(mockCoverFullSync).toHaveBeenCalledTimes(1);
+  });
+
+  it("should report progress steps push, pull, covers, done in order", async () => {
+    const steps: FullSyncStep[] = [];
+    await setupAndTriggerFullSync((step) => { steps.push(step); });
+    expect(steps).toEqual(["push", "pull", "covers", "done"]);
+  });
+
+  it("should report error step when push fails during full sync", async () => {
+    const steps: FullSyncStep[] = [];
+    const onProgress = (step: FullSyncStep) => { steps.push(step); };
+    renderProviderWithFullSync(onProgress);
+    await act(async () => {});
+    vi.clearAllMocks();
+    mockPush.mockRejectedValue(new Error("Push failed"));
+    await act(async () => { fireEvent.click(screen.getByTestId("full-sync-btn")); });
+    expect(steps).toContain("error");
+    expect(steps).not.toContain("done");
+  });
+
+  it("should increment syncVersion after successful full sync", async () => {
+    renderProviderWithFullSync(vi.fn());
+    await act(async () => {});
+    const versionAfterMount = parseInt(screen.getByTestId("version").textContent ?? "0");
+    vi.clearAllMocks();
+    mockPush.mockResolvedValue(undefined);
+    mockPull.mockResolvedValue(undefined);
+    await act(async () => { fireEvent.click(screen.getByTestId("full-sync-btn")); });
+    const versionAfterFullSync = parseInt(screen.getByTestId("version").textContent ?? "0");
+    expect(versionAfterFullSync).toBeGreaterThan(versionAfterMount);
   });
 });

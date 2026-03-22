@@ -126,7 +126,18 @@
     "syncNotConnected": "Не подключено",
     "syncConfigure": "Настроить",
     "syncConnect": "Подключить",
-    "syncDisconnect": "Отключить"
+    "syncDisconnect": "Отключить",
+    "fullSync": "Полная синхронизация",
+    "fullSyncConfirmTitle": "Запустить полную синхронизацию?",
+    "fullSyncConfirmDescription": "Все данные будут синхронизированы. Конфликты решаются по принципу «кто последний, тот и прав». Как обычно.",
+    "fullSyncStepPush": "Выгружаю страдания на сервер",
+    "fullSyncStepPull": "Загружаю чужие страдания",
+    "fullSyncStepCovers": "Синхронизация обложек",
+    "fullSyncSuccess": "Синхронизация завершена. Редкий успех.",
+    "fullSyncError": "Ошибка синхронизации. Не удивительно.",
+    "fullSyncCancel": "Отмена",
+    "fullSyncClose": "Закрыть",
+    "fullSyncStart": "Синхронизировать"
   },
   "setup": {
     "title": "Подключение к бэкенду",

@@ -447,4 +447,55 @@ describe("SyncService", () => {
       expect(settingsRepository.getChangedSince).not.toHaveBeenCalled();
     });
   });
+
+  describe("pull — versionsOverride", () => {
+    function createService() {
+      return new SyncService(
+        mockApiClient,
+        taskRepository,
+        goalRepository,
+        contextRepository,
+        categoryRepository,
+        checklistRepository,
+        settingsRepository,
+      );
+    }
+
+    it("should use provided versionsOverride instead of local versions when override is given", async () => {
+      const override = { tasks: 0, goals: 0, contexts: 0, categories: 0, checklist_items: 0 };
+      const service = createService();
+
+      await service.pull(override);
+
+      expect(mockApiClient.pull).toHaveBeenCalledWith({ versions: override });
+    });
+
+    it("should not call getMaxVersion on any repository when versionsOverride is provided", async () => {
+      const override = { tasks: 0, goals: 0, contexts: 0, categories: 0, checklist_items: 0 };
+      const service = createService();
+
+      await service.pull(override);
+
+      expect(taskRepository.getMaxVersion).not.toHaveBeenCalled();
+      expect(goalRepository.getMaxVersion).not.toHaveBeenCalled();
+      expect(contextRepository.getMaxVersion).not.toHaveBeenCalled();
+      expect(categoryRepository.getMaxVersion).not.toHaveBeenCalled();
+      expect(checklistRepository.getMaxVersion).not.toHaveBeenCalled();
+    });
+
+    it("should use local versions from repositories when versionsOverride is not provided", async () => {
+      (taskRepository.getMaxVersion as ReturnType<typeof vi.fn>).mockResolvedValue(10);
+      (goalRepository.getMaxVersion as ReturnType<typeof vi.fn>).mockResolvedValue(5);
+      (contextRepository.getMaxVersion as ReturnType<typeof vi.fn>).mockResolvedValue(3);
+      (categoryRepository.getMaxVersion as ReturnType<typeof vi.fn>).mockResolvedValue(2);
+      (checklistRepository.getMaxVersion as ReturnType<typeof vi.fn>).mockResolvedValue(7);
+
+      const service = createService();
+      await service.pull();
+
+      expect(mockApiClient.pull).toHaveBeenCalledWith({
+        versions: { tasks: 10, goals: 5, contexts: 3, categories: 2, checklist_items: 7 },
+      });
+    });
+  });
 });

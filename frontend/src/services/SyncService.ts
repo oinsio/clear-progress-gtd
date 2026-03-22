@@ -20,8 +20,8 @@ export class SyncService {
     private readonly settingsRepository: SettingsRepository,
   ) {}
 
-  async pull(): Promise<void> {
-    const versions = await this.getLocalVersions();
+  async pull(versionsOverride?: VersionMap): Promise<void> {
+    const versions = versionsOverride ?? await this.getLocalVersions();
     const pullResponse = await this.apiClient.pull({ versions });
 
     if (!pullResponse.ok) {

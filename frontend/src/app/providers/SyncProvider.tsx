@@ -6,7 +6,8 @@ import React, {
   useRef,
   useState,
 } from "react";
-import type { SyncStatus } from "@/types/common";
+import type { SyncStatus, FullSyncStep } from "@/types/common";
+import type { VersionMap } from "@/types/api";
 import { SYNC_INTERVAL_MS, PING_INTERVAL_MS, SYNC_DEBOUNCE_MS, STORAGE_KEYS } from "@/constants";
 import { SyncService } from "@/services/SyncService";
 import { ApiClient } from "@/services/ApiClient";
@@ -18,6 +19,14 @@ import { ChecklistRepository } from "@/db/repositories/ChecklistRepository";
 import { SettingsRepository } from "@/db/repositories/SettingsRepository";
 import { defaultCoverSyncService } from "@/services/defaultServices";
 
+const FULL_SYNC_ZERO_VERSIONS: VersionMap = {
+  tasks: 0,
+  goals: 0,
+  contexts: 0,
+  categories: 0,
+  checklist_items: 0,
+};
+
 interface SyncContextValue {
   syncStatus: SyncStatus;
   syncVersion: number;
@@ -25,6 +34,7 @@ interface SyncContextValue {
   pull: () => Promise<void>;
   push: () => Promise<void>;
   schedulePush: () => void;
+  triggerFullSync: (onProgress: (step: FullSyncStep) => void) => Promise<void>;
 }
 
 const SyncContext = createContext<SyncContextValue | null>(null);
@@ -93,6 +103,33 @@ export function SyncProvider({ children }: { children: React.ReactNode }) {
     debounceTimerRef.current = setTimeout(() => void sync(), SYNC_DEBOUNCE_MS);
   }, [sync]);
 
+  const triggerFullSync = useCallback(async (onProgress: (step: FullSyncStep) => void): Promise<void> => {
+    if (!navigator.onLine) {
+      setSyncStatus("offline");
+      onProgress("error");
+      return;
+    }
+    setSyncStatus("syncing");
+    try {
+      onProgress("push");
+      await syncService.push(null);
+      onProgress("pull");
+      await syncService.pull(FULL_SYNC_ZERO_VERSIONS);
+      onProgress("covers");
+      await defaultCoverSyncService.fullSync();
+      const syncTimestamp = new Date().toISOString();
+      localStorage.setItem(STORAGE_KEYS.LAST_SYNC, syncTimestamp);
+      setLastSyncedAt(syncTimestamp);
+      setSyncVersion((version) => version + 1);
+      setSyncStatus("idle");
+      stopPingInterval();
+      onProgress("done");
+    } catch {
+      setSyncStatus("error");
+      onProgress("error");
+    }
+  }, [stopPingInterval]);
+
   const performPing = useCallback(async (): Promise<void> => {
     try {
       const pingResult = await apiClient.ping();
@@ -141,7 +178,7 @@ export function SyncProvider({ children }: { children: React.ReactNode }) {
   }, [syncStatus, startPingInterval]);
 
   return (
-    <SyncContext.Provider value={{ syncStatus, syncVersion, lastSyncedAt, pull: sync, push: sync, schedulePush }}>
+    <SyncContext.Provider value={{ syncStatus, syncVersion, lastSyncedAt, pull: sync, push: sync, schedulePush, triggerFullSync }}>
       {children}
     </SyncContext.Provider>
   );
@@ -156,6 +193,7 @@ const SYNC_FALLBACK: SyncContextValue = {
   pull: SYNC_NOOP,
   push: SYNC_NOOP,
   schedulePush: () => {},
+  triggerFullSync: SYNC_NOOP as (onProgress: (step: FullSyncStep) => void) => Promise<void>,
 };
 
 export function useSync(): SyncContextValue {

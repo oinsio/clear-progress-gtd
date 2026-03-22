@@ -67,6 +67,7 @@ function createMockGoalRepository(
 ): GoalRepository {
   return {
     getById: vi.fn().mockResolvedValue(undefined),
+    getActive: vi.fn().mockResolvedValue([]),
     update: vi.fn().mockResolvedValue(undefined),
     ...overrides,
   } as unknown as GoalRepository;
@@ -291,5 +292,174 @@ describe("CoverSyncService", () => {
       expect(mockGoalRepository.update).not.toHaveBeenCalled();
     });
 
+  });
+
+  describe("fullSync — ensureServerCoversAreCached", () => {
+    const REMOTE_FILE_ID = "remote-file-id-abc";
+
+    function createActiveGoal(coverFileId: string) {
+      return {
+        id: "goal-1",
+        title: "Goal",
+        description: "",
+        cover_file_id: coverFileId,
+        status: "in_progress" as const,
+        sort_order: 0,
+        is_deleted: false,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        version: 1,
+      };
+    }
+
+    beforeEach(() => {
+      global.fetch = vi.fn().mockResolvedValue({
+        ok: true,
+        blob: vi.fn().mockResolvedValue(new Blob(["img"], { type: "image/jpeg" })),
+      });
+    });
+
+    it("should skip goals with empty cover_file_id", async () => {
+      mockGoalRepository = createMockGoalRepository({
+        getActive: vi.fn().mockResolvedValue([createActiveGoal("")]),
+      });
+      const service = createService();
+
+      await service.fullSync();
+
+      expect(mockCoverRepository.getByFileId).not.toHaveBeenCalled();
+    });
+
+    it("should skip goals with local: cover_file_id", async () => {
+      mockGoalRepository = createMockGoalRepository({
+        getActive: vi.fn().mockResolvedValue([createActiveGoal(`${LOCAL_COVER_ID_PREFIX}some-uuid`)]),
+      });
+      const service = createService();
+
+      await service.fullSync();
+
+      expect(mockCoverRepository.getByFileId).not.toHaveBeenCalled();
+    });
+
+    it("should skip cover if already in localCoverCache", async () => {
+      localCoverCache.set(REMOTE_FILE_ID, "blob:http://localhost/cached");
+      mockGoalRepository = createMockGoalRepository({
+        getActive: vi.fn().mockResolvedValue([createActiveGoal(REMOTE_FILE_ID)]),
+      });
+      const service = createService();
+
+      await service.fullSync();
+
+      expect(mockCoverRepository.getByFileId).not.toHaveBeenCalled();
+    });
+
+    describe("when CoverRecord with blob already exists in repository", () => {
+      beforeEach(() => {
+        const existingCover = {
+          file_id: REMOTE_FILE_ID,
+          thumbnail_url: "https://example.com/thumb",
+          data_hash: "existing-hash",
+          data: new Blob(["img"], { type: "image/jpeg" }),
+        };
+        mockGoalRepository = createMockGoalRepository({
+          getActive: vi.fn().mockResolvedValue([createActiveGoal(REMOTE_FILE_ID)]),
+        });
+        mockCoverRepository = createMockCoverRepository({
+          getByFileId: vi.fn().mockResolvedValue(existingCover),
+        });
+      });
+
+      it("should skip cover download", async () => {
+        const service = createService();
+
+        await service.fullSync();
+
+        expect(global.fetch).not.toHaveBeenCalled();
+      });
+
+      it("should populate localCoverCache without re-downloading", async () => {
+        const service = createService();
+
+        await service.fullSync();
+
+        expect(localCoverCache.get(REMOTE_FILE_ID)).toBeDefined();
+      });
+    });
+
+    it("should download and save cover when CoverRecord is missing", async () => {
+      mockGoalRepository = createMockGoalRepository({
+        getActive: vi.fn().mockResolvedValue([createActiveGoal(REMOTE_FILE_ID)]),
+      });
+      mockCoverRepository = createMockCoverRepository({
+        getByFileId: vi.fn().mockResolvedValue(undefined),
+      });
+      const service = createService();
+
+      await service.fullSync();
+
+      expect(mockCoverRepository.save).toHaveBeenCalledWith(
+        expect.objectContaining({ file_id: REMOTE_FILE_ID }),
+      );
+    });
+
+    it("should add downloaded cover to localCoverCache", async () => {
+      mockGoalRepository = createMockGoalRepository({
+        getActive: vi.fn().mockResolvedValue([createActiveGoal(REMOTE_FILE_ID)]),
+      });
+      mockCoverRepository = createMockCoverRepository({
+        getByFileId: vi.fn().mockResolvedValue(undefined),
+      });
+      const service = createService();
+
+      await service.fullSync();
+
+      expect(localCoverCache.get(REMOTE_FILE_ID)).toBeDefined();
+    });
+
+    describe("when cover download fails", () => {
+      beforeEach(() => {
+        global.fetch = vi.fn().mockRejectedValue(new Error("Network error"));
+        mockGoalRepository = createMockGoalRepository({
+          getActive: vi.fn().mockResolvedValue([createActiveGoal(REMOTE_FILE_ID)]),
+        });
+        mockCoverRepository = createMockCoverRepository({
+          getByFileId: vi.fn().mockResolvedValue(undefined),
+        });
+      });
+
+      it("should not throw (best-effort)", async () => {
+        const service = createService();
+
+        await expect(service.fullSync()).resolves.not.toThrow();
+      });
+
+      it("should not save cover to repository", async () => {
+        const service = createService();
+
+        await service.fullSync();
+
+        expect(mockCoverRepository.save).not.toHaveBeenCalled();
+      });
+    });
+
+    it("should also download cover when CoverRecord exists without blob data", async () => {
+      const coverWithoutBlob = {
+        file_id: REMOTE_FILE_ID,
+        thumbnail_url: "https://example.com/thumb",
+        data_hash: "some-hash",
+        // no data field
+      };
+      mockGoalRepository = createMockGoalRepository({
+        getActive: vi.fn().mockResolvedValue([createActiveGoal(REMOTE_FILE_ID)]),
+      });
+      mockCoverRepository = createMockCoverRepository({
+        getByFileId: vi.fn().mockResolvedValue(coverWithoutBlob),
+      });
+      const service = createService();
+
+      await service.fullSync();
+
+      expect(global.fetch).toHaveBeenCalled();
+    });
   });
 });

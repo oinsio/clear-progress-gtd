@@ -126,7 +126,18 @@
     "syncNotConnected": "Not connected",
     "syncConfigure": "Configure",
     "syncConnect": "Connect",
-    "syncDisconnect": "Disconnect"
+    "syncDisconnect": "Disconnect",
+    "fullSync": "Full sync",
+    "fullSyncConfirmTitle": "Start full sync?",
+    "fullSyncConfirmDescription": "All data will be synced between your device and the server. Conflicts are resolved by last-modified time.",
+    "fullSyncStepPush": "Uploading data to server",
+    "fullSyncStepPull": "Downloading data from server",
+    "fullSyncStepCovers": "Syncing covers",
+    "fullSyncSuccess": "Sync complete",
+    "fullSyncError": "Sync failed",
+    "fullSyncCancel": "Cancel",
+    "fullSyncClose": "Close",
+    "fullSyncStart": "Sync"
   },
   "setup": {
     "title": "Backend connection",
@@ -212,7 +223,7 @@
     "purple": "Purple"
   },
   "lang": {
-    "ru": "Russian",
+    "ru": "Русский",
     "en": "English",
     "house": "Dr. House"
   },

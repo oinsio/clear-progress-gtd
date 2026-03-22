@@ -5,7 +5,7 @@ import type { GoalRepository } from "@/db/repositories/GoalRepository";
 import type { ApiClient } from "./ApiClient";
 import { localCoverCache } from "./LocalCoverCache";
 import { LOCAL_COVER_ID_PREFIX } from "@/constants";
-import { arrayBufferToBase64 } from "./CoverService";
+import { arrayBufferToBase64, buildCoverThumbnailUrl, computeSha256Hex } from "./CoverService";
 
 export class CoverSyncService {
   constructor(
@@ -45,6 +45,48 @@ export class CoverSyncService {
         break;
       }
     }
+  }
+
+  async fullSync(): Promise<void> {
+    await this.sync();
+    await this.ensureServerCoversAreCached();
+  }
+
+  private async ensureServerCoversAreCached(): Promise<void> {
+    const activeGoals = await this.goalRepository.getActive();
+    for (const goal of activeGoals) {
+      if (!goal.cover_file_id || goal.cover_file_id.startsWith(LOCAL_COVER_ID_PREFIX)) {
+        continue;
+      }
+      if (localCoverCache.get(goal.cover_file_id)) {
+        continue;
+      }
+      const existingCover = await this.coverRepository.getByFileId(goal.cover_file_id);
+      if (existingCover?.data) {
+        const url = URL.createObjectURL(existingCover.data);
+        localCoverCache.set(goal.cover_file_id, url);
+        continue;
+      }
+      try {
+        await this.downloadAndCacheCover(goal.cover_file_id);
+      } catch {
+        // best-effort: cover will display from thumbnail URL when online
+      }
+    }
+  }
+
+  private async downloadAndCacheCover(fileId: string): Promise<void> {
+    const thumbnailUrl = buildCoverThumbnailUrl(fileId);
+    const response = await fetch(thumbnailUrl);
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`);
+    }
+    const blob = await response.blob();
+    const buffer = await blob.arrayBuffer();
+    const dataHash = await computeSha256Hex(buffer);
+    await this.coverRepository.save({ file_id: fileId, thumbnail_url: thumbnailUrl, data_hash: dataHash, data: blob });
+    const url = URL.createObjectURL(blob);
+    localCoverCache.set(fileId, url);
   }
 
   private async uploadPendingCover(pendingCover: PendingCoverRecord): Promise<void> {

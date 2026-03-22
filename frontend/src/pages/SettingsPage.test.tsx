@@ -12,6 +12,8 @@ vi.mock("@/hooks/useLanguage");
 vi.mock("@/hooks/usePanelSide");
 vi.mock("@/hooks/usePanelOpen");
 vi.mock("@/components/tasks/RightFilterPanel");
+vi.mock("@/components/settings/ConfirmFullSyncDialog");
+vi.mock("@/app/providers/SyncProvider");
 vi.mock("@/i18n", () => ({ default: {} }));
 vi.mock("react-i18next", () => ({
   useTranslation: () => ({ t: (key: string) => key }),
@@ -24,12 +26,16 @@ import { useTheme } from "@/app/providers/ThemeProvider";
 import { useLanguage } from "@/hooks/useLanguage";
 import { usePanelOpen } from "@/hooks/usePanelOpen";
 import { usePanelSide } from "@/hooks/usePanelSide";
+import { useSync } from "@/app/providers/SyncProvider";
+import { ConfirmFullSyncDialog } from "@/components/settings/ConfirmFullSyncDialog";
 
 const mockUseSettings = vi.mocked(useSettings);
 const mockUseTheme = vi.mocked(useTheme);
 const mockUseLanguage = vi.mocked(useLanguage);
 const mockUsePanelOpen = vi.mocked(usePanelOpen);
 const mockUsePanelSide = vi.mocked(usePanelSide);
+const mockUseSync = vi.mocked(useSync);
+const mockConfirmFullSyncDialog = vi.mocked(ConfirmFullSyncDialog);
 
 function buildSettingsHook(overrides: Partial<UseSettingsReturn> = {}): UseSettingsReturn {
   return {
@@ -74,6 +80,16 @@ describe("SettingsPage", () => {
     mockUseLanguage.mockReturnValue(buildLanguageHook());
     mockUsePanelOpen.mockReturnValue({ isPanelOpen: false, togglePanelOpen: vi.fn() });
     mockUsePanelSide.mockReturnValue({ panelSide: "right", setPanelSide: vi.fn() });
+    mockUseSync.mockReturnValue({
+      syncStatus: "idle",
+      syncVersion: 0,
+      lastSyncedAt: null,
+      pull: vi.fn(),
+      push: vi.fn(),
+      schedulePush: vi.fn(),
+      triggerFullSync: vi.fn().mockResolvedValue(undefined),
+    });
+    mockConfirmFullSyncDialog.mockReturnValue(null);
   });
 
   afterEach(() => {
@@ -188,6 +204,47 @@ describe("SettingsPage", () => {
     it("should render configure button", () => {
       renderPage();
       expect(screen.getByTestId("settings-sync-connect")).toBeInTheDocument();
+    });
+
+    it("should not render full sync button when backend is not connected", () => {
+      renderPage();
+      expect(screen.queryByTestId("settings-full-sync-btn")).not.toBeInTheDocument();
+    });
+
+    it("should render full sync button when backend is connected", () => {
+      localStorageMock.setItem(STORAGE_KEYS.GAS_URL, "https://script.google.com/macros/s/abc/exec");
+      renderPage();
+      expect(screen.getByTestId("settings-full-sync-btn")).toBeInTheDocument();
+    });
+
+    it("should open ConfirmFullSyncDialog when full sync button is clicked", () => {
+      localStorageMock.setItem(STORAGE_KEYS.GAS_URL, "https://script.google.com/macros/s/abc/exec");
+      renderPage();
+      fireEvent.click(screen.getByTestId("settings-full-sync-btn"));
+      expect(mockConfirmFullSyncDialog).toHaveBeenCalledWith(
+        expect.objectContaining({ isOpen: true }),
+        expect.anything(),
+      );
+    });
+
+    it("should pass triggerFullSync as onSync to ConfirmFullSyncDialog", () => {
+      localStorageMock.setItem(STORAGE_KEYS.GAS_URL, "https://script.google.com/macros/s/abc/exec");
+      const triggerFullSync = vi.fn().mockResolvedValue(undefined);
+      mockUseSync.mockReturnValue({
+        syncStatus: "idle",
+        syncVersion: 0,
+        lastSyncedAt: null,
+        pull: vi.fn(),
+        push: vi.fn(),
+        schedulePush: vi.fn(),
+        triggerFullSync,
+      });
+      renderPage();
+      fireEvent.click(screen.getByTestId("settings-full-sync-btn"));
+      expect(mockConfirmFullSyncDialog).toHaveBeenCalledWith(
+        expect.objectContaining({ onSync: triggerFullSync }),
+        expect.anything(),
+      );
     });
   });
 });
