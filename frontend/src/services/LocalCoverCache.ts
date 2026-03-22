@@ -7,6 +7,11 @@ export const localCoverCache = {
   get(localId: string): string | undefined {
     return urlCache.get(localId);
   },
+  delete(id: string): void {
+    const url = urlCache.get(id);
+    if (url) URL.revokeObjectURL(url);
+    urlCache.delete(id);
+  },
   transfer(fromId: string, toId: string): void {
     const url = urlCache.get(fromId);
     if (url) {

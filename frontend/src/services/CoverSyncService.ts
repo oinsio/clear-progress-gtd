@@ -110,9 +110,13 @@ export class CoverSyncService {
       if (existingCover?.data) {
         const url = URL.createObjectURL(existingCover.data);
         localCoverCache.set(goal.cover_file_id, url);
+        continue;
       }
-      // Covers from other devices are cached by the Service Worker
-      // when the <img> element loads the thumbnail URL (no CORS restriction for img tags).
+      const fetchedCover = await this.fetchAndStoreCoverBlob(goal.cover_file_id);
+      if (fetchedCover?.data) {
+        const url = URL.createObjectURL(fetchedCover.data);
+        localCoverCache.set(goal.cover_file_id, url);
+      }
     }
   }
 

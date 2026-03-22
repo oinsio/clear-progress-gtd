@@ -711,6 +711,8 @@ describe("CoverSyncService", () => {
     });
 
     describe("when CoverRecord is missing from repository", () => {
+      let fetchMock: ReturnType<typeof vi.fn>;
+
       beforeEach(() => {
         mockGoalRepository = createMockGoalRepository({
           getActive: vi.fn().mockResolvedValue([createActiveGoal(REMOTE_FILE_ID)]),
@@ -718,9 +720,45 @@ describe("CoverSyncService", () => {
         mockCoverRepository = createMockCoverRepository({
           getByFileId: vi.fn().mockResolvedValue(undefined),
         });
+        fetchMock = vi.fn().mockRejectedValue(new Error("Network error"));
+        vi.stubGlobal("fetch", fetchMock);
       });
 
-      it("should not attempt to download cover (Service Worker handles caching)", async () => {
+      afterEach(() => {
+        vi.unstubAllGlobals();
+      });
+
+      it("should attempt to fetch cover blob from Google Drive", async () => {
+        const service = createService();
+
+        await service.fullSync();
+
+        expect(fetchMock).toHaveBeenCalled();
+      });
+
+      it("should save downloaded blob to coverRepository when fetch succeeds", async () => {
+        const downloadedBlob = new Blob(["img data"], { type: "image/jpeg" });
+        fetchMock.mockResolvedValue({ ok: true, blob: vi.fn().mockResolvedValue(downloadedBlob) });
+        const service = createService();
+
+        await service.fullSync();
+
+        expect(mockCoverRepository.save).toHaveBeenCalledWith(
+          expect.objectContaining({ file_id: REMOTE_FILE_ID, data: downloadedBlob }),
+        );
+      });
+
+      it("should add cover to localCoverCache after successful download", async () => {
+        const downloadedBlob = new Blob(["img data"], { type: "image/jpeg" });
+        fetchMock.mockResolvedValue({ ok: true, blob: vi.fn().mockResolvedValue(downloadedBlob) });
+        const service = createService();
+
+        await service.fullSync();
+
+        expect(localCoverCache.get(REMOTE_FILE_ID)).toBeDefined();
+      });
+
+      it("should not save to coverRepository when fetch fails", async () => {
         const service = createService();
 
         await service.fullSync();
@@ -728,7 +766,7 @@ describe("CoverSyncService", () => {
         expect(mockCoverRepository.save).not.toHaveBeenCalled();
       });
 
-      it("should not add cover to localCoverCache when no local blob exists", async () => {
+      it("should not add cover to localCoverCache when fetch fails", async () => {
         const service = createService();
 
         await service.fullSync();
@@ -737,12 +775,11 @@ describe("CoverSyncService", () => {
       });
     });
 
-    it("should not attempt download when CoverRecord exists without blob data", async () => {
+    it("should attempt to download when CoverRecord exists without blob data", async () => {
       const coverWithoutBlob = {
         file_id: REMOTE_FILE_ID,
         thumbnail_url: "https://example.com/thumb",
         data_hash: "some-hash",
-        // no data field
       };
       mockGoalRepository = createMockGoalRepository({
         getActive: vi.fn().mockResolvedValue([createActiveGoal(REMOTE_FILE_ID)]),
@@ -750,11 +787,18 @@ describe("CoverSyncService", () => {
       mockCoverRepository = createMockCoverRepository({
         getByFileId: vi.fn().mockResolvedValue(coverWithoutBlob),
       });
+      const downloadedBlob = new Blob(["img"], { type: "image/jpeg" });
+      const fetchMock = vi.fn().mockResolvedValue({
+        ok: true,
+        blob: vi.fn().mockResolvedValue(downloadedBlob),
+      });
+      vi.stubGlobal("fetch", fetchMock);
       const service = createService();
 
       await service.fullSync();
 
-      expect(mockCoverRepository.save).not.toHaveBeenCalled();
+      expect(mockCoverRepository.save).toHaveBeenCalled();
+      vi.unstubAllGlobals();
     });
   });
 });

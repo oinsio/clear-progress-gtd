@@ -131,6 +131,7 @@ export class CoverService {
     const response = await this.apiClient.deleteCover({ file_id: fileId });
     if (response.deleted) {
       await this.coverRepository.delete(fileId);
+      localCoverCache.delete(fileId);
     }
   }
 

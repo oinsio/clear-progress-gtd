@@ -307,6 +307,27 @@ describe("CoverService", () => {
 
       expect(mockCoverRepository.delete).not.toHaveBeenCalled();
     });
+
+    it("should remove cover URL from localCoverCache when backend confirms deletion", async () => {
+      localCoverCache.set("file-abc", "blob:http://localhost/abc");
+      const service = new CoverService(mockApiClient, mockCoverRepository, mockPendingCoverRepository);
+
+      await service.deleteCover("file-abc");
+
+      expect(localCoverCache.get("file-abc")).toBeUndefined();
+    });
+
+    it("should not remove cover from localCoverCache when backend says not deleted", async () => {
+      localCoverCache.set("file-abc", "blob:http://localhost/abc");
+      mockApiClient = createMockApiClient({
+        deleteCover: vi.fn().mockResolvedValue({ deleted: false, ref_count: 2 }),
+      });
+      const service = new CoverService(mockApiClient, mockCoverRepository, mockPendingCoverRepository);
+
+      await service.deleteCover("file-abc");
+
+      expect(localCoverCache.get("file-abc")).toBeDefined();
+    });
   });
 
   describe("getCoverUrl", () => {
