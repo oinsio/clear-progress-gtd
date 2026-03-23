@@ -7,6 +7,7 @@ import type {
   InitResponse,
   UploadCoverResponse,
   DeleteCoverResponse,
+  GetCoversResponse,
 } from "@/types/api";
 import { STORAGE_KEYS } from "@/constants";
 
@@ -82,6 +83,13 @@ export class ApiClient {
     });
     const { file_id, thumbnail_url, reused } = response;
     return { file_id, thumbnail_url, reused };
+  }
+
+  async getCovers(fileIds: string[]): Promise<GetCoversResponse> {
+    return this.request<GetCoversResponse>({
+      action: "get_cover",
+      file_ids: fileIds,
+    });
   }
 
   async deleteCover(payload: { file_id: string }): Promise<Pick<DeleteCoverResponse, "deleted" | "ref_count">> {

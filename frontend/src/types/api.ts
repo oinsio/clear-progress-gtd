@@ -78,32 +78,28 @@ export interface PingResponse {
   initialized: boolean;
 }
 
-export interface InitRequest {
-  action: "init";
-}
-
 export interface InitResponse {
   ok: boolean;
-}
-
-export interface UploadCoverRequest {
-  action: "upload_cover";
-  goal_id: string;
-  filename: string;
-  mime_type: string;
-  data: string;
 }
 
 export interface UploadCoverResponse {
   ok: boolean;
   file_id: string;
+  /** @deprecated thumbnail_url is no longer used for display — covers are served via get_cover API */
   thumbnail_url: string;
   reused: boolean;
 }
 
-export interface DeleteCoverRequest {
-  action: "delete_cover";
+export interface GetCoverResult {
   file_id: string;
+  mime_type?: string;
+  data?: string;
+  error?: string;
+}
+
+export interface GetCoversResponse {
+  ok: boolean;
+  covers: GetCoverResult[];
 }
 
 export interface DeleteCoverResponse {

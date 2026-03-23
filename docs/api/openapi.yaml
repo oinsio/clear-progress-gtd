@@ -34,7 +34,7 @@ tags:
   - name: Sync
     description: Data synchronization (pull/push)
   - name: Covers
-    description: Upload and delete goal cover images
+    description: Upload, delete, and retrieve goal cover images
   - name: Maintenance
     description: Maintenance operations (purge)
 
@@ -603,6 +603,81 @@ paths:
                     error: FILE_NOT_FOUND
                     message: "File not found: 1NONEXISTENT"
 
+  /exec#get_cover:
+    post:
+      operationId: getCover
+      tags: [Covers]
+      summary: Fetch cover image(s) by file ID
+      description: |
+        Downloads one or more cover images from Backend and returns them as
+        base64-encoded bytes. Supports batch retrieval (up to 10 files per request).
+
+        **Partial success:** if some file IDs are invalid or not found, the response
+        still returns `ok: true` — each item in `covers` contains either `data` or
+        `error`. The client should check each item individually.
+
+        The client is expected to decode the base64 `data`, store the resulting blob
+        in IndexedDB (`CoverRepository`), and keep an object URL in the in-memory
+        `LocalCoverCache`. Covers are served exclusively from this cache.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetCoverRequest'
+            examples:
+              single:
+                summary: Fetch one cover
+                value:
+                  action: get_cover
+                  file_ids: ["1XyZ_aBcDeFgHiJkLmNoPqRsTuVwXyZ"]
+              batch:
+                summary: Fetch multiple covers
+                value:
+                  action: get_cover
+                  file_ids:
+                    - "1XyZ_aBcDeFgHiJkLmNoPqRsTuVwXyZ"
+                    - "1MnOpQrStUvWxYzAbCdEfGhIjKlMnOp"
+                    - "1AbCdEfGhIjKlMnOpQrStUvWxYzAbCd"
+      responses:
+        '200':
+          description: Fetch result (partial success is possible)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetCoversResponse'
+              examples:
+                success:
+                  summary: All covers returned successfully
+                  value:
+                    ok: true
+                    covers:
+                      - file_id: 1XyZ_aBcDeFgHiJkLmNoPqRsTuVwXyZ
+                        mime_type: image/jpeg
+                        data: /9j/4AAQSkZJRgABAQEASABIAAD...
+                partial:
+                  summary: Partial success — one file not found
+                  value:
+                    ok: true
+                    covers:
+                      - file_id: 1XyZ_aBcDeFgHiJkLmNoPqRsTuVwXyZ
+                        mime_type: image/jpeg
+                        data: /9j/4AAQSkZJRgABAQEASABIAAD...
+                      - file_id: 1NONEXISTENT_ID
+                        error: FILE_NOT_FOUND
+                empty_ids:
+                  summary: Error — file_ids is empty or missing
+                  value:
+                    ok: false
+                    error: INVALID_PAYLOAD
+                    message: file_ids must be a non-empty array
+                too_many:
+                  summary: Error — too many file IDs in one request
+                  value:
+                    ok: false
+                    error: INVALID_PAYLOAD
+                    message: file_ids must contain at most 10 items
+
   /exec#purge:
     post:
       operationId: purge
@@ -1170,6 +1245,22 @@ components:
           description: File ID on Google Drive
           example: 1MnOpQrStUvWxYzAbCdEfGhIjKlMnOp
 
+    GetCoverRequest:
+      type: object
+      required: [action, file_ids]
+      properties:
+        action:
+          type: string
+          enum: [get_cover]
+        file_ids:
+          type: array
+          items:
+            type: string
+          minItems: 1
+          maxItems: 10
+          description: List of Google Drive file IDs to fetch (max 10 per request)
+          example: ["1XyZ_aBcDeFgHiJkLmNoPqRsTuVwXyZ", "1MnOpQrStUvWxYzAbCdEfGhIjKlMnOp"]
+
     PurgeRequest:
       type: object
       required: [action, confirm]
@@ -1270,7 +1361,11 @@ components:
         thumbnail_url:
           type: string
           format: uri
-          description: Thumbnail URL for display in the app (400px wide)
+          deprecated: true
+          description: |
+            **Deprecated.** Google Drive thumbnail URL (400px wide).
+            No longer used by the client — covers are now fetched via `get_cover`
+            and served exclusively from IndexedDB blob cache.
           example: https://drive.google.com/thumbnail?id=1XyZ_aBcDeFgHiJkLmNoPqRsTuVwXyZ&sz=w400
         reused:
           type: boolean
@@ -1292,6 +1387,44 @@ components:
           type: integer
           description: Number of goals referencing the file (including soft-deleted goals)
           example: 0
+
+    GetCoverResult:
+      type: object
+      required: [file_id]
+      properties:
+        file_id:
+          type: string
+          description: Google Drive file ID
+          example: 1XyZ_aBcDeFgHiJkLmNoPqRsTuVwXyZ
+        mime_type:
+          type: string
+          description: MIME type of the image (present on success)
+          example: image/jpeg
+        data:
+          type: string
+          format: byte
+          description: Image data in base64 without the `data:...` prefix (present on success)
+          example: /9j/4AAQSkZJRgABAQEASABIAAD...
+        error:
+          type: string
+          description: Error code if the file could not be retrieved
+          enum: [FILE_NOT_FOUND]
+          example: FILE_NOT_FOUND
+
+    GetCoversResponse:
+      type: object
+      required: [ok, covers]
+      properties:
+        ok:
+          type: boolean
+          example: true
+        covers:
+          type: array
+          items:
+            $ref: '#/components/schemas/GetCoverResult'
+          description: |
+            One entry per requested file_id. Each entry contains either image data
+            (success) or an `error` field (failure). Partial success is possible.
 
     PurgeResponse:
       type: object

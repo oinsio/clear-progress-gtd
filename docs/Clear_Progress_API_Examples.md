@@ -1291,7 +1291,162 @@ Content-Type: application/json
 
 ---
 
-## 7. POST purge (v2.0)
+## 7. POST get_cover
+
+### 7.1. Получение одной обложки
+
+**Request**
+
+```json
+{
+  "action": "get_cover",
+  "file_ids": ["1XyZ_aBcDeFgHiJkLmNoPqRsTuVwXyZ"]
+}
+```
+
+**Response**
+
+```json
+{
+  "ok": true,
+  "covers": [
+    {
+      "file_id": "1XyZ_aBcDeFgHiJkLmNoPqRsTuVwXyZ",
+      "mime_type": "image/jpeg",
+      "data": "/9j/4AAQSkZJRgABAQEASABIAAD..."
+    }
+  ]
+}
+```
+
+---
+
+### 7.2. Batch-запрос нескольких обложек
+
+**Request**
+
+```json
+{
+  "action": "get_cover",
+  "file_ids": [
+    "1XyZ_aBcDeFgHiJkLmNoPqRsTuVwXyZ",
+    "1MnOpQrStUvWxYzAbCdEfGhIjKlMnOp",
+    "1AbCdEfGhIjKlMnOpQrStUvWxYzAbCd"
+  ]
+}
+```
+
+**Response**
+
+```json
+{
+  "ok": true,
+  "covers": [
+    {
+      "file_id": "1XyZ_aBcDeFgHiJkLmNoPqRsTuVwXyZ",
+      "mime_type": "image/jpeg",
+      "data": "/9j/4AAQSkZJRgABAQEASABIAAD..."
+    },
+    {
+      "file_id": "1MnOpQrStUvWxYzAbCdEfGhIjKlMnOp",
+      "mime_type": "image/png",
+      "data": "iVBORw0KGgoAAAANSUhEUgAA..."
+    },
+    {
+      "file_id": "1AbCdEfGhIjKlMnOpQrStUvWxYzAbCd",
+      "mime_type": "image/webp",
+      "data": "UklGRlYAAABXRUJQVlA4..."
+    }
+  ]
+}
+```
+
+---
+
+### 7.3. Частичный успех — один файл не найден
+
+**Request**
+
+```json
+{
+  "action": "get_cover",
+  "file_ids": [
+    "1XyZ_aBcDeFgHiJkLmNoPqRsTuVwXyZ",
+    "1NONEXISTENT_OR_DELETED_FILE_ID"
+  ]
+}
+```
+
+**Response**
+
+Поле `ok` остаётся `true`. Клиент должен проверить каждый элемент массива `covers` отдельно.
+
+```json
+{
+  "ok": true,
+  "covers": [
+    {
+      "file_id": "1XyZ_aBcDeFgHiJkLmNoPqRsTuVwXyZ",
+      "mime_type": "image/jpeg",
+      "data": "/9j/4AAQSkZJRgABAQEASABIAAD..."
+    },
+    {
+      "file_id": "1NONEXISTENT_OR_DELETED_FILE_ID",
+      "error": "FILE_NOT_FOUND"
+    }
+  ]
+}
+```
+
+---
+
+### 7.4. Ошибка — пустой массив file_ids
+
+**Request**
+
+```json
+{
+  "action": "get_cover",
+  "file_ids": []
+}
+```
+
+**Response**
+
+```json
+{
+  "ok": false,
+  "error": "INVALID_PAYLOAD",
+  "message": "file_ids must be a non-empty array"
+}
+```
+
+---
+
+### 7.5. Ошибка — слишком много файлов
+
+**Request**
+
+```json
+{
+  "action": "get_cover",
+  "file_ids": ["id1", "id2", "id3", "id4", "id5", "id6", "id7", "id8", "id9", "id10", "id11"]
+}
+```
+
+**Response**
+
+```json
+{
+  "ok": false,
+  "error": "INVALID_PAYLOAD",
+  "message": "file_ids must contain at most 10 items"
+}
+```
+
+---
+
+## 8. POST purge (v2.0)
 
 ### 7.1. Успешный purge
 
@@ -1377,7 +1532,7 @@ Content-Type: application/json
 
 ---
 
-## 8. Ошибки
+## 9. Ошибки
 
 ### 8.1. Неизвестный action
 
@@ -1542,7 +1697,7 @@ Push без обязательного поля `changes`.
 
 ---
 
-## 9. Полные сценарии (E2E)
+## 10. Полные сценарии (E2E)
 
 ### 9.1. Сценарий: Первый запуск приложения
 
@@ -1625,7 +1780,7 @@ Push без обязательного поля `changes`.
 
 ---
 
-## 10. Справочник значений полей
+## 11. Справочник значений полей
 
 ### 10.1. Допустимые значения enum-полей
 

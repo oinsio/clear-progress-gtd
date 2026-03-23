@@ -3,10 +3,10 @@ import { X, CircleMinus, Pause, Square, Play, Check } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useGoal } from "@/hooks/useGoal";
+import { useCoverUrl } from "@/hooks/useCoverUrl";
 import { cn } from "@/shared/lib/cn";
 import type { GoalStatus } from "@/types/common";
 import { GoalCoverPicker } from "@/components/goals/GoalCoverPicker";
-import { getCoverDisplayUrl } from "@/services/CoverService";
 import type { CoverService } from "@/services/CoverService";
 import { defaultCoverService } from "@/services/defaultServices";
 
@@ -36,6 +36,7 @@ export default function GoalPage({
 }: GoalPageProps) {
   const { t } = useTranslation();
   const { goal, isLoading, updateGoal, updateGoalStatus, deleteGoal } = useGoal(goalId);
+  const { url: existingCoverUrl } = useCoverUrl(goal?.cover_file_id ?? "");
 
   const [title, setTitle] = useState<string | undefined>(undefined);
   const [description, setDescription] = useState<string | undefined>(undefined);
@@ -62,10 +63,10 @@ export default function GoalPage({
       const url = URL.createObjectURL(pendingCoverFile);
       objectUrlRef.current = url;
       setCoverPreviewSrc(url);
-    } else if (isCoverRemoved || !goal?.cover_file_id) {
+    } else if (isCoverRemoved) {
       setCoverPreviewSrc(null);
     } else {
-      setCoverPreviewSrc(getCoverDisplayUrl(goal.cover_file_id));
+      setCoverPreviewSrc(existingCoverUrl);
     }
     return () => {
       if (objectUrlRef.current) {
@@ -73,7 +74,7 @@ export default function GoalPage({
         objectUrlRef.current = null;
       }
     };
-  }, [pendingCoverFile, isCoverRemoved, goal?.cover_file_id]);
+  }, [pendingCoverFile, isCoverRemoved, existingCoverUrl]);
 
   const handleCoverSelect = useCallback((file: File) => {
     setPendingCoverFile(file);

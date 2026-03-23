@@ -4,8 +4,8 @@ import type { CoverRepository } from "@/db/repositories/CoverRepository";
 import type { GoalRepository } from "@/db/repositories/GoalRepository";
 import type { ApiClient } from "./ApiClient";
 import { localCoverCache } from "./LocalCoverCache";
-import { LOCAL_COVER_ID_PREFIX, FALLBACK_COVER_MIME_TYPE } from "@/constants";
-import { arrayBufferToBase64, buildCoverFilename, buildCoverThumbnailUrl, computeSha256Hex } from "./CoverService";
+import { LOCAL_COVER_ID_PREFIX, FALLBACK_COVER_MIME_TYPE, MAX_COVER_BATCH_SIZE } from "@/constants";
+import { arrayBufferToBase64, buildCoverFilename, computeSha256Hex } from "./CoverService";
 
 export class CoverSyncService {
   constructor(
@@ -60,9 +60,8 @@ export class CoverSyncService {
       }
       let existingCover = await this.coverRepository.getByFileId(goal.cover_file_id);
       if (!existingCover?.data) {
-        const fetchedCover = await this.fetchAndStoreCoverBlob(goal.cover_file_id);
-        if (!fetchedCover) continue;
-        existingCover = fetchedCover;
+        await this.cacheFromServer(goal.cover_file_id);
+        existingCover = await this.coverRepository.getByFileId(goal.cover_file_id);
       }
       if (!existingCover?.data) continue;
       try {
@@ -84,7 +83,7 @@ export class CoverSyncService {
           });
           await this.coverRepository.save({
             file_id: response.file_id,
-            thumbnail_url: response.thumbnail_url,
+            thumbnail_url: "",
             data_hash: existingCover.data_hash,
             data: existingCover.data,
           });
@@ -97,40 +96,105 @@ export class CoverSyncService {
     }
   }
 
+  private readonly inFlightCaches = new Map<string, Promise<void>>();
+
+  async ensureCoverCached(fileId: string): Promise<void> {
+    if (localCoverCache.get(fileId)) return;
+
+    const inflightRequest = this.inFlightCaches.get(fileId);
+    if (inflightRequest) return inflightRequest;
+
+    const cachePromise = this.fetchAndPopulateCache(fileId).finally(() => {
+      this.inFlightCaches.delete(fileId);
+    });
+    this.inFlightCaches.set(fileId, cachePromise);
+    return cachePromise;
+  }
+
+  private async fetchAndPopulateCache(fileId: string): Promise<void> {
+    const existingCover = await this.coverRepository.getByFileId(fileId);
+    if (existingCover?.data) {
+      const url = URL.createObjectURL(existingCover.data);
+      localCoverCache.set(fileId, url);
+      return;
+    }
+    await this.cacheFromServer(fileId);
+  }
+
   async ensureServerCoversAreCached(): Promise<void> {
     const activeGoals = await this.goalRepository.getActive();
-    for (const goal of activeGoals) {
-      if (!goal.cover_file_id || goal.cover_file_id.startsWith(LOCAL_COVER_ID_PREFIX)) {
-        continue;
-      }
-      if (localCoverCache.get(goal.cover_file_id)) {
-        continue;
-      }
-      const existingCover = await this.coverRepository.getByFileId(goal.cover_file_id);
+    const uncachedFileIds = activeGoals
+      .map(goal => goal.cover_file_id)
+      .filter(fileId => fileId && !fileId.startsWith(LOCAL_COVER_ID_PREFIX) && !localCoverCache.get(fileId));
+
+    const missingFromDb: string[] = [];
+    for (const fileId of uncachedFileIds) {
+      const existingCover = await this.coverRepository.getByFileId(fileId);
       if (existingCover?.data) {
         const url = URL.createObjectURL(existingCover.data);
-        localCoverCache.set(goal.cover_file_id, url);
-        continue;
+        localCoverCache.set(fileId, url);
+      } else {
+        missingFromDb.push(fileId);
       }
-      const fetchedCover = await this.fetchAndStoreCoverBlob(goal.cover_file_id);
-      if (fetchedCover?.data) {
-        const url = URL.createObjectURL(fetchedCover.data);
-        localCoverCache.set(goal.cover_file_id, url);
+    }
+
+    if (missingFromDb.length > 0) {
+      await this.batchCacheFromServer(missingFromDb);
+    }
+  }
+
+  async cacheFromServer(fileId: string): Promise<void> {
+    const fetchedCover = await this.fetchFromServerAndStore(fileId);
+    if (fetchedCover?.data) {
+      const url = URL.createObjectURL(fetchedCover.data);
+      localCoverCache.set(fileId, url);
+    }
+  }
+
+  async batchCacheFromServer(fileIds: string[]): Promise<void> {
+    for (let offset = 0; offset < fileIds.length; offset += MAX_COVER_BATCH_SIZE) {
+      const chunk = fileIds.slice(offset, offset + MAX_COVER_BATCH_SIZE);
+      try {
+        const response = await this.apiClient.getCovers(chunk);
+        for (const coverResult of response.covers) {
+          if (coverResult.error || !coverResult.data) continue;
+          try {
+            const mimeType = coverResult.mime_type ?? FALLBACK_COVER_MIME_TYPE;
+            const blob = base64ToBlob(coverResult.data, mimeType);
+            const buffer = await blob.arrayBuffer();
+            const dataHash = await computeSha256Hex(buffer);
+            const coverRecord: CoverRecord = {
+              file_id: coverResult.file_id,
+              thumbnail_url: "",
+              data_hash: dataHash,
+              data: blob,
+            };
+            await this.coverRepository.save(coverRecord);
+            const url = URL.createObjectURL(blob);
+            localCoverCache.set(coverResult.file_id, url);
+          } catch {
+            // best-effort: skip this cover
+          }
+        }
+      } catch {
+        // best-effort: skip this chunk
       }
     }
   }
 
-  private async fetchAndStoreCoverBlob(fileId: string): Promise<CoverRecord | null> {
+  private async fetchFromServerAndStore(fileId: string): Promise<CoverRecord | null> {
     try {
-      const thumbnailUrl = buildCoverThumbnailUrl(fileId);
-      const response = await fetch(thumbnailUrl, { credentials: "include" });
-      if (!response.ok) return null;
-      const blob = await response.blob();
+      const response = await this.apiClient.getCovers([fileId]);
+      const coverResult = response.covers[0];
+      if (!coverResult || coverResult.error || !coverResult.data) return null;
+
+      const mimeType = coverResult.mime_type ?? FALLBACK_COVER_MIME_TYPE;
+      const blob = base64ToBlob(coverResult.data, mimeType);
       const buffer = await blob.arrayBuffer();
       const dataHash = await computeSha256Hex(buffer);
       const coverRecord: CoverRecord = {
         file_id: fileId,
-        thumbnail_url: thumbnailUrl,
+        thumbnail_url: "",
         data_hash: dataHash,
         data: blob,
       };
@@ -174,4 +238,13 @@ export class CoverSyncService {
     await this.pendingCoverRepository.delete(pendingCover.local_id);
     localCoverCache.transfer(pendingCover.local_id, response.file_id);
   }
+}
+
+function base64ToBlob(base64: string, mimeType: string): Blob {
+  const binaryString = atob(base64);
+  const bytes = new Uint8Array(binaryString.length);
+  for (let i = 0; i < binaryString.length; i++) {
+    bytes[i] = binaryString.charCodeAt(i);
+  }
+  return new Blob([bytes], { type: mimeType });
 }

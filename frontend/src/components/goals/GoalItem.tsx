@@ -1,13 +1,13 @@
-import type React from "react";
 import { useTranslation } from "react-i18next";
 import { GoalStatusBadge } from "./GoalStatusBadge";
 import type { Goal } from "@/types/entities";
 import type { GoalStatus } from "@/types/common";
 import { formatShortDateTime } from "@/shared/lib/utils";
-import { getCoverDisplayUrl } from "@/services/CoverService";
+import { useCoverUrl } from "@/hooks/useCoverUrl";
 import defaultCoverSvg from "@/assets/default-goal-cover.svg";
 import { useIsUnsynced } from "@/hooks/useIsUnsynced";
 import { cn } from "@/shared/lib/cn";
+import React from "react";
 const FINISHED_GOAL_STATUSES = new Set<GoalStatus>(["completed", "cancelled"]);
 
 interface GoalItemProps {
@@ -23,6 +23,7 @@ export function GoalItem({ goal, taskCount, onNavigate, nodeRef, style, dragHand
   const { t } = useTranslation();
   const isFinished = FINISHED_GOAL_STATUSES.has(goal.status);
   const isUnsynced = useIsUnsynced(goal);
+  const { url: coverUrl } = useCoverUrl(goal.cover_file_id);
   return (
     <li
       ref={nodeRef}
@@ -43,10 +44,10 @@ export function GoalItem({ goal, taskCount, onNavigate, nodeRef, style, dragHand
         {/* Cover */}
         <div className="flex-shrink-0 w-12 h-12 rounded-full overflow-hidden bg-gray-100 flex items-center justify-center">
           <img
-            data-testid={getCoverDisplayUrl(goal.cover_file_id) ? "goal-cover-img" : "goal-cover-placeholder"}
-            src={getCoverDisplayUrl(goal.cover_file_id) ?? defaultCoverSvg}
-            alt={getCoverDisplayUrl(goal.cover_file_id) ? goal.title : ""}
-            aria-hidden={!getCoverDisplayUrl(goal.cover_file_id)}
+            data-testid={coverUrl ? "goal-cover-img" : "goal-cover-placeholder"}
+            src={coverUrl ?? defaultCoverSvg}
+            alt={coverUrl ? goal.title : ""}
+            aria-hidden={!coverUrl}
             className="w-full h-full object-cover"
           />
         </div>

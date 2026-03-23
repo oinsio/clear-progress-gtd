@@ -73,6 +73,7 @@ export const API_ACTIONS = {
   PUSH: "push",
   UPLOAD_COVER: "upload_cover",
   DELETE_COVER: "delete_cover",
+  GET_COVER: "get_cover",
   PURGE: "purge",
 } as const;
 
@@ -108,6 +109,7 @@ export const SETTING_KEYS = {
 } as const;
 
 export const MAX_COVER_SIZE_BYTES = 2 * 1024 * 1024;
+export const MAX_COVER_BATCH_SIZE = 10;
 export const COVER_HASH_PREFIX_LENGTH = 12;
 export const DEFAULT_COVER_EXTENSION = "jpg";
 export const FALLBACK_COVER_MIME_TYPE = "image/jpeg";

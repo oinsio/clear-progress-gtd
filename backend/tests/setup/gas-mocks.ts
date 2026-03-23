@@ -49,10 +49,27 @@ vi.stubGlobal('Drive', {
   },
 });
 
+// --- DriveApp mock ---
+
+const mockBlob = {
+  getBytes: vi.fn().mockReturnValue([]),
+  getContentType: vi.fn().mockReturnValue('image/jpeg'),
+  getDataAsString: vi.fn().mockReturnValue(''),
+};
+
+const mockDriveFile = {
+  getBlob: vi.fn().mockReturnValue(mockBlob),
+};
+
+vi.stubGlobal('DriveApp', {
+  getFileById: vi.fn().mockReturnValue(mockDriveFile),
+});
+
 // --- Utilities mock ---
 
 vi.stubGlobal('Utilities', {
   base64Decode: vi.fn().mockReturnValue([]),
+  base64Encode: vi.fn().mockReturnValue('bW9ja2Jhc2U2NA=='),
   computeDigest: vi.fn().mockReturnValue(Array(32).fill(0)),
   DigestAlgorithm: { SHA_256: 'SHA_256' },
   newBlob: vi.fn().mockReturnValue({}),

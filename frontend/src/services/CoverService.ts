@@ -42,7 +42,7 @@ export function getCoverDisplayUrl(fileId: string): string | null {
     const localId = fileId.slice(LOCAL_COVER_ID_PREFIX.length);
     return localCoverCache.get(localId) ?? null;
   }
-  return localCoverCache.get(fileId) ?? buildCoverThumbnailUrl(fileId);
+  return localCoverCache.get(fileId) ?? null;
 }
 
 export class CoverService {

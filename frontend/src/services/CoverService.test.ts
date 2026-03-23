@@ -366,9 +366,9 @@ describe("CoverService", () => {
       expect(result).toBeNull();
     });
 
-    it("should return thumbnail URL for regular remote fileId", () => {
+    it("should return null for regular remote fileId not in cache", () => {
       const result = getCoverDisplayUrl("remote-file-id");
-      expect(result).toBe(buildCoverThumbnailUrl("remote-file-id"));
+      expect(result).toBeNull();
     });
 
     it("should return cached object URL for remote fileId if present in cache", () => {

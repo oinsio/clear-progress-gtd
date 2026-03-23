@@ -49,6 +49,7 @@ export const ACTIONS = {
   PUSH: 'push',
   UPLOAD_COVER: 'upload_cover',
   DELETE_COVER: 'delete_cover',
+  GET_COVER: 'get_cover',
   PURGE: 'purge',
 } as const;
 
@@ -84,6 +85,7 @@ export const DRIVE_QUERY_FIELDS = {
 
 export const COVER_HASH_PREFIX_LENGTH = 12;
 export const MAX_COVER_SIZE_BYTES = 2 * 1024 * 1024; // 2 MB
+export const MAX_COVER_BATCH_SIZE = 10;
 export const DEFAULT_COVER_EXTENSION = 'jpg';
 
 export const DEFAULT_TASK_BOX = 'inbox';
@@ -118,6 +120,8 @@ export const ERROR_MESSAGES = {
   SHEET_NOT_FOUND: 'Sheet not found',
   INIT_REQUIRED: 'Call init before using the API',
   PURGE_CONFIRM_REQUIRED: 'confirm must be true to purge deleted records',
+  FILE_IDS_REQUIRED: 'file_ids must be a non-empty array',
+  FILE_IDS_TOO_MANY: `file_ids must contain at most ${MAX_COVER_BATCH_SIZE} items`,
   DATA_REQUIRED: 'data field is required',
   COVER_INVALID_MIME: 'mime_type must be an image type (image/*)',
   BLANK_TITLE: 'title or name must not be blank',
