@@ -1,12 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { uploadCover } from './upload-cover';
 import { ERROR_CODES } from '../helpers/response';
-import {
-  MAX_COVER_SIZE_BYTES,
-  COVER_HASH_PREFIX_LENGTH,
-  PROPERTY_KEYS,
-} from '../helpers/constants';
+import { MAX_COVER_SIZE_BYTES, COVER_HASH_PREFIX_LENGTH, PROPERTY_KEYS } from '../helpers/constants';
 import { resetScriptProperties, setScriptProperty } from '../../tests/setup/gas-mocks';
+import { setupCoverMocks, DEFAULT_COVERS_FOLDER_ID } from '../../tests/helpers/cover-mocks';
 
 function parseResponse(): Record<string, unknown> {
   const calls = (ContentService.createTextOutput as ReturnType<typeof vi.fn>).mock.calls;
@@ -17,25 +14,17 @@ function parseResponse(): Record<string, unknown> {
 // When computeDigest returns Array(32).fill(0), each byte maps to '00'
 const MOCK_HASH = '00'.repeat(32);
 const MOCK_HASH_PREFIX = '0'.repeat(COVER_HASH_PREFIX_LENGTH);
-const COVERS_FOLDER_ID = 'covers-folder-id';
 
 const validPayload = {
   goal_id: 'goal-1',
   filename: 'cover.jpg',
   mime_type: 'image/jpeg',
-  data: 'base64encodeddata',
+  data: 'base64_encoded_data',
 };
 
 describe('uploadCover', () => {
   beforeEach(() => {
-    vi.clearAllMocks();
-    resetScriptProperties();
-    setScriptProperty(PROPERTY_KEYS.COVERS_FOLDER_ID, COVERS_FOLDER_ID);
-    vi.mocked(Utilities.base64Decode).mockReturnValue([]);
-    vi.mocked(Utilities.computeDigest).mockReturnValue(Array(32).fill(0));
-    vi.mocked(Utilities.newBlob).mockReturnValue({} as never);
-    vi.mocked(Drive.Files.list).mockReturnValue({ files: [] });
-    vi.mocked(Drive.Files.create).mockReturnValue({ id: 'new-file-id' });
+    setupCoverMocks();
   });
 
   describe('mime_type validation', () => {
@@ -231,7 +220,7 @@ describe('uploadCover', () => {
       uploadCover(validPayload);
 
       expect(Drive.Files.create).toHaveBeenCalledWith(
-        expect.objectContaining({ parents: [COVERS_FOLDER_ID] }),
+        expect.objectContaining({ parents: [DEFAULT_COVERS_FOLDER_ID] }),
         expect.anything(),
       );
     });

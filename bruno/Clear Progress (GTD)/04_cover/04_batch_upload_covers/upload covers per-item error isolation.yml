@@ -1,0 +1,64 @@
+info:
+  name: upload covers per-item error isolation
+  type: http
+  seq: 2
+
+http:
+  method: post
+  url: https://script.google.com/macros/s/{{deploymentId}}/exec#upload_covers
+  headers:
+    - name: accept
+      value: application/json
+    - name: Content-Type
+      value: application/json
+  body:
+    type: json
+    data: |-
+      {
+        "action": "upload_covers",
+        "covers": [
+          {
+            "local_id": "{{$randomUUID}}",
+            "goal_id": "{{$randomUUID}}",
+            "filename": "document.pdf",
+            "mime_type": "application/pdf",
+            "data": "{{batchEdgeCaseData}}"
+          },
+          {
+            "local_id": "{{$randomUUID}}",
+            "goal_id": "{{$randomUUID}}",
+            "filename": "valid-cover.jpg",
+            "mime_type": "image/jpeg",
+            "data": "{{batchEdgeCaseData}}"
+          }
+        ]
+      }
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: before-request
+      code: |-
+        const base64Data = bru.getCollectionVar("cover_for_edge_cases");
+        bru.setVar("batchEdgeCaseData", base64Data);
+  assertions:
+    - expression: res.status
+      operator: eq
+      value: "200"
+    - expression: res.body.ok
+      operator: isTruthy
+    - expression: res.body.results[0].error
+      operator: isDefined
+    - expression: res.body.results[1].file_id
+      operator: isDefined
+
+settings:
+  encodeUrl: false
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |
+  upload_covers called with 2 covers: first has invalid mime_type (application/pdf), second is valid.
+  Expected: ok: true (top-level success), results[0] has per-item error, results[1] has file_id.
+  Verifies that a per-item error does not fail the entire batch.

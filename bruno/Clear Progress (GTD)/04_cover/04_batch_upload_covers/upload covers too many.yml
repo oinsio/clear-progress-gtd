@@ -1,0 +1,55 @@
+info:
+  name: upload covers too many
+  type: http
+  seq: 4
+
+http:
+  method: post
+  url: https://script.google.com/macros/s/{{deploymentId}}/exec#upload_covers
+  headers:
+    - name: accept
+      value: application/json
+    - name: Content-Type
+      value: application/json
+  body:
+    type: json
+    data: |-
+      {
+        "action": "upload_covers",
+        "covers": {{tooManyCovers}}
+      }
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: before-request
+      code: |-
+        // Build an array of 11 items (> MAX_COVER_BATCH_SIZE = 10)
+        const base64Data = bru.getCollectionVar("cover_for_edge_cases");
+        const covers = Array.from({ length: 11 }, (_, i) => ({
+          local_id: `local-id-${i}`,
+          goal_id: `goal-id-${i}`,
+          filename: `cover-${i}.jpg`,
+          mime_type: "image/jpeg",
+          data: base64Data,
+        }));
+        bru.setVar("tooManyCovers", JSON.stringify(covers));
+  assertions:
+    - expression: res.status
+      operator: eq
+      value: "200"
+    - expression: res.body.ok
+      operator: isFalsy
+    - expression: res.body.error
+      operator: eq
+      value: INVALID_PAYLOAD
+
+settings:
+  encodeUrl: false
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |
+  upload_covers called with 11 covers (exceeds MAX_COVER_BATCH_SIZE = 10).
+  Expected: ok: false, error: INVALID_PAYLOAD.

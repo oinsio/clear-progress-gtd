@@ -6,10 +6,12 @@ import type {
   PushResponse,
   InitResponse,
   UploadCoverResponse,
+  UploadCoverBatchItem,
+  UploadCoversResponse,
   DeleteCoverResponse,
   GetCoversResponse,
 } from "@/types/api";
-import { STORAGE_KEYS } from "@/constants";
+import { STORAGE_KEYS, API_ACTIONS } from "@/constants";
 
 export class ApiClient {
   private getUrl(): string {
@@ -78,11 +80,18 @@ export class ApiClient {
     data: string;
   }): Promise<Pick<UploadCoverResponse, "file_id" | "reused">> {
     const response = await this.request<UploadCoverResponse>({
-      action: "upload_cover",
+      action: API_ACTIONS.UPLOAD_COVER,
       ...payload,
     });
     const { file_id, reused } = response;
     return { file_id, reused };
+  }
+
+  async uploadCovers(covers: UploadCoverBatchItem[]): Promise<UploadCoversResponse> {
+    return this.request<UploadCoversResponse>({
+      action: API_ACTIONS.UPLOAD_COVERS,
+      covers,
+    });
   }
 
   async getCovers(fileIds: string[]): Promise<GetCoversResponse> {

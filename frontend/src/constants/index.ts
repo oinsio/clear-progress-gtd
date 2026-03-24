@@ -72,6 +72,7 @@ export const API_ACTIONS = {
   PULL: "pull",
   PUSH: "push",
   UPLOAD_COVER: "upload_cover",
+  UPLOAD_COVERS: "upload_covers",
   DELETE_COVER: "delete_cover",
   GET_COVER: "get_cover",
   PURGE: "purge",

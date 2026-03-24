@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach, vi, afterEach } from "vitest";
 import { http, HttpResponse } from "msw";
 import { server } from "@/test/mocks/server";
 import { ApiClient } from "./ApiClient";
+import type { UploadCoverBatchItem } from "@/types/api";
 
 const TEST_URL = "https://script.google.com/macros/s/test-deploy-id/exec";
 
@@ -125,5 +126,69 @@ describe("ApiClient.pingUrl", () => {
     const result = await apiClient.pingUrl(TEST_URL);
 
     expect(result.initialized).toBe(false);
+  });
+});
+
+describe("ApiClient.uploadCovers", () => {
+  let apiClient: ApiClient;
+
+  const validCover: UploadCoverBatchItem = {
+    local_id: "local-uuid-1",
+    goal_id: "goal-uuid-1",
+    filename: "cover.jpg",
+    mime_type: "image/jpeg",
+    data: "base64_encoded_data",
+  };
+
+  const mockResponse = {
+    ok: true,
+    results: [{ local_id: "local-uuid-1", goal_id: "goal-uuid-1", file_id: "drive-file-id", reused: false }],
+  };
+
+  beforeEach(() => {
+    apiClient = new ApiClient();
+    localStorage.setItem("gas_url", TEST_URL);
+    server.use(
+      http.post(TEST_URL, () => HttpResponse.json(mockResponse)),
+    );
+  });
+
+  afterEach(() => {
+    localStorage.clear();
+    vi.restoreAllMocks();
+  });
+
+  it("should send action upload_covers in request body", async () => {
+    const fetchSpy = vi.spyOn(global, "fetch");
+
+    await apiClient.uploadCovers([validCover]);
+
+    const requestBody = JSON.parse((fetchSpy.mock.calls[0][1] as RequestInit).body as string) as Record<string, unknown>;
+    expect(requestBody.action).toBe("upload_covers");
+  });
+
+  it("should include covers array in request body", async () => {
+    const fetchSpy = vi.spyOn(global, "fetch");
+
+    await apiClient.uploadCovers([validCover]);
+
+    const requestBody = JSON.parse((fetchSpy.mock.calls[0][1] as RequestInit).body as string) as Record<string, unknown>;
+    expect(requestBody.covers).toEqual([validCover]);
+  });
+
+  it("should return UploadCoversResponse from server", async () => {
+    const result = await apiClient.uploadCovers([validCover]);
+
+    expect(result).toEqual(mockResponse);
+  });
+
+  it("should pass multiple covers in the request", async () => {
+    const fetchSpy = vi.spyOn(global, "fetch");
+    const covers = [validCover, { ...validCover, local_id: "local-uuid-2", goal_id: "goal-uuid-2" }];
+
+    await apiClient.uploadCovers(covers);
+
+    const requestBody = JSON.parse((fetchSpy.mock.calls[0][1] as RequestInit).body as string) as Record<string, unknown>;
+    expect((requestBody.covers as unknown[]).length).toBe(2);
   });
 });

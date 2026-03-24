@@ -1,0 +1,67 @@
+info:
+  name: upload covers batch
+  type: http
+  seq: 1
+
+http:
+  method: post
+  url: https://script.google.com/macros/s/{{deploymentId}}/exec#upload_covers
+  headers:
+    - name: accept
+      value: application/json
+    - name: Content-Type
+      value: application/json
+  body:
+    type: json
+    data: |-
+      {
+        "action": "upload_covers",
+        "covers": [
+          {
+            "local_id": "{{$randomUUID}}",
+            "goal_id": "{{$randomUUID}}",
+            "filename": "batch-cover-1.jpg",
+            "mime_type": "image/jpeg",
+            "data": "{{batchCover1}}"
+          },
+          {
+            "local_id": "{{$randomUUID}}",
+            "goal_id": "{{$randomUUID}}",
+            "filename": "batch-cover-2.jpg",
+            "mime_type": "image/jpeg",
+            "data": "{{batchCover2}}"
+          }
+        ]
+      }
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: before-request
+      code: |-
+        const cover1 = bru.getCollectionVar("cover_1");
+        const cover2 = bru.getCollectionVar("cover_2");
+        bru.setVar("batchCover1", cover1);
+        bru.setVar("batchCover2", cover2);
+  assertions:
+    - expression: res.status
+      operator: eq
+      value: "200"
+    - expression: res.body.ok
+      operator: isTruthy
+    - expression: res.body.results
+      operator: isDefined
+    - expression: res.body.results[0].file_id
+      operator: isDefined
+    - expression: res.body.results[1].file_id
+      operator: isDefined
+
+settings:
+  encodeUrl: false
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |
+  upload_covers called with 2 valid covers (cover_1 and cover_2 from collection vars).
+  Expected: ok: true, results array with 2 entries, each having file_id.

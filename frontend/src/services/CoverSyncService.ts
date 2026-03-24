@@ -3,6 +3,7 @@ import type { PendingCoverRepository } from "@/db/repositories/PendingCoverRepos
 import type { CoverRepository } from "@/db/repositories/CoverRepository";
 import type { GoalRepository } from "@/db/repositories/GoalRepository";
 import type { ApiClient } from "./ApiClient";
+import type { UploadCoverBatchItem } from "@/types/api";
 import { localCoverCache } from "./LocalCoverCache";
 import { LOCAL_COVER_ID_PREFIX, FALLBACK_COVER_MIME_TYPE, MAX_COVER_BATCH_SIZE } from "@/constants";
 import { arrayBufferToBase64, buildCoverFilename, computeSha256Hex } from "./CoverService";
@@ -38,11 +39,31 @@ export class CoverSyncService {
 
   async sync(): Promise<void> {
     const pendingCovers = await this.pendingCoverRepository.getAll();
-    for (const pendingCover of pendingCovers) {
+
+    for (let offset = 0; offset < pendingCovers.length; offset += MAX_COVER_BATCH_SIZE) {
+      const chunk = pendingCovers.slice(offset, offset + MAX_COVER_BATCH_SIZE);
+
+      let batchItems: UploadCoverBatchItem[];
       try {
-        await this.uploadPendingCover(pendingCover);
+        batchItems = await Promise.all(chunk.map(cover => this.buildBatchItem(cover)));
       } catch {
         break;
+      }
+
+      let response;
+      try {
+        response = await this.apiClient.uploadCovers(batchItems);
+      } catch {
+        break;
+      }
+
+      const pendingByLocalId = new Map(chunk.map(cover => [cover.local_id, cover]));
+
+      for (const result of response.results) {
+        if (result.error || !result.file_id) continue;
+        const pendingCover = pendingByLocalId.get(result.local_id);
+        if (!pendingCover) continue;
+        await this.handleSuccessfulUpload(pendingCover, result.file_id);
       }
     }
   }
@@ -54,43 +75,73 @@ export class CoverSyncService {
 
   async reuploadLocalCovers(): Promise<void> {
     const activeGoals = await this.goalRepository.getActive();
+
+    type BatchEntry = {
+      goal: (typeof activeGoals)[number];
+      cover: CoverRecord;
+      item: UploadCoverBatchItem;
+    };
+
+    const batchEntries: BatchEntry[] = [];
+
     for (const goal of activeGoals) {
-      if (!goal.cover_file_id || goal.cover_file_id.startsWith(LOCAL_COVER_ID_PREFIX)) {
-        continue;
-      }
+      if (!goal.cover_file_id || goal.cover_file_id.startsWith(LOCAL_COVER_ID_PREFIX)) continue;
+
       let existingCover = await this.coverRepository.getByFileId(goal.cover_file_id);
       if (!existingCover?.data) {
         await this.cacheFromServer(goal.cover_file_id);
         existingCover = await this.coverRepository.getByFileId(goal.cover_file_id);
       }
       if (!existingCover?.data) continue;
-      try {
-        const buffer = await existingCover.data.arrayBuffer();
-        const base64Data = arrayBufferToBase64(buffer);
-        const response = await this.apiClient.uploadCover({
+
+      const buffer = await existingCover.data.arrayBuffer();
+      const base64Data = arrayBufferToBase64(buffer);
+      const mimeType = existingCover.data.type || FALLBACK_COVER_MIME_TYPE;
+
+      batchEntries.push({
+        goal,
+        cover: existingCover,
+        item: {
+          local_id: goal.id,
           goal_id: goal.id,
-          filename: buildCoverFilename(existingCover.data_hash, existingCover.data.type || FALLBACK_COVER_MIME_TYPE),
-          mime_type: existingCover.data.type || FALLBACK_COVER_MIME_TYPE,
+          filename: buildCoverFilename(existingCover.data_hash, mimeType),
+          mime_type: mimeType,
           data: base64Data,
-        });
-        if (response.file_id !== goal.cover_file_id) {
-          const now = new Date().toISOString();
-          await this.goalRepository.update({
-            ...goal,
-            cover_file_id: response.file_id,
-            version: goal.version + 1,
-            updated_at: now,
-          });
-          await this.coverRepository.save({
-            file_id: response.file_id,
-            data_hash: existingCover.data_hash,
-            data: existingCover.data,
-          });
-          await this.coverRepository.delete(goal.cover_file_id);
-          localCoverCache.transfer(goal.cover_file_id, response.file_id);
-        }
+        },
+      });
+    }
+
+    for (let offset = 0; offset < batchEntries.length; offset += MAX_COVER_BATCH_SIZE) {
+      const chunk = batchEntries.slice(offset, offset + MAX_COVER_BATCH_SIZE);
+
+      let response;
+      try {
+        response = await this.apiClient.uploadCovers(chunk.map(entry => entry.item));
       } catch {
-        // best-effort: continue with next cover
+        continue; // best-effort: skip this chunk
+      }
+
+      const entryByGoalId = new Map(chunk.map(entry => [entry.goal.id, entry]));
+
+      for (const result of response.results) {
+        if (result.error || !result.file_id) continue;
+        const entry = entryByGoalId.get(result.goal_id);
+        if (!entry || result.file_id === entry.goal.cover_file_id) continue;
+
+        const now = new Date().toISOString();
+        await this.goalRepository.update({
+          ...entry.goal,
+          cover_file_id: result.file_id,
+          version: entry.goal.version + 1,
+          updated_at: now,
+        });
+        await this.coverRepository.save({
+          file_id: result.file_id,
+          data_hash: entry.cover.data_hash,
+          data: entry.cover.data,
+        });
+        await this.coverRepository.delete(entry.goal.cover_file_id);
+        localCoverCache.transfer(entry.goal.cover_file_id, result.file_id);
       }
     }
   }
@@ -202,38 +253,40 @@ export class CoverSyncService {
     }
   }
 
-  private async uploadPendingCover(pendingCover: PendingCoverRecord): Promise<void> {
-    const buffer = await pendingCover.data.arrayBuffer();
+  private async buildBatchItem(pending: PendingCoverRecord): Promise<UploadCoverBatchItem> {
+    const buffer = await pending.data.arrayBuffer();
     const base64Data = arrayBufferToBase64(buffer);
-
-    const response = await this.apiClient.uploadCover({
-      goal_id: pendingCover.goal_id,
-      filename: pendingCover.filename,
-      mime_type: pendingCover.mime_type,
+    return {
+      local_id: pending.local_id,
+      goal_id: pending.goal_id,
+      filename: pending.filename,
+      mime_type: pending.mime_type,
       data: base64Data,
-    });
+    };
+  }
 
+  private async handleSuccessfulUpload(pendingCover: PendingCoverRecord, fileId: string): Promise<void> {
     const localFileId = `${LOCAL_COVER_ID_PREFIX}${pendingCover.local_id}`;
     const allGoals = await this.goalRepository.getActive();
-    const matchingGoals = allGoals.filter((goal) => goal.cover_file_id === localFileId);
+    const matchingGoals = allGoals.filter(goal => goal.cover_file_id === localFileId);
     const now = new Date().toISOString();
     for (const goal of matchingGoals) {
       await this.goalRepository.update({
         ...goal,
-        cover_file_id: response.file_id,
+        cover_file_id: fileId,
         version: goal.version + 1,
         updated_at: now,
       });
     }
 
     await this.coverRepository.save({
-      file_id: response.file_id,
+      file_id: fileId,
       data_hash: pendingCover.data_hash,
       data: pendingCover.data,
     });
 
     await this.pendingCoverRepository.delete(pendingCover.local_id);
-    localCoverCache.transfer(pendingCover.local_id, response.file_id);
+    localCoverCache.transfer(pendingCover.local_id, fileId);
   }
 }
 

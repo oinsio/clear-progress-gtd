@@ -1,0 +1,42 @@
+info:
+  name: upload covers empty array
+  type: http
+  seq: 3
+
+http:
+  method: post
+  url: https://script.google.com/macros/s/{{deploymentId}}/exec#upload_covers
+  headers:
+    - name: accept
+      value: application/json
+    - name: Content-Type
+      value: application/json
+  body:
+    type: json
+    data: |-
+      {
+        "action": "upload_covers",
+        "covers": []
+      }
+  auth: inherit
+
+runtime:
+  assertions:
+    - expression: res.status
+      operator: eq
+      value: "200"
+    - expression: res.body.ok
+      operator: isFalsy
+    - expression: res.body.error
+      operator: eq
+      value: INVALID_PAYLOAD
+
+settings:
+  encodeUrl: false
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |
+  upload_covers called with an empty covers array.
+  Expected: ok: false, error: INVALID_PAYLOAD.

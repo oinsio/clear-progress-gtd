@@ -6,6 +6,7 @@ import { pull } from './actions/pull';
 import { push } from './actions/push';
 import { purge } from './actions/purge';
 import { uploadCover } from './actions/upload-cover';
+import { uploadCovers } from './actions/upload-covers';
 import { deleteCover } from './actions/delete-cover';
 import { getCover } from './actions/get-cover';
 
@@ -36,6 +37,8 @@ function doPost(e: GoogleAppsScript.Events.DoPost): GoogleAppsScript.Content.Tex
       return push(payload.changes as Parameters<typeof push>[0]);
     case ACTIONS.UPLOAD_COVER:
       return uploadCover(payload as Parameters<typeof uploadCover>[0]);
+    case ACTIONS.UPLOAD_COVERS:
+      return uploadCovers(payload as Parameters<typeof uploadCovers>[0]);
     case ACTIONS.DELETE_COVER:
       return deleteCover(payload as Parameters<typeof deleteCover>[0]);
     case ACTIONS.GET_COVER:
