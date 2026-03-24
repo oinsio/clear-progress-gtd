@@ -192,7 +192,7 @@ describe("CoverSyncService", () => {
         getAll: vi.fn().mockResolvedValue([pendingCover]),
       });
       mockGoalRepository = createMockGoalRepository({
-        getById: vi.fn().mockResolvedValue(matchingGoal),
+        getActive: vi.fn().mockResolvedValue([matchingGoal]),
       });
       const service = createService();
 
@@ -298,13 +298,50 @@ describe("CoverSyncService", () => {
         getAll: vi.fn().mockResolvedValue([pendingCover]),
       });
       mockGoalRepository = createMockGoalRepository({
-        getById: vi.fn().mockResolvedValue(goalWithDifferentCover),
+        getActive: vi.fn().mockResolvedValue([goalWithDifferentCover]),
       });
       const service = createService();
 
       await service.sync();
 
       expect(mockGoalRepository.update).not.toHaveBeenCalled();
+    });
+
+    it("should update all goals that share the same local cover file_id", async () => {
+      const pendingCover = createPendingCover({ local_id: "shared-local-id" });
+      const localFileId = `${LOCAL_COVER_ID_PREFIX}shared-local-id`;
+
+      const baseGoal = {
+        title: "Test Goal",
+        description: "",
+        status: "in_progress" as const,
+        sort_order: 0,
+        is_deleted: false,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        version: 1,
+      };
+      const goal1 = { ...baseGoal, id: "goal-shared-1", cover_file_id: localFileId };
+      const goal2 = { ...baseGoal, id: "goal-shared-2", cover_file_id: localFileId };
+      const goalOther = { ...baseGoal, id: "goal-other", cover_file_id: "other-file-id" };
+
+      mockPendingCoverRepository = createMockPendingCoverRepository({
+        getAll: vi.fn().mockResolvedValue([pendingCover]),
+      });
+      mockGoalRepository = createMockGoalRepository({
+        getActive: vi.fn().mockResolvedValue([goal1, goal2, goalOther]),
+      });
+      const service = createService();
+
+      await service.sync();
+
+      expect(mockGoalRepository.update).toHaveBeenCalledTimes(2);
+      expect(mockGoalRepository.update).toHaveBeenCalledWith(
+        expect.objectContaining({ id: "goal-shared-1", cover_file_id: "uploaded-file-id" }),
+      );
+      expect(mockGoalRepository.update).toHaveBeenCalledWith(
+        expect.objectContaining({ id: "goal-shared-2", cover_file_id: "uploaded-file-id" }),
+      );
     });
 
   });

@@ -214,9 +214,10 @@ export class CoverSyncService {
     });
 
     const localFileId = `${LOCAL_COVER_ID_PREFIX}${pendingCover.local_id}`;
-    const goal = await this.goalRepository.getById(pendingCover.goal_id);
-    if (goal?.cover_file_id === localFileId) {
-      const now = new Date().toISOString();
+    const allGoals = await this.goalRepository.getActive();
+    const matchingGoals = allGoals.filter((goal) => goal.cover_file_id === localFileId);
+    const now = new Date().toISOString();
+    for (const goal of matchingGoals) {
       await this.goalRepository.update({
         ...goal,
         cover_file_id: response.file_id,

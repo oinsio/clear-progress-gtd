@@ -116,6 +116,12 @@ export class CoverService {
   }
 
   async deleteCover(fileId: string): Promise<void> {
+    if (fileId.startsWith(LOCAL_COVER_ID_PREFIX)) {
+      const localId = fileId.slice(LOCAL_COVER_ID_PREFIX.length);
+      await this.pendingCoverRepository.delete(localId);
+      localCoverCache.delete(localId);
+      return;
+    }
     const response = await this.apiClient.deleteCover({ file_id: fileId });
     if (response.deleted) {
       await this.coverRepository.delete(fileId);

@@ -321,6 +321,31 @@ describe("CoverService", () => {
 
       expect(localCoverCache.get("file-abc")).toBeDefined();
     });
+
+    it("should delete pending cover from pendingCoverRepository when file_id starts with local:", async () => {
+      const service = new CoverService(mockApiClient, mockCoverRepository, mockPendingCoverRepository);
+
+      await service.deleteCover("local:some-local-uuid");
+
+      expect(mockPendingCoverRepository.delete).toHaveBeenCalledWith("some-local-uuid");
+    });
+
+    it("should not call API when file_id starts with local:", async () => {
+      const service = new CoverService(mockApiClient, mockCoverRepository, mockPendingCoverRepository);
+
+      await service.deleteCover("local:some-local-uuid");
+
+      expect(mockApiClient.deleteCover).not.toHaveBeenCalled();
+    });
+
+    it("should remove local cover from localCoverCache when file_id starts with local:", async () => {
+      localCoverCache.set("some-local-uuid", "blob:http://localhost/local");
+      const service = new CoverService(mockApiClient, mockCoverRepository, mockPendingCoverRepository);
+
+      await service.deleteCover("local:some-local-uuid");
+
+      expect(localCoverCache.get("some-local-uuid")).toBeUndefined();
+    });
   });
 
   describe("getCoverDisplayUrl", () => {
