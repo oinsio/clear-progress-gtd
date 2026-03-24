@@ -9,6 +9,7 @@ import { usePanelOpen } from "@/hooks/usePanelOpen";
 import { useSync } from "@/app/providers/SyncProvider";
 import { RightFilterPanel, type RightPanelMode } from "@/components/tasks/RightFilterPanel";
 import { ConfirmFullSyncDialog } from "@/components/settings/ConfirmFullSyncDialog";
+import { ConfirmDisconnectDialog } from "@/components/settings/ConfirmDisconnectDialog";
 import { BOX_ORDER, ACCENT_COLORS, ACCENT_COLOR_VALUES, PANEL_SIDES, ROUTES, STORAGE_KEYS, SUPPORTED_LANGUAGES, BACKEND_CONNECTION_EVENT } from "@/constants";
 import type { Box, AccentColor, PanelSide } from "@/types/common";
 import type { Language } from "@/constants";
@@ -59,12 +60,22 @@ export default function SettingsPage() {
   const [isBackendConnected, setIsBackendConnected] = useState(
     !!localStorage.getItem(STORAGE_KEYS.GAS_URL),
   );
+  const [isDisconnectDialogOpen, setIsDisconnectDialogOpen] = useState(false);
 
-  const handleDisconnect = (): void => {
+  const handleDisconnectRequest = useCallback((): void => {
+    setIsDisconnectDialogOpen(true);
+  }, []);
+
+  const handleDisconnectCancel = useCallback((): void => {
+    setIsDisconnectDialogOpen(false);
+  }, []);
+
+  const handleDisconnectConfirm = useCallback((): void => {
     localStorage.removeItem(STORAGE_KEYS.GAS_URL);
     window.dispatchEvent(new Event(BACKEND_CONNECTION_EVENT));
     setIsBackendConnected(false);
-  };
+    setIsDisconnectDialogOpen(false);
+  }, []);
 
   const handleFullSyncOpen = useCallback((): void => {
     setIsFullSyncDialogOpen(true);
@@ -216,8 +227,8 @@ export default function SettingsPage() {
                     </button>
                     <button
                       data-testid="settings-sync-disconnect"
-                      onClick={handleDisconnect}
-                      className="w-full text-sm font-medium text-red-500 transition-colors hover:text-red-600"
+                      onClick={handleDisconnectRequest}
+                      className="w-full rounded-lg border border-red-200 py-2 text-sm font-medium text-red-500 transition-colors hover:border-red-300 hover:bg-red-50"
                     >
                       {t("settings.syncDisconnect")}
                     </button>
@@ -241,6 +252,12 @@ export default function SettingsPage() {
         isOpen={isFullSyncDialogOpen}
         onClose={handleFullSyncClose}
         onSync={triggerFullSync}
+      />
+
+      <ConfirmDisconnectDialog
+        isOpen={isDisconnectDialogOpen}
+        onClose={handleDisconnectCancel}
+        onConfirm={handleDisconnectConfirm}
       />
 
       {/* Right panel — same as on main page */}

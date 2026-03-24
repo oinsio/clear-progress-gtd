@@ -139,7 +139,11 @@
     "fullSyncError": "Sync failed",
     "fullSyncCancel": "Cancel",
     "fullSyncClose": "Close",
-    "fullSyncStart": "Sync"
+    "fullSyncStart": "Sync",
+    "disconnectConfirmTitle": "Disconnect sync?",
+    "disconnectConfirmDescription": "The app will stop syncing with the server. Local data will be preserved.",
+    "disconnectConfirm": "Disconnect",
+    "disconnectCancel": "Cancel"
   },
   "setup": {
     "title": "Backend connection",

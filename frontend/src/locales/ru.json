@@ -127,7 +127,7 @@
     "syncNotConnected": "Не подключено",
     "syncConfigure": "Настроить",
     "syncConnect": "Подключить",
-    "syncDisconnect": "Отключить",
+    "syncDisconnect": "Отключить от аккаунта",
     "fullSync": "Полная синхронизация",
     "fullSyncConfirmTitle": "Запустить полную синхронизацию?",
     "fullSyncConfirmDescription": "Все данные будут синхронизированы между устройством и сервером. Конфликты разрешаются по времени последнего изменения.",
@@ -139,10 +139,14 @@
     "fullSyncError": "Ошибка синхронизации",
     "fullSyncCancel": "Отмена",
     "fullSyncClose": "Закрыть",
-    "fullSyncStart": "Синхронизировать"
+    "fullSyncStart": "Синхронизировать",
+    "disconnectConfirmTitle": "Отключить синхронизацию?",
+    "disconnectConfirmDescription": "Приложение перестанет синхронизироваться с сервером. Локальные данные сохранятся.",
+    "disconnectConfirm": "Отключить",
+    "disconnectCancel": "Отмена"
   },
   "setup": {
-    "title": "Подключение к бэкенду",
+    "title": "Подключение к аккаунту",
     "description": "Введите URL или Deployment ID вашего Google Apps Script",
     "urlLabel": "Google Apps Script URL или Deployment ID",
     "urlPlaceholder": "AKfycbx... или https://script.google.com/...",
