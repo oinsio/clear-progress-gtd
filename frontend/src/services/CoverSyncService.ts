@@ -83,7 +83,6 @@ export class CoverSyncService {
           });
           await this.coverRepository.save({
             file_id: response.file_id,
-            thumbnail_url: "",
             data_hash: existingCover.data_hash,
             data: existingCover.data,
           });
@@ -165,7 +164,6 @@ export class CoverSyncService {
             const dataHash = await computeSha256Hex(buffer);
             const coverRecord: CoverRecord = {
               file_id: coverResult.file_id,
-              thumbnail_url: "",
               data_hash: dataHash,
               data: blob,
             };
@@ -194,7 +192,6 @@ export class CoverSyncService {
       const dataHash = await computeSha256Hex(buffer);
       const coverRecord: CoverRecord = {
         file_id: fileId,
-        thumbnail_url: "",
         data_hash: dataHash,
         data: blob,
       };
@@ -230,7 +227,6 @@ export class CoverSyncService {
 
     await this.coverRepository.save({
       file_id: response.file_id,
-      thumbnail_url: response.thumbnail_url,
       data_hash: pendingCover.data_hash,
       data: pendingCover.data,
     });

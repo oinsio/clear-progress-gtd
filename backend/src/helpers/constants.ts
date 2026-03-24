@@ -141,6 +141,3 @@ export function isValidUuid(value: string): boolean {
   return UUID_V4_REGEX.test(value);
 }
 
-export function thumbnailUrl(fileId: string): string {
-  return `https://drive.google.com/thumbnail?id=${fileId}&sz=w400`;
-}

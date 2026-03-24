@@ -7,7 +7,6 @@ import {
   DRIVE_PERMISSIONS,
   ERROR_MESSAGES,
   buildFolderQuery,
-  thumbnailUrl,
 } from '../helpers/constants';
 import { jsonOk, jsonError, jsonNotInitialized, ERROR_CODES } from '../helpers/response';
 
@@ -50,7 +49,6 @@ export function uploadCover(payload: {
     if (file.description === hash) {
       return jsonOk({
         file_id: file.id,
-        thumbnail_url: thumbnailUrl(file.id!),
         reused: true,
       });
     }
@@ -68,7 +66,6 @@ export function uploadCover(payload: {
 
   return jsonOk({
     file_id: newFile.id,
-    thumbnail_url: thumbnailUrl(newFile.id!),
     reused: false,
   });
 }

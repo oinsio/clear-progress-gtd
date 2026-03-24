@@ -40,7 +40,6 @@ function createMockApiClient(
   return {
     uploadCover: vi.fn().mockResolvedValue({
       file_id: "uploaded-file-id",
-      thumbnail_url: "",
       reused: false,
     }),
     deleteCover: vi.fn().mockResolvedValue({ deleted: true, ref_count: 0 }),
@@ -133,7 +132,6 @@ describe("CoverSyncService", () => {
     it("should create object URLs for covers with blob data in CoverRepository", async () => {
       const coverWithBlob = {
         file_id: "remote-file-id",
-        thumbnail_url: "",
         data_hash: "hash-abc",
         data: new Blob(["img"], { type: "image/jpeg" }),
       };
@@ -334,7 +332,6 @@ describe("CoverSyncService", () => {
     function createCoverRecord(fileId = EXISTING_SERVER_FILE_ID) {
       return {
         file_id: fileId,
-        thumbnail_url: "",
         data_hash: "cover-hash-xyz",
         data: new Blob(["img data"], { type: "image/jpeg" }),
       };
@@ -350,7 +347,6 @@ describe("CoverSyncService", () => {
       mockApiClient = createMockApiClient({
         uploadCover: vi.fn().mockResolvedValue({
           file_id: EXISTING_SERVER_FILE_ID,
-          thumbnail_url: "",
           reused: true,
         }),
       });
@@ -382,10 +378,8 @@ describe("CoverSyncService", () => {
 
     it("should skip goals without a cover blob in CoverRepository when server fetch also fails", async () => {
       mockCoverRepository = createMockCoverRepository({
-        getByFileId: vi.fn().mockResolvedValue({ file_id: EXISTING_SERVER_FILE_ID, data_hash: "h", thumbnail_url: "", data: undefined }),
       });
       mockApiClient = createMockApiClient({
-        uploadCover: vi.fn().mockResolvedValue({ file_id: EXISTING_SERVER_FILE_ID, thumbnail_url: "", reused: true }),
         getCovers: createMockGetCoversNotFound(EXISTING_SERVER_FILE_ID),
       });
       const service = createService();
@@ -400,7 +394,6 @@ describe("CoverSyncService", () => {
         getByFileId: vi.fn().mockResolvedValue(undefined),
       });
       mockApiClient = createMockApiClient({
-        uploadCover: vi.fn().mockResolvedValue({ file_id: EXISTING_SERVER_FILE_ID, thumbnail_url: "", reused: true }),
         getCovers: createMockGetCoversNotFound(EXISTING_SERVER_FILE_ID),
       });
       const service = createService();
@@ -483,7 +476,6 @@ describe("CoverSyncService", () => {
           .mockRejectedValueOnce(new Error("Network error"))
           .mockResolvedValueOnce({
             file_id: "file-ok",
-            thumbnail_url: "",
             reused: true,
           }),
       });
@@ -518,7 +510,6 @@ describe("CoverSyncService", () => {
         mockApiClient = createMockApiClient({
           uploadCover: vi.fn().mockResolvedValue({
             file_id: EXISTING_SERVER_FILE_ID,
-            thumbnail_url: "",
             reused: true,
           }),
           getCovers: createMockGetCoversSuccess(EXISTING_SERVER_FILE_ID),
@@ -540,7 +531,6 @@ describe("CoverSyncService", () => {
           getByFileId: vi.fn().mockResolvedValue(undefined),
         });
         mockApiClient = createMockApiClient({
-          uploadCover: vi.fn().mockResolvedValue({ file_id: EXISTING_SERVER_FILE_ID, thumbnail_url: "", reused: true }),
           getCovers: createMockGetCoversSuccess(EXISTING_SERVER_FILE_ID),
         });
         const service = createService();
@@ -582,7 +572,6 @@ describe("CoverSyncService", () => {
         mockApiClient = createMockApiClient({
           uploadCover: vi.fn().mockResolvedValue({
             file_id: NEW_SERVER_FILE_ID,
-            thumbnail_url: "",
             reused: false,
           }),
         });
@@ -703,7 +692,6 @@ describe("CoverSyncService", () => {
       beforeEach(() => {
         const existingCover = {
           file_id: REMOTE_FILE_ID,
-          thumbnail_url: "",
           data_hash: "existing-hash",
           data: new Blob(["img"], { type: "image/jpeg" }),
         };
@@ -829,7 +817,6 @@ describe("CoverSyncService", () => {
       mockCoverRepository = createMockCoverRepository({
         getByFileId: vi.fn().mockResolvedValue({
           file_id: FILE_ID,
-          thumbnail_url: "",
           data_hash: "hash-abc",
           data: existingBlob,
         }),
@@ -890,7 +877,6 @@ describe("CoverSyncService", () => {
       mockCoverRepository = createMockCoverRepository({
         getByFileId: vi.fn().mockResolvedValue({
           file_id: FILE_ID,
-          thumbnail_url: "",
           data_hash: "hash-abc",
           data: new Blob(["img"], { type: "image/jpeg" }),
         }),

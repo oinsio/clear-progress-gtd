@@ -26,9 +26,8 @@ function buildGoalHook(overrides: Partial<UseGoalReturn> = {}): UseGoalReturn {
 
 function buildMockCoverService(overrides: Partial<CoverService> = {}): CoverService {
   return {
-    uploadCover: vi.fn().mockResolvedValue({ file_id: "file-123", thumbnail_url: "https://example.com/thumb" }),
+    uploadCover: vi.fn().mockResolvedValue({ file_id: "file-123" }),
     deleteCover: vi.fn().mockResolvedValue(undefined),
-    getCoverUrl: vi.fn().mockReturnValue(null),
     ...overrides,
   } as unknown as CoverService;
 }
@@ -178,7 +177,7 @@ describe("GoalPage", () => {
       const uploadCover = vi
         .fn()
         .mockRejectedValueOnce(new Error("Network error"))
-        .mockResolvedValue({ file_id: "file-123", thumbnail_url: "https://example.com/thumb" });
+        .mockResolvedValue({ file_id: "file-123" });
       const coverService = buildMockCoverService({ uploadCover });
 
       renderWithCoverAndSave(coverService, onClose);

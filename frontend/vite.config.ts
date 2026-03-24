@@ -11,25 +11,6 @@ export default defineConfig({
       manifest: false,
       workbox: {
         globPatterns: ["**/*.{js,css,html,ico,png,svg}"],
-        runtimeCaching: [
-          {
-            urlPattern: /^https:\/\/drive\.google\.com\/thumbnail/,
-            handler: "CacheFirst" as const,
-            options: {
-              cacheName: "cover-images",
-              plugins: [
-                {
-                  cacheWillUpdate: async ({ response }: { response: Response }) => {
-                    if (response && (response.status === 200 || response.type === "opaque")) {
-                      return response;
-                    }
-                    return null;
-                  },
-                },
-              ],
-            },
-          },
-        ],
       },
     }),
   ],

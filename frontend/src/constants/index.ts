@@ -86,8 +86,6 @@ export const BACKEND_CONNECTION_EVENT = "backend_connection_changed";
 export const DB_NAME = "clear-progress";
 export const DB_VERSION = 3;
 export const LOCAL_COVER_ID_PREFIX = "local:";
-export const COVER_THUMBNAIL_BASE_URL = "https://drive.google.com/thumbnail";
-export const COVER_THUMBNAIL_SIZE = "w400";
 
 export const STORAGE_KEYS = {
   GAS_URL: "gas_url",

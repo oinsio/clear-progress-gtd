@@ -65,7 +65,6 @@ export interface Setting {
 
 export interface CoverRecord {
   file_id: string;
-  thumbnail_url: string;
   data_hash: string;
   data?: Blob;
 }

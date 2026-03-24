@@ -53,7 +53,6 @@ export default function GoalPage({
   const currentDescription = description ?? goal?.description ?? "";
   const canSave = currentTitle.trim().length > 0 && !isSaving;
 
-  // Compute the effective thumbnail URL for the picker
   useEffect(() => {
     if (objectUrlRef.current) {
       URL.revokeObjectURL(objectUrlRef.current);

@@ -296,7 +296,6 @@ POST {WEB_APP_URL}
 {
   "ok": true,
   "file_id": "1abc...xyz",
-  "thumbnail_url": "https://drive.google.com/thumbnail?id=1abc...xyz&sz=w400",
   "reused": false
 }
 ```
@@ -307,14 +306,11 @@ POST {WEB_APP_URL}
 {
   "ok": true,
   "file_id": "1abc...xyz",
-  "thumbnail_url": "https://drive.google.com/thumbnail?id=1abc...xyz&sz=w400",
   "reused": true
 }
 ```
 
 Поле `reused = true` означает, что идентичное изображение уже существовало и было переиспользовано без создания дубликата.
-
-> **Примечание:** поле `thumbnail_url` в ответе устарело (deprecated) и больше не используется клиентом. Обложки отображаются исключительно через API `get_cover` и кеш IndexedDB. Поле сохраняется в ответе для обратной совместимости.
 
 ### 7.1. Дедупликация изображений
 
@@ -331,8 +327,8 @@ POST {WEB_APP_URL}
 3. Перебрать файлы в папке `Covers` и сравнить хеш из `description` с вычисленным.
 4. Если совпадение найдено — вернуть `file_id` существующего файла (`reused: true`). Новый файл не создаётся.
 5. Если совпадений нет — создать новый файл с именем `{sha256_prefix_12}.{ext}`, записать полный хеш в `description`.
-6. Сделать файл публичным для чтения (чтобы PWA могла загрузить по thumbnail URL).
-7. Вернуть `file_id` и `thumbnail_url` (`reused: false`).
+6. Сделать файл публичным для чтения.
+7. Вернуть `file_id` (`reused: false`).
 
 ---
 

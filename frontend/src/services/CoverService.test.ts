@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { CoverService, buildCoverFilename, buildCoverThumbnailUrl, getCoverDisplayUrl } from "./CoverService";
+import { CoverService, buildCoverFilename, getCoverDisplayUrl } from "./CoverService";
 import type { ApiClient } from "./ApiClient";
 import type { CoverRepository } from "@/db/repositories/CoverRepository";
 import type { PendingCoverRepository } from "@/db/repositories/PendingCoverRepository";
@@ -54,7 +54,6 @@ function createMockApiClient(
   return {
     uploadCover: vi.fn().mockResolvedValue({
       file_id: "new-file-id",
-      thumbnail_url: buildCoverThumbnailUrl("new-file-id"),
       reused: false,
     }),
     deleteCover: vi.fn().mockResolvedValue({ deleted: true, ref_count: 0 }),
@@ -119,7 +118,6 @@ describe("CoverService", () => {
     it("should return cached cover without API call if same hash exists in DB", async () => {
       const cached = {
         file_id: "cached-id",
-        thumbnail_url: buildCoverThumbnailUrl("cached-id"),
         data_hash: "any-hash",
       };
       mockCoverRepository = createMockCoverRepository({
@@ -130,7 +128,6 @@ describe("CoverService", () => {
       const result = await service.uploadCover(createImageFile(), "goal-1");
 
       expect(result.file_id).toBe("cached-id");
-      expect(result.thumbnail_url).toBe(buildCoverThumbnailUrl("cached-id"));
       expect(mockApiClient.uploadCover).not.toHaveBeenCalled();
     });
 
@@ -157,7 +154,6 @@ describe("CoverService", () => {
       expect(mockCoverRepository.save).toHaveBeenCalledWith(
         expect.objectContaining({
           file_id: "new-file-id",
-          thumbnail_url: buildCoverThumbnailUrl("new-file-id"),
           data_hash: expect.any(String),
         }),
       );
@@ -183,19 +179,17 @@ describe("CoverService", () => {
       expect(localCoverCache.get("new-file-id")).toBeDefined();
     });
 
-    it("should return file_id and thumbnail_url from API response", async () => {
+    it("should return file_id from API response", async () => {
       const service = new CoverService(mockApiClient, mockCoverRepository, mockPendingCoverRepository);
 
       const result = await service.uploadCover(createImageFile(), "goal-1");
 
       expect(result.file_id).toBe("new-file-id");
-      expect(result.thumbnail_url).toBe(buildCoverThumbnailUrl("new-file-id"));
     });
 
     it("should not save to DB when reusing cached cover", async () => {
       const cached = {
         file_id: "cached-id",
-        thumbnail_url: buildCoverThumbnailUrl("cached-id"),
         data_hash: "any-hash",
       };
       mockCoverRepository = createMockCoverRepository({
@@ -275,7 +269,6 @@ describe("CoverService", () => {
       const result = await service.uploadCover(createImageFile(), "goal-1");
 
       expect(result.file_id).toBe(`local:${existingLocalId}`);
-      expect(result.thumbnail_url).toBe(existingObjectUrl);
       expect(mockApiClient.uploadCover).not.toHaveBeenCalled();
     });
   });
@@ -327,26 +320,6 @@ describe("CoverService", () => {
       await service.deleteCover("file-abc");
 
       expect(localCoverCache.get("file-abc")).toBeDefined();
-    });
-  });
-
-  describe("getCoverUrl", () => {
-    it("should return null for empty fileId", () => {
-      const service = new CoverService(mockApiClient, mockCoverRepository, mockPendingCoverRepository);
-      expect(service.getCoverUrl("")).toBeNull();
-    });
-
-    it("should return built thumbnail URL for non-empty fileId", () => {
-      const service = new CoverService(mockApiClient, mockCoverRepository, mockPendingCoverRepository);
-      const url = service.getCoverUrl("file-123");
-      expect(url).toBe(buildCoverThumbnailUrl("file-123"));
-    });
-  });
-
-  describe("buildCoverThumbnailUrl", () => {
-    it("should build a Google Drive thumbnail URL", () => {
-      const url = buildCoverThumbnailUrl("abc123");
-      expect(url).toBe("https://drive.google.com/thumbnail?id=abc123&sz=w400");
     });
   });
 

@@ -85,8 +85,6 @@ export interface InitResponse {
 export interface UploadCoverResponse {
   ok: boolean;
   file_id: string;
-  /** @deprecated thumbnail_url is no longer used for display — covers are served via get_cover API */
-  thumbnail_url: string;
   reused: boolean;
 }
 

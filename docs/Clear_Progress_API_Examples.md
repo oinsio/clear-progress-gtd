@@ -1151,7 +1151,6 @@ Content-Type: application/json
 {
   "ok": true,
   "file_id": "1XyZ_aBcDeFgHiJkLmNoPqRsTuVwXyZ",
-  "thumbnail_url": "https://drive.google.com/thumbnail?id=1XyZ_aBcDeFgHiJkLmNoPqRsTuVwXyZ&sz=w400",
   "reused": false
 }
 ```
@@ -1178,7 +1177,6 @@ Content-Type: application/json
 {
   "ok": true,
   "file_id": "1XyZ_aBcDeFgHiJkLmNoPqRsTuVwXyZ",
-  "thumbnail_url": "https://drive.google.com/thumbnail?id=1XyZ_aBcDeFgHiJkLmNoPqRsTuVwXyZ&sz=w400",
   "reused": true
 }
 ```
@@ -1205,7 +1203,6 @@ Content-Type: application/json
 {
   "ok": true,
   "file_id": "1MnOpQrStUvWxYzAbCdEfGhIjKlMnOp",
-  "thumbnail_url": "https://drive.google.com/thumbnail?id=1MnOpQrStUvWxYzAbCdEfGhIjKlMnOp&sz=w400",
   "reused": false
 }
 ```

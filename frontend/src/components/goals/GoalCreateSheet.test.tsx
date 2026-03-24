@@ -5,9 +5,8 @@ import type { CoverService } from "@/services/CoverService";
 
 function buildMockCoverService(overrides: Partial<CoverService> = {}): CoverService {
   return {
-    uploadCover: vi.fn().mockResolvedValue({ file_id: "file-123", thumbnail_url: "https://example.com/thumb" }),
+    uploadCover: vi.fn().mockResolvedValue({ file_id: "file-123" }),
     deleteCover: vi.fn().mockResolvedValue(undefined),
-    getCoverUrl: vi.fn().mockReturnValue(null),
     ...overrides,
   } as unknown as CoverService;
 }

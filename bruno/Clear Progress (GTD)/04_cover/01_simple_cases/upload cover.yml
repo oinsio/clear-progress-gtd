@@ -58,8 +58,6 @@ runtime:
       operator: isTruthy
     - expression: res.body.file_id
       operator: isDefined
-    - expression: res.body.thumbnail_url
-      operator: isDefined
     - expression: res.body.reused
       operator: isDefined
   actions:

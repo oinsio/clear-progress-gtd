@@ -30,11 +30,7 @@ Google Sheets Schema
 
 ### 1.5. Обложки целей
 
-Изображения-обложки загружаются через Google Apps Script в подпапку `Covers` внутри папки `Clear Progress` на Google Drive пользователя. В Google Sheets хранится только file ID файла на Google Drive. Клиент получает изображение по URL:
-
-```
-https://drive.google.com/thumbnail?id={fileId}&sz=w400
-```
+Изображения-обложки загружаются через Google Apps Script в подпапку `Covers` внутри папки `Clear Progress` на Google Drive пользователя. В Google Sheets хранится только file ID файла на Google Drive. Клиент получает изображение через API `get_cover` и кэширует его в IndexedDB.
 
 ### 1.6. Файловая структура на Google Drive
 

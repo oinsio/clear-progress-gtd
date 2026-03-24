@@ -1,4 +1,4 @@
-import { MAX_COVER_SIZE_BYTES, COVER_THUMBNAIL_BASE_URL, COVER_THUMBNAIL_SIZE, LOCAL_COVER_ID_PREFIX, COVER_HASH_PREFIX_LENGTH, DEFAULT_COVER_EXTENSION } from "@/constants";
+import { MAX_COVER_SIZE_BYTES, LOCAL_COVER_ID_PREFIX, COVER_HASH_PREFIX_LENGTH, DEFAULT_COVER_EXTENSION } from "@/constants";
 import type { ApiClient } from "./ApiClient";
 import type { CoverRepository } from "@/db/repositories/CoverRepository";
 import type { PendingCoverRepository } from "@/db/repositories/PendingCoverRepository";
@@ -8,10 +8,6 @@ const COVER_ERROR = {
   INVALID_TYPE: "INVALID_TYPE",
   FILE_TOO_LARGE: "FILE_TOO_LARGE",
 } as const;
-
-export function buildCoverThumbnailUrl(fileId: string): string {
-  return `${COVER_THUMBNAIL_BASE_URL}?id=${fileId}&sz=${COVER_THUMBNAIL_SIZE}`;
-}
 
 export function arrayBufferToBase64(buffer: ArrayBuffer): string {
   const bytes = new Uint8Array(buffer);
@@ -55,7 +51,7 @@ export class CoverService {
   async uploadCover(
     file: File,
     goalId: string,
-  ): Promise<{ file_id: string; thumbnail_url: string }> {
+  ): Promise<{ file_id: string }> {
     if (!file.type.startsWith("image/")) {
       throw new Error(COVER_ERROR.INVALID_TYPE);
     }
@@ -68,16 +64,12 @@ export class CoverService {
 
     const existingPending = await this.pendingCoverRepository.getByHash(dataHash);
     if (existingPending) {
-      const objectUrl = localCoverCache.get(existingPending.local_id) ?? "";
-      return {
-        file_id: `${LOCAL_COVER_ID_PREFIX}${existingPending.local_id}`,
-        thumbnail_url: objectUrl,
-      };
+      return { file_id: `${LOCAL_COVER_ID_PREFIX}${existingPending.local_id}` };
     }
 
     const existingRemote = await this.coverRepository.getByHash(dataHash);
     if (existingRemote) {
-      return { file_id: existingRemote.file_id, thumbnail_url: existingRemote.thumbnail_url };
+      return { file_id: existingRemote.file_id };
     }
 
     try {
@@ -92,14 +84,13 @@ export class CoverService {
       const blob = new Blob([buffer], { type: file.type });
       await this.coverRepository.save({
         file_id: response.file_id,
-        thumbnail_url: response.thumbnail_url,
         data_hash: dataHash,
         data: blob,
       });
       const blobUrl = URL.createObjectURL(blob);
       localCoverCache.set(response.file_id, blobUrl);
 
-      return { file_id: response.file_id, thumbnail_url: response.thumbnail_url };
+      return { file_id: response.file_id };
     } catch (error) {
       if (error instanceof Error && Object.values(COVER_ERROR).includes(error.message as typeof COVER_ERROR[keyof typeof COVER_ERROR])) {
         throw error;
@@ -120,10 +111,7 @@ export class CoverService {
       const objectUrl = URL.createObjectURL(blob);
       localCoverCache.set(localId, objectUrl);
 
-      return {
-        file_id: `${LOCAL_COVER_ID_PREFIX}${localId}`,
-        thumbnail_url: objectUrl,
-      };
+      return { file_id: `${LOCAL_COVER_ID_PREFIX}${localId}` };
     }
   }
 
@@ -135,8 +123,4 @@ export class CoverService {
     }
   }
 
-  getCoverUrl(fileId: string): string | null {
-    if (!fileId) return null;
-    return buildCoverThumbnailUrl(fileId);
-  }
 }

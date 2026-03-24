@@ -5,7 +5,6 @@ import {
   MAX_COVER_SIZE_BYTES,
   COVER_HASH_PREFIX_LENGTH,
   PROPERTY_KEYS,
-  thumbnailUrl,
 } from '../helpers/constants';
 import { resetScriptProperties, setScriptProperty } from '../../tests/setup/gas-mocks';
 
@@ -176,16 +175,6 @@ describe('uploadCover', () => {
       expect(parseResponse().file_id).toBe('existing-file-id');
     });
 
-    it('should return thumbnail_url for existing file when duplicate found', () => {
-      vi.mocked(Drive.Files.list).mockReturnValue({
-        files: [{ id: 'existing-file-id', description: MOCK_HASH }],
-      });
-
-      uploadCover(validPayload);
-
-      expect(parseResponse().thumbnail_url).toBe(thumbnailUrl('existing-file-id'));
-    });
-
     it('should not create a new file when duplicate found', () => {
       vi.mocked(Drive.Files.list).mockReturnValue({
         files: [{ id: 'existing-file-id', description: MOCK_HASH }],
@@ -236,14 +225,6 @@ describe('uploadCover', () => {
       uploadCover(validPayload);
 
       expect(parseResponse().file_id).toBe('new-file-id');
-    });
-
-    it('should return thumbnail_url for newly created file', () => {
-      vi.mocked(Drive.Files.create).mockReturnValue({ id: 'new-file-id' });
-
-      uploadCover(validPayload);
-
-      expect(parseResponse().thumbnail_url).toBe(thumbnailUrl('new-file-id'));
     });
 
     it('should upload new file to the covers folder', () => {

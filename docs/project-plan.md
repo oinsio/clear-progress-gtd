@@ -834,7 +834,7 @@
 - [ ] `services/cover.service.ts`
 - [ ] `uploadCover(goalId, file)`: валидация размера (≤2МБ), конвертация в base64, вызов `api.uploadCover`, обновление `cover_file_id` в IndexedDB
 - [ ] `deleteCover(goalId)`: вызов `api.deleteCover`, очистка `cover_file_id`
-- [ ] `getCoverUrl(fileId)`: формирует URL для превью (Google Drive thumbnail link)
+- [ ] `getCoverUrl(fileId)`: возвращает blob URL из кэша или `null` если обложка не закэширована
 - [ ] Обработка ошибок: файл слишком большой, сеть недоступна
 
 **Зависимости:** → M-58, M-10

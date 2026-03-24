@@ -34,7 +34,7 @@ describe("useCoverUrl", () => {
     expect(result.current.url).toBe(cachedUrl);
   });
 
-  it("should return null for uncached remote fileId (no thumbnail fallback)", () => {
+  it("should return null for uncached remote fileId", () => {
     const { result } = renderHook(() => useCoverUrl("remote-id"));
 
     expect(result.current.url).toBeNull();

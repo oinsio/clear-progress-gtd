@@ -76,13 +76,13 @@ export class ApiClient {
     filename: string;
     mime_type: string;
     data: string;
-  }): Promise<Pick<UploadCoverResponse, "file_id" | "thumbnail_url" | "reused">> {
+  }): Promise<Pick<UploadCoverResponse, "file_id" | "reused">> {
     const response = await this.request<UploadCoverResponse>({
       action: "upload_cover",
       ...payload,
     });
-    const { file_id, thumbnail_url, reused } = response;
-    return { file_id, thumbnail_url, reused };
+    const { file_id, reused } = response;
+    return { file_id, reused };
   }
 
   async getCovers(fileIds: string[]): Promise<GetCoversResponse> {
