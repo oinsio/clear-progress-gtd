@@ -289,6 +289,8 @@ Before creating files, consult `project-structure.md`.
 - Use MSW for API mocking — do not mock fetch directly
 - Test business logic in services independently from components
 - Aim for meaningful coverage, not 100%
+- To launch backend unit tests use `backend/` directory
+- To launch frontend unit tests use `frontend/` directory
 
 ### Integration Tests (Vitest + RTL)
 
