@@ -91,7 +91,7 @@ export default function SetupPage() {
   const isLoading = phase === "connecting" || phase === "initializing";
 
   return (
-    <div data-testid="setup-page" className="relative flex h-screen overflow-hidden bg-white">
+    <div data-testid="setup-page" className="relative flex flex-1 overflow-hidden bg-white">
       <div className="flex flex-1 flex-col overflow-hidden">
         <main className="flex-1 overflow-y-auto">
           <div className="mx-auto max-w-lg space-y-8 px-4 py-6">

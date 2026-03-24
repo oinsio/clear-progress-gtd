@@ -1,4 +1,5 @@
 import { useState, useCallback } from "react";
+import { useTranslation } from "react-i18next";
 import { X } from "lucide-react";
 
 interface EntityEditSheetProps {
@@ -24,6 +25,7 @@ export function EntityEditSheet({
   testId,
   nameInputTestId,
 }: EntityEditSheetProps) {
+  const { t } = useTranslation();
   const [name, setName] = useState(initialName);
   const [isSaving, setIsSaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -67,7 +69,7 @@ export function EntityEditSheet({
           <button
             type="button"
             onClick={onClose}
-            aria-label="Закрыть"
+            aria-label={t("taskEdit.close")}
             className="w-8 h-8 flex items-center justify-center rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
           >
             <X size={18} />
@@ -75,7 +77,7 @@ export function EntityEditSheet({
         </div>
         <div className="px-4 py-4 flex flex-col gap-4">
           <div>
-            <label className="text-xs font-medium text-gray-500 mb-1 block">Название</label>
+            <label className="text-xs font-medium text-gray-500 mb-1 block">{t("taskEdit.fieldTitle")}</label>
             <input
               type="text"
               value={name}
@@ -94,24 +96,24 @@ export function EntityEditSheet({
             aria-label={deleteLabel}
             className="flex-1 py-2.5 text-sm text-red-500 border border-red-200 rounded-xl hover:bg-red-50 transition-colors"
           >
-            Удалить
+            {t("taskEdit.delete")}
           </button>
           <button
             type="button"
             onClick={onClose}
-            aria-label="Отмена"
+            aria-label={t("task.cancel")}
             className="flex-1 py-2.5 text-sm text-gray-600 border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors"
           >
-            Отмена
+            {t("task.cancel")}
           </button>
           <button
             type="button"
             onClick={handleSave}
             disabled={!name.trim() || isSaving}
-            aria-label="Сохранить"
+            aria-label={t("taskEdit.save")}
             className="flex-1 py-2.5 text-sm text-white bg-accent rounded-xl hover:opacity-90 transition-opacity disabled:opacity-50"
           >
-            Сохранить
+            {t("taskEdit.save")}
           </button>
         </div>
 
@@ -128,20 +130,20 @@ export function EntityEditSheet({
                 type="button"
                 data-testid="entity-edit-delete-cancel"
                 onClick={handleDeleteCancel}
-                aria-label="Отмена"
+                aria-label={t("task.cancel")}
                 className="flex-1 py-2.5 text-sm text-gray-600 border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors"
               >
-                Отмена
+                {t("task.cancel")}
               </button>
               <button
                 type="button"
                 data-testid="entity-edit-delete-confirm-btn"
                 onClick={handleDeleteConfirm}
                 disabled={isDeleting}
-                aria-label="Удалить"
+                aria-label={t("taskEdit.delete")}
                 className="flex-1 py-2.5 text-sm text-white bg-red-500 rounded-xl hover:bg-red-600 transition-colors disabled:opacity-50"
               >
-                Удалить
+                {t("taskEdit.delete")}
               </button>
             </div>
           </div>

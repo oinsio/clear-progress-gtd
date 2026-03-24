@@ -86,7 +86,7 @@ export default function SettingsPage() {
   }, []);
 
   return (
-    <div data-testid="settings-page" className="relative flex h-screen overflow-hidden bg-white">
+    <div data-testid="settings-page" className="relative flex flex-1 overflow-hidden bg-white">
       {/* Main content */}
       <div className="flex flex-1 flex-col overflow-hidden">
         <main className="flex-1 overflow-y-auto">

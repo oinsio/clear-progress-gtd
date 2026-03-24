@@ -106,7 +106,7 @@ export default function SearchPage() {
   const hasQuery = searchQuery.length > 0;
 
   return (
-    <div data-testid="search-page" className="relative flex h-screen overflow-hidden bg-white">
+    <div data-testid="search-page" className="relative flex flex-1 overflow-hidden bg-white">
       {/* Main content column */}
       <div className="flex flex-1 flex-col overflow-hidden">
         {/* Search header */}
@@ -129,6 +129,7 @@ export default function SearchPage() {
 
         {/* Results */}
         <main className="flex-1 overflow-y-auto">
+          <div className="xl:max-w-3xl xl:mx-auto">
           {!hasQuery && (
             <p className="text-sm text-gray-400 text-center py-16">{t("search.emptyQuery")}</p>
           )}
@@ -172,6 +173,7 @@ export default function SearchPage() {
               </ul>
             </section>
           )}
+          </div>
         </main>
       </div>
 

@@ -92,11 +92,11 @@ export function RightFilterPanel({
       {isOpen ? (
         <>
           {/* Mobile placeholder: keeps flex layout stable while panel is an overlay */}
-          <div className={cn("sm:hidden w-14 flex-shrink-0 bg-accent", panelBorder)} />
+          <div className={cn("md:hidden w-14 flex-shrink-0 bg-accent", panelBorder)} />
           <div
             className={cn(
               "w-52 flex flex-col bg-accent overflow-hidden cursor-pointer",
-              "absolute top-0 bottom-0 z-20 sm:relative sm:z-auto",
+              "absolute top-0 bottom-0 z-20 md:relative md:z-auto",
               isLeft ? "left-0" : "right-0",
               panelBorder,
             )}

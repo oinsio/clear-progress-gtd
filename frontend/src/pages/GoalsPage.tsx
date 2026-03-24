@@ -140,7 +140,7 @@ export default function GoalsPage() {
   );
 
   return (
-    <div data-testid="goals-page" className="relative flex h-screen overflow-hidden bg-white">
+    <div data-testid="goals-page" className="relative flex flex-1 overflow-hidden bg-white">
       {/* Main content */}
       <div className="flex flex-1 flex-col overflow-hidden">
         {/* Header */}
@@ -150,6 +150,7 @@ export default function GoalsPage() {
 
         {/* Scrollable goal list */}
         <main className="flex-1 overflow-y-auto">
+          <div className="xl:max-w-3xl xl:mx-auto">
           {!isLoading && activeGoals.length === 0 ? (
             <div className="flex flex-col items-center py-3" data-testid="empty-goals-message">
               <p className="text-gray-400 text-sm">{t("goal.empty")}</p>
@@ -194,6 +195,7 @@ export default function GoalsPage() {
               />
             </div>
           )}
+          </div>
         </main>
 
         {/* Bottom action bar */}

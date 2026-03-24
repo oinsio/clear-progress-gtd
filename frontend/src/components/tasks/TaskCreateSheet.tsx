@@ -1,4 +1,5 @@
 import { useState, useCallback } from "react";
+import { useTranslation } from "react-i18next";
 import { X } from "lucide-react";
 import type * as React from "react";
 import { cn } from "@/shared/lib/cn";
@@ -7,7 +8,6 @@ import type { Box } from "@/types/common";
 import { InboxBoxIcon, TodayBoxIcon, WeekBoxIcon, LaterBoxIcon } from "@/components/tasks/BoxIcons";
 import { useSettings } from "@/hooks/useSettings";
 
-const ADD_TASK_TITLE_PLACEHOLDER = "Название задачи...";
 const BOX_OPTIONS: Box[] = [BOX.INBOX, BOX.TODAY, BOX.WEEK, BOX.LATER];
 const BOX_PICKER_ICONS: Partial<Record<Box, React.FC<{ className?: string }>>> = {
   [BOX.INBOX]: InboxBoxIcon,
@@ -31,6 +31,7 @@ export function TaskCreateSheet({
   onSave,
   onClose,
 }: TaskCreateSheetProps) {
+  const { t } = useTranslation();
   const { defaultBox } = useSettings();
   const [title, setTitle] = useState("");
   const [notes, setNotes] = useState("");
@@ -54,11 +55,11 @@ export function TaskCreateSheet({
       <div className="absolute inset-0 bg-black/40" onClick={onClose} />
       <div className="relative bg-white rounded-t-2xl shadow-xl">
         <div className="flex items-center justify-between px-4 pt-4 pb-2 border-b border-gray-100">
-          <h2 className="text-base font-semibold text-gray-800">Новая задача</h2>
+          <h2 className="text-base font-semibold text-gray-800">{t("task.newTitle")}</h2>
           <button
             type="button"
             onClick={onClose}
-            aria-label="Закрыть"
+            aria-label={t("taskEdit.close")}
             className="w-8 h-8 flex items-center justify-center rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
           >
             <X size={18} />
@@ -66,12 +67,12 @@ export function TaskCreateSheet({
         </div>
         <div className="px-4 py-4 flex flex-col gap-4">
           <div>
-            <label className="text-xs font-medium text-gray-500 mb-1 block">Название</label>
+            <label className="text-xs font-medium text-gray-500 mb-1 block">{t("taskEdit.fieldTitle")}</label>
             <input
               type="text"
               value={title}
               onChange={(event) => setTitle(event.target.value)}
-              placeholder={ADD_TASK_TITLE_PLACEHOLDER}
+              placeholder={t("task.titlePlaceholder")}
               autoFocus
               className="w-full text-sm text-gray-800 border border-gray-200 rounded-lg px-3 py-2 outline-none focus:border-accent"
               data-testid="task-create-title-input"
@@ -85,18 +86,18 @@ export function TaskCreateSheet({
             </div>
           </div>
           <div>
-            <label className="text-xs font-medium text-gray-500 mb-1 block">Заметки</label>
+            <label className="text-xs font-medium text-gray-500 mb-1 block">{t("taskEdit.fieldNotes")}</label>
             <textarea
               value={notes}
               onChange={(event) => setNotes(event.target.value)}
-              placeholder="Добавить заметку..."
+              placeholder={t("taskEdit.notesPlaceholder")}
               rows={3}
               className="w-full text-sm text-gray-700 border border-gray-200 rounded-lg px-3 py-2 outline-none focus:border-accent resize-none"
               data-testid="task-create-notes-input"
             />
           </div>
           <div>
-            <label className="text-xs font-medium text-gray-500 mb-2 block">Коробочка</label>
+            <label className="text-xs font-medium text-gray-500 mb-2 block">{t("taskEdit.fieldBox")}</label>
             <div className="flex gap-1">
               {BOX_OPTIONS.map((box) => {
                 const BoxIcon = BOX_PICKER_ICONS[box];
@@ -126,19 +127,19 @@ export function TaskCreateSheet({
           <button
             type="button"
             onClick={onClose}
-            aria-label="Отмена"
+            aria-label={t("task.cancel")}
             className="flex-1 py-2.5 text-sm text-gray-600 border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors"
           >
-            Отмена
+            {t("task.cancel")}
           </button>
           <button
             type="button"
             onClick={handleSave}
             disabled={!title.trim() || isSaving}
-            aria-label="Создать задачу"
+            aria-label={t("task.createLabel")}
             className="flex-1 py-2.5 text-sm text-white bg-accent rounded-xl hover:opacity-90 transition-opacity disabled:opacity-50"
           >
-            Создать
+            {t("task.create")}
           </button>
         </div>
       </div>

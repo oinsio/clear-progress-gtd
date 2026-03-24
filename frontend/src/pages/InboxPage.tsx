@@ -534,7 +534,7 @@ export default function InboxPage() {
   return (
     <div
       data-testid="inbox-page"
-      className="relative flex h-screen overflow-hidden bg-white"
+      className="relative flex flex-1 overflow-hidden bg-white"
     >
       {/* Main content column */}
       <div className="flex flex-1 flex-col overflow-hidden">
@@ -558,7 +558,9 @@ export default function InboxPage() {
 
           {/* Scrollable task list */}
         <main className="flex-1 overflow-y-auto">
-          {renderContent()}
+          <div className="xl:max-w-3xl xl:mx-auto">
+            {renderContent()}
+          </div>
         </main>
 
         {/* Bottom box filter bar — hidden in inbox and completed modes */}

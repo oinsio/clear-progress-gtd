@@ -1,5 +1,6 @@
 import { useState, useCallback, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { ArrowLeft, Tag, Plus } from "lucide-react";
 import { useCategoryTasks } from "@/hooks/useCategoryTasks";
 import { useCategories } from "@/hooks/useCategories";
@@ -15,11 +16,10 @@ import { BOX, ROUTES } from "@/constants";
 import type { Task } from "@/types/entities";
 import type { Box } from "@/types/common";
 
-const CATEGORY_NOT_FOUND_MESSAGE = "Категория не найдена";
-
 // ── Main page ─────────────────────────────────────────────────────────────────
 
 export default function CategoryDetailPage() {
+  const { t } = useTranslation();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
 
@@ -85,26 +85,26 @@ export default function CategoryDetailPage() {
   if (!isLoading && !category) {
     return (
       <div className="flex items-center justify-center h-screen">
-        <p className="text-gray-400 text-sm">{CATEGORY_NOT_FOUND_MESSAGE}</p>
+        <p className="text-gray-400 text-sm">{t("category.notFound")}</p>
       </div>
     );
   }
 
   return (
-    <div data-testid="category-detail-page" className="relative flex h-screen overflow-hidden bg-white">
+    <div data-testid="category-detail-page" className="relative flex flex-1 overflow-hidden bg-white">
       {/* Main content column */}
       <div className="flex flex-1 flex-col overflow-hidden">
         {/* Header */}
         <header className="flex items-center gap-2 px-4 py-3 border-b border-gray-100">
           <button
             type="button"
-            aria-label="Назад"
+            aria-label={t("category.back")}
             onClick={() => navigate(ROUTES.CATEGORIES)}
             className="w-8 h-8 flex items-center justify-center rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
           >
             <ArrowLeft className="w-5 h-5" />
           </button>
-          <h1 className="text-lg font-semibold text-accent">Категория</h1>
+          <h1 className="text-lg font-semibold text-accent">{t("selector.category")}</h1>
         </header>
 
         {/* Scrollable content */}
@@ -143,7 +143,7 @@ export default function CategoryDetailPage() {
         <div className="flex items-center justify-end border-t border-gray-200 bg-white px-3 py-2">
           <button
             type="button"
-            aria-label="Добавить задачу"
+            aria-label={t("task.add")}
             data-testid="add-task-button"
             onClick={() => setIsCreateTaskSheetOpen(true)}
             className="w-10 h-10 bg-accent text-white rounded-full flex items-center justify-center shadow-md hover:bg-accent/80 active:bg-accent/70 transition-colors"
@@ -156,10 +156,10 @@ export default function CategoryDetailPage() {
         {isEditSheetOpen && category && (
           <EntityEditSheet
             testId="category-edit-sheet"
-            title="Редактировать категорию"
+            title={t("category.editTitle")}
             initialName={category.name}
-            namePlaceholder="Название категории"
-            deleteLabel="Удалить категорию"
+            namePlaceholder={t("category.nameLabel")}
+            deleteLabel={t("category.deleteLabel")}
             nameInputTestId="category-edit-name-input"
             onSave={handleSaveCategory}
             onDelete={handleDeleteCategory}
@@ -170,7 +170,7 @@ export default function CategoryDetailPage() {
         {/* Task create sheet */}
         {isCreateTaskSheetOpen && category && (
           <TaskCreateSheet
-            entityLabel="Категория"
+            entityLabel={t("selector.category")}
             entityName={category.name}
             entityIcon={Tag}
             onSave={handleCreateTask}

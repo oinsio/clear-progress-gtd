@@ -5,9 +5,9 @@ import { useTranslation } from "react-i18next";
 import { ROUTES } from "@/constants";
 import { cn } from "@/shared/lib/cn";
 
-type NavItem = { href: string; labelKey: string; icon: LucideIcon };
+export type NavItem = { href: string; labelKey: string; icon: LucideIcon };
 
-const BOTTOM_NAV_ITEMS: NavItem[] = [
+export const BOTTOM_NAV_ITEMS: NavItem[] = [
   { href: ROUTES.INBOX, labelKey: "nav.inbox", icon: Inbox },
   { href: ROUTES.TODAY, labelKey: "nav.today", icon: CalendarDays },
   { href: ROUTES.GOALS, labelKey: "nav.goals", icon: Target },

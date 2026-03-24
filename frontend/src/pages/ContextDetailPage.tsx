@@ -1,5 +1,6 @@
 import { useState, useCallback, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { ArrowLeft, MapPin, Plus } from "lucide-react";
 import { useContextTasks } from "@/hooks/useContextTasks";
 import { useContexts } from "@/hooks/useContexts";
@@ -17,8 +18,6 @@ import type { Box } from "@/types/common";
 import { TodayBoxIcon, WeekBoxIcon, LaterBoxIcon } from "@/components/tasks/BoxIcons";
 import * as React from "react";
 
-const CONTEXT_NOT_FOUND_MESSAGE = "Контекст не найден";
-
 const BOX_SECTION_ICONS: Record<Box, React.FC<{ className?: string }>> = {
   [BOX.INBOX]: ({ className }) => <MapPin className={className} />,
   [BOX.TODAY]: TodayBoxIcon,
@@ -29,6 +28,7 @@ const BOX_SECTION_ICONS: Record<Box, React.FC<{ className?: string }>> = {
 // ── Main page ─────────────────────────────────────────────────────────────────
 
 export default function ContextDetailPage() {
+  const { t } = useTranslation();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
 
@@ -95,26 +95,26 @@ export default function ContextDetailPage() {
   if (!isLoading && !context) {
     return (
       <div className="flex items-center justify-center h-screen">
-        <p className="text-gray-400 text-sm">{CONTEXT_NOT_FOUND_MESSAGE}</p>
+        <p className="text-gray-400 text-sm">{t("context.notFound")}</p>
       </div>
     );
   }
 
   return (
-    <div data-testid="context-detail-page" className="relative flex h-screen overflow-hidden bg-white">
+    <div data-testid="context-detail-page" className="relative flex flex-1 overflow-hidden bg-white">
       {/* Main content column */}
       <div className="flex flex-1 flex-col overflow-hidden">
         {/* Header */}
         <header className="flex items-center gap-2 px-4 py-3 border-b border-gray-100">
           <button
             type="button"
-            aria-label="Назад"
+            aria-label={t("context.back")}
             onClick={() => navigate(ROUTES.CONTEXTS)}
             className="w-8 h-8 flex items-center justify-center rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
           >
             <ArrowLeft className="w-5 h-5" />
           </button>
-          <h1 className="text-lg font-semibold text-accent">Контекст</h1>
+          <h1 className="text-lg font-semibold text-accent">{t("selector.context")}</h1>
         </header>
 
         {/* Scrollable content */}
@@ -153,7 +153,7 @@ export default function ContextDetailPage() {
         <div className="flex items-center justify-end border-t border-gray-200 bg-white px-3 py-2">
           <button
             type="button"
-            aria-label="Добавить задачу"
+            aria-label={t("task.add")}
             data-testid="add-task-button"
             onClick={() => setIsCreateTaskSheetOpen(true)}
             className="w-10 h-10 bg-accent text-white rounded-full flex items-center justify-center shadow-md hover:bg-accent/80 active:bg-accent/70 transition-colors"
@@ -166,10 +166,10 @@ export default function ContextDetailPage() {
         {isEditSheetOpen && context && (
           <EntityEditSheet
             testId="context-edit-sheet"
-            title="Редактировать контекст"
+            title={t("context.editTitle")}
             initialName={context.name}
-            namePlaceholder="Название контекста"
-            deleteLabel="Удалить контекст"
+            namePlaceholder={t("context.nameLabel")}
+            deleteLabel={t("context.deleteLabel")}
             nameInputTestId="context-edit-name-input"
             onSave={handleSaveContext}
             onDelete={handleDeleteContext}
@@ -180,7 +180,7 @@ export default function ContextDetailPage() {
         {/* Task create sheet */}
         {isCreateTaskSheetOpen && context && (
           <TaskCreateSheet
-            entityLabel="Контекст"
+            entityLabel={t("selector.context")}
             entityName={context.name}
             entityIcon={BOX_SECTION_ICONS[BOX.INBOX]}
             onSave={handleCreateTask}

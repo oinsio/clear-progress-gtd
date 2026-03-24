@@ -1,5 +1,6 @@
 import { useState, useCallback, useMemo, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import {ArrowLeft, Pencil, CheckCheck, Plus, Target} from "lucide-react";
 import { useCoverUrl } from "@/hooks/useCoverUrl";
 import defaultCoverSvg from "@/assets/default-goal-cover.svg";
@@ -22,11 +23,8 @@ import { cn } from "@/shared/lib/cn";
 import type { Task } from "@/types/entities";
 import type { Box } from "@/types/common";
 
-const GOAL_NOT_FOUND_MESSAGE = "Цель не найдена";
-const COMPLETED_SECTION_LABEL = "Выполненные";
-const PAGE_TITLE = "Цель";
-
 export default function GoalDetailPage() {
+  const { t } = useTranslation();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
 
@@ -95,25 +93,25 @@ export default function GoalDetailPage() {
   if (!isLoading && !goal) {
     return (
       <div className="flex items-center justify-center h-screen">
-        <p className="text-gray-400 text-sm">{GOAL_NOT_FOUND_MESSAGE}</p>
+        <p className="text-gray-400 text-sm">{t("goal.notFound")}</p>
       </div>
     );
   }
 
   return (
-    <div data-testid="goal-detail-page" className="relative flex h-screen overflow-hidden bg-white">
+    <div data-testid="goal-detail-page" className="relative flex flex-1 overflow-hidden bg-white">
       <div className="flex flex-1 flex-col overflow-hidden">
         {/* Header */}
         <header className="flex items-center gap-2 px-4 py-3 border-b border-gray-100">
           <button
             type="button"
-            aria-label="Назад"
+            aria-label={t("goal.back")}
             onClick={() => navigate(ROUTES.GOALS)}
             className="w-8 h-8 flex items-center justify-center rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
           >
             <ArrowLeft className="w-5 h-5" />
           </button>
-          <h1 className="text-lg font-semibold text-accent">{PAGE_TITLE}</h1>
+          <h1 className="text-lg font-semibold text-accent">{t("selector.goal")}</h1>
         </header>
 
         {/* Scrollable content */}
@@ -143,7 +141,7 @@ export default function GoalDetailPage() {
               {/* Toggle completed tasks button */}
               <button
                 type="button"
-                aria-label={showCompleted ? "Скрыть выполненные" : "Показать выполненные"}
+                aria-label={showCompleted ? t("goal.hideCompleted") : t("goal.showCompleted")}
                 data-testid="toggle-completed-button"
                 onClick={() => setShowCompleted((prev) => !prev)}
                 className={cn(
@@ -159,7 +157,7 @@ export default function GoalDetailPage() {
               {/* Edit goal button */}
               <button
                 type="button"
-                aria-label="Редактировать цель"
+                aria-label={t("goal.editTitle")}
                 data-testid="edit-goal-button"
                 onClick={() => setIsEditGoalOpen(true)}
                 className="w-8 h-8 flex items-center justify-center rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
@@ -187,7 +185,7 @@ export default function GoalDetailPage() {
           {showCompleted && completedTasks.length > 0 && (
             <section>
               <h2 className="px-4 py-2 text-sm font-semibold text-accent bg-gray-50 sticky top-0">
-                {COMPLETED_SECTION_LABEL} ({completedTasks.length})
+                {t("goal.completedSection", { count: completedTasks.length })}
               </h2>
               <TaskList
                 tasks={completedTasks}
@@ -207,7 +205,7 @@ export default function GoalDetailPage() {
         <div className="flex items-center justify-end border-t border-gray-200 bg-white px-3 py-2">
           <button
             type="button"
-            aria-label="Добавить задачу"
+            aria-label={t("task.add")}
             data-testid="add-task-button"
             onClick={() => setIsCreateTaskSheetOpen(true)}
             className="w-10 h-10 bg-accent text-white rounded-full flex items-center justify-center shadow-md hover:bg-accent/80 active:bg-accent/70 transition-colors"
@@ -219,7 +217,7 @@ export default function GoalDetailPage() {
         {/* Task create sheet */}
         {isCreateTaskSheetOpen && goal && (
           <TaskCreateSheet
-            entityLabel="Цель"
+            entityLabel={t("selector.goal")}
             entityName={goal.title}
             entityIcon={Target}
             onSave={handleCreateTask}

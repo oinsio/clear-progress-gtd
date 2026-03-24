@@ -23,7 +23,11 @@
     "restoreConfirm": "Restore task?",
     "cancel": "Cancel",
     "drag": "Drag task",
-    "add": "Add task"
+    "add": "Add task",
+    "newTitle": "New task",
+    "titlePlaceholder": "Task title...",
+    "create": "Create",
+    "createLabel": "Create task"
   },
   "section": {
     "inbox": "Inbox",
@@ -52,6 +56,9 @@
     "add": "Add goal",
     "addTask": "Add task",
     "taskPlaceholder": "Task title...",
+    "completedSection": "Completed ({{count}})",
+    "showCompleted": "Show completed",
+    "hideCompleted": "Hide completed",
     "status": {
       "planning": "Planning",
       "in_progress": "In progress",
@@ -78,20 +85,30 @@
   "context": {
     "empty": "No contexts yet",
     "namePlaceholder": "Context name...",
+    "nameLabel": "Context name",
     "taskPlaceholder": "Task title...",
     "taskCount": "Tasks:",
     "drag": "Drag context",
     "add": "Add context",
-    "addTask": "Add task"
+    "addTask": "Add task",
+    "back": "Back",
+    "notFound": "Context not found",
+    "editTitle": "Edit context",
+    "deleteLabel": "Delete context"
   },
   "category": {
     "empty": "No categories yet",
     "namePlaceholder": "Category name...",
+    "nameLabel": "Category name",
     "taskPlaceholder": "Task title...",
     "taskCount": "Tasks:",
     "drag": "Drag category",
     "add": "Add category",
-    "addTask": "Add task"
+    "addTask": "Add task",
+    "back": "Back",
+    "notFound": "Category not found",
+    "editTitle": "Edit category",
+    "deleteLabel": "Delete category"
   },
   "search": {
     "placeholder": "Tasks and goals...",
