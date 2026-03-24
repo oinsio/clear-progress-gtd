@@ -4,21 +4,25 @@ export interface GroupedCompletedTasks {
   todayTasks: Task[];
   yesterdayTasks: Task[];
   weekTasks: Task[];
+  monthTasks: Task[];
   earlierTasks: Task[];
 }
 
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
 const DAYS_IN_WEEK = 7;
+const DAYS_IN_MONTH = 30;
 
 export function groupCompletedTasks(tasks: Task[]): GroupedCompletedTasks {
   const startOfToday = new Date();
   startOfToday.setHours(0, 0, 0, 0);
   const startOfYesterday = new Date(startOfToday.getTime() - MS_PER_DAY);
   const startOf7DaysAgo = new Date(startOfToday.getTime() - DAYS_IN_WEEK * MS_PER_DAY);
+  const startOf30DaysAgo = new Date(startOfToday.getTime() - DAYS_IN_MONTH * MS_PER_DAY);
 
   const todayTasks: Task[] = [];
   const yesterdayTasks: Task[] = [];
   const weekTasks: Task[] = [];
+  const monthTasks: Task[] = [];
   const earlierTasks: Task[] = [];
 
   for (const task of tasks) {
@@ -29,12 +33,14 @@ export function groupCompletedTasks(tasks: Task[]): GroupedCompletedTasks {
       yesterdayTasks.push(task);
     } else if (completedDate && completedDate >= startOf7DaysAgo) {
       weekTasks.push(task);
+    } else if (completedDate && completedDate >= startOf30DaysAgo) {
+      monthTasks.push(task);
     } else {
       earlierTasks.push(task);
     }
   }
 
-  return { todayTasks, yesterdayTasks, weekTasks, earlierTasks };
+  return { todayTasks, yesterdayTasks, weekTasks, monthTasks, earlierTasks };
 }
 
 export function formatCompletedAt(isoString: string): string {

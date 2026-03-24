@@ -295,7 +295,7 @@ export default function InboxPage() {
     [completeLater, reloadCompleted],
   );
 
-  const { todayTasks: todayCompletedTasks, yesterdayTasks: yesterdayCompletedTasks, weekTasks: weekCompletedTasks, earlierTasks: earlierCompletedTasks } = useMemo(
+  const { todayTasks: todayCompletedTasks, yesterdayTasks: yesterdayCompletedTasks, weekTasks: weekCompletedTasks, monthTasks: monthCompletedTasks, earlierTasks: earlierCompletedTasks } = useMemo(
     () => groupCompletedTasks(completedTasks),
     [completedTasks],
   );
@@ -377,6 +377,19 @@ export default function InboxPage() {
             <TaskSection
               label={t("section.completedWeek")}
               tasks={weekCompletedTasks}
+              goals={goals}
+              contexts={contexts}
+              categories={categories}
+              onComplete={handleCompleteTodayAndReload}
+              onUpdate={handleUpdateTask}
+              onMove={handleMoveTask}
+              onDelete={deleteToday}
+            />
+          )}
+          {monthCompletedTasks.length > 0 && (
+            <TaskSection
+              label={t("section.completedMonth")}
+              tasks={monthCompletedTasks}
               goals={goals}
               contexts={contexts}
               categories={categories}

@@ -33,6 +33,7 @@
     "completedToday": "Completed today",
     "completedYesterday": "Yesterday",
     "completedWeek": "Last 7 days",
+    "completedMonth": "Last 30 days",
     "completedEarlier": "Earlier"
   },
   "goal": {

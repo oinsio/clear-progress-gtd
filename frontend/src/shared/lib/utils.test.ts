@@ -55,6 +55,7 @@ describe("groupCompletedTasks", () => {
   const startOfToday = new Date(2025, 2, 19, 0, 0, 0, 0);
   const startOfYesterday = new Date(2025, 2, 18, 0, 0, 0, 0);
   const startOf7DaysAgo = new Date(2025, 2, 12, 0, 0, 0, 0);
+  const startOf30DaysAgo = new Date(2025, 1, 17, 0, 0, 0, 0);
 
   beforeEach(() => {
     vi.useFakeTimers();
@@ -70,6 +71,7 @@ describe("groupCompletedTasks", () => {
     expect(result.todayTasks).toEqual([]);
     expect(result.yesterdayTasks).toEqual([]);
     expect(result.weekTasks).toEqual([]);
+    expect(result.monthTasks).toEqual([]);
     expect(result.earlierTasks).toEqual([]);
   });
 
@@ -79,6 +81,7 @@ describe("groupCompletedTasks", () => {
     expect(result.todayTasks).toContain(task);
     expect(result.yesterdayTasks).toHaveLength(0);
     expect(result.weekTasks).toHaveLength(0);
+    expect(result.monthTasks).toHaveLength(0);
     expect(result.earlierTasks).toHaveLength(0);
   });
 
@@ -94,6 +97,7 @@ describe("groupCompletedTasks", () => {
     expect(result.yesterdayTasks).toContain(task);
     expect(result.todayTasks).toHaveLength(0);
     expect(result.weekTasks).toHaveLength(0);
+    expect(result.monthTasks).toHaveLength(0);
     expect(result.earlierTasks).toHaveLength(0);
   });
 
@@ -109,6 +113,7 @@ describe("groupCompletedTasks", () => {
     expect(result.weekTasks).toContain(task);
     expect(result.todayTasks).toHaveLength(0);
     expect(result.yesterdayTasks).toHaveLength(0);
+    expect(result.monthTasks).toHaveLength(0);
     expect(result.earlierTasks).toHaveLength(0);
   });
 
@@ -118,13 +123,31 @@ describe("groupCompletedTasks", () => {
     expect(result.weekTasks).toContain(task);
   });
 
-  it("should place task completed more than 7 days ago into earlierTasks", () => {
+  it("should place task completed 8 days ago into monthTasks", () => {
     const task = buildTask({ is_completed: true, completed_at: new Date(2025, 2, 11, 23, 59, 0).toISOString() });
+    const result = groupCompletedTasks([task]);
+    expect(result.monthTasks).toContain(task);
+    expect(result.todayTasks).toHaveLength(0);
+    expect(result.yesterdayTasks).toHaveLength(0);
+    expect(result.weekTasks).toHaveLength(0);
+    expect(result.earlierTasks).toHaveLength(0);
+  });
+
+  it("should place task completed exactly 30 days ago (at midnight) into monthTasks", () => {
+    const task = buildTask({ is_completed: true, completed_at: startOf30DaysAgo.toISOString() });
+    const result = groupCompletedTasks([task]);
+    expect(result.monthTasks).toContain(task);
+    expect(result.earlierTasks).toHaveLength(0);
+  });
+
+  it("should place task completed more than 30 days ago into earlierTasks", () => {
+    const task = buildTask({ is_completed: true, completed_at: new Date(2025, 1, 16, 23, 59, 0).toISOString() });
     const result = groupCompletedTasks([task]);
     expect(result.earlierTasks).toContain(task);
     expect(result.todayTasks).toHaveLength(0);
     expect(result.yesterdayTasks).toHaveLength(0);
     expect(result.weekTasks).toHaveLength(0);
+    expect(result.monthTasks).toHaveLength(0);
   });
 
   it("should place task with empty completed_at into earlierTasks", () => {
@@ -133,15 +156,17 @@ describe("groupCompletedTasks", () => {
     expect(result.earlierTasks).toContain(task);
   });
 
-  it("should distribute tasks correctly across all four groups", () => {
+  it("should distribute tasks correctly across all five groups", () => {
     const todayTask = buildTask({ is_completed: true, completed_at: new Date(2025, 2, 19, 8, 0, 0).toISOString() });
     const yesterdayTask = buildTask({ is_completed: true, completed_at: new Date(2025, 2, 18, 8, 0, 0).toISOString() });
     const weekTask = buildTask({ is_completed: true, completed_at: new Date(2025, 2, 15, 8, 0, 0).toISOString() });
-    const earlierTask = buildTask({ is_completed: true, completed_at: new Date(2025, 2, 10, 8, 0, 0).toISOString() });
-    const result = groupCompletedTasks([todayTask, yesterdayTask, weekTask, earlierTask]);
+    const monthTask = buildTask({ is_completed: true, completed_at: new Date(2025, 2, 10, 8, 0, 0).toISOString() });
+    const earlierTask = buildTask({ is_completed: true, completed_at: new Date(2025, 1, 10, 8, 0, 0).toISOString() });
+    const result = groupCompletedTasks([todayTask, yesterdayTask, weekTask, monthTask, earlierTask]);
     expect(result.todayTasks).toEqual([todayTask]);
     expect(result.yesterdayTasks).toEqual([yesterdayTask]);
     expect(result.weekTasks).toEqual([weekTask]);
+    expect(result.monthTasks).toEqual([monthTask]);
     expect(result.earlierTasks).toEqual([earlierTask]);
   });
 

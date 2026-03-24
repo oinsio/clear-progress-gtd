@@ -33,6 +33,7 @@
     "completedToday": "Выжившие сегодня",
     "completedYesterday": "Вчерашние выжившие",
     "completedWeek": "За 7 дней страданий",
+    "completedMonth": "За месяц страданий",
     "completedEarlier": "Давно выписаны"
   },
   "goal": {

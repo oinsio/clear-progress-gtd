@@ -33,6 +33,7 @@
     "completedToday": "Выполненные сегодня",
     "completedYesterday": "Вчера",
     "completedWeek": "За 7 дней",
+    "completedMonth": "За месяц",
     "completedEarlier": "Ранее"
   },
   "goal": {
