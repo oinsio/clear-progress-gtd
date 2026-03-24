@@ -4,8 +4,17 @@ info:
   seq: 2
 
 http:
-  method: GET
-  url: "{{coverUrl}}"
+  method: POST
+  url: https://script.google.com/macros/s/{{deploymentId}}/exec#get_cover
+  body:
+    type: json
+    data: |-
+      {
+        "action": "get_cover",
+        "file_ids": [
+          "{{fileId}}"
+        ]
+      }
   auth: inherit
 
 runtime:
@@ -13,12 +22,21 @@ runtime:
     - expression: res.status
       operator: eq
       value: "200"
-    - expression: Number(res.headers['content-length'])
-      operator: gt
-      value: "0"
-    - expression: res.headers['content-type']
-      operator: contains
+    - expression: res.body.ok
+      operator: isTruthy
+    - expression: res.body.covers
+      operator: isArray
+    - expression: res.body.covers.length
+      operator: eq
+      value: "1"
+    - expression: res.body.covers[0].file_id
+      operator: eq
+      value: "{{fileId}}"
+    - expression: res.body.covers[0].mime_type
+      operator: startsWith
       value: image
+    - expression: res.body.covers[0].data
+      operator: isNotEmpty
 
 settings:
   encodeUrl: true
