@@ -329,7 +329,7 @@ Before creating files, consult `project-structure.md`.
 
 ### Setup
 - Library: `i18next` + `react-i18next`; initialized in `src/i18n.ts`, imported in `main.tsx`
-- Languages: `ru` (default), `en`; files in `src/locales/ru.json` and `src/locales/en.json`
+- Languages: `ru` (default), `en`; files in `src/locales/ru.json` and `src/locales/en.json`; Dr.House ru localization in `src/locales/house.json`
 - Language state: `LanguageProvider` (Context) in `src/app/providers/LanguageProvider.tsx`
 - Language switch: `useLanguage()` hook from `src/hooks/useLanguage.ts`
 - Persistence: localStorage key `STORAGE_KEYS.LANGUAGE`
