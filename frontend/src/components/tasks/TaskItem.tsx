@@ -41,6 +41,12 @@ export function TaskItem({ task, goals, contexts, categories, onComplete, onUpda
   const [isExpanded, setIsExpanded] = useState(false);
   const [isConfirmingRestore, setIsConfirmingRestore] = useState(false);
 
+  useEffect(() => {
+    if (isDesktop && isExpanded) {
+      setIsExpanded(false);
+    }
+  }, [isDesktop, isExpanded]);
+
   const handleBodyClick = useCallback(() => {
     if (isDesktop && onSelect) {
       onSelect(task.id);
