@@ -1,6 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, it, expect, vi } from "vitest";
+import { useState } from "react";
 import { TaskItem } from "./TaskItem";
 import { buildTask } from "@/test/factories/taskFactory";
 import { buildGoal } from "@/test/factories/goalFactory";
@@ -9,13 +10,28 @@ vi.mock("@/hooks/useChecklist", () => ({
   useChecklist: vi.fn().mockReturnValue({
     items: [],
     progress: { completed: 0, total: 0 },
+    hasUnsyncedItems: false,
     isLoading: false,
+    reload: vi.fn(),
     createItem: vi.fn(),
     toggleItem: vi.fn(),
     updateItem: vi.fn(),
     deleteItem: vi.fn(),
+    reorderItems: vi.fn(),
   }),
 }));
+
+function StatefulTaskItem(props: Record<string, unknown>) {
+  const task = props.task as { id: string };
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+  return (
+    <TaskItem
+      {...(props as unknown as Parameters<typeof TaskItem>[0])}
+      isExpanded={expandedId === task.id}
+      onExpand={setExpandedId}
+    />
+  );
+}
 
 function renderTaskItem(overrides: Record<string, unknown> = {}) {
   const task = buildTask();
@@ -30,7 +46,7 @@ function renderTaskItem(overrides: Record<string, unknown> = {}) {
     onDelete: vi.fn(),
     ...overrides,
   };
-  render(<TaskItem {...props} />);
+  render(<StatefulTaskItem {...props} />);
   return props;
 }
 
@@ -175,11 +191,14 @@ describe("TaskItem", () => {
     vi.mocked(useChecklist).mockReturnValue({
       items: [],
       progress: { completed: 0, total: 0 },
+      hasUnsyncedItems: false,
       isLoading: false,
+      reload: vi.fn(),
       createItem: vi.fn(),
       toggleItem: vi.fn(),
       updateItem: vi.fn(),
       deleteItem: vi.fn(),
+      reorderItems: vi.fn(),
     });
     renderTaskItem();
     expect(screen.queryByTestId("checklist-badge")).not.toBeInTheDocument();
@@ -190,11 +209,14 @@ describe("TaskItem", () => {
     vi.mocked(useChecklist).mockReturnValue({
       items: [],
       progress: { completed: 1, total: 3 },
+      hasUnsyncedItems: false,
       isLoading: false,
+      reload: vi.fn(),
       createItem: vi.fn(),
       toggleItem: vi.fn(),
       updateItem: vi.fn(),
       deleteItem: vi.fn(),
+      reorderItems: vi.fn(),
     });
     renderTaskItem();
     expect(screen.getByTestId("checklist-badge")).toBeInTheDocument();
@@ -205,11 +227,14 @@ describe("TaskItem", () => {
     vi.mocked(useChecklist).mockReturnValue({
       items: [],
       progress: { completed: 2, total: 5 },
+      hasUnsyncedItems: false,
       isLoading: false,
+      reload: vi.fn(),
       createItem: vi.fn(),
       toggleItem: vi.fn(),
       updateItem: vi.fn(),
       deleteItem: vi.fn(),
+      reorderItems: vi.fn(),
     });
     renderTaskItem();
     expect(screen.getByTestId("checklist-badge")).toHaveTextContent("2/5");

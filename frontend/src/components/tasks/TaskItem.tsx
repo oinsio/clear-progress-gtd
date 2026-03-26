@@ -30,37 +30,40 @@ interface TaskItemProps {
   dragHandleProps?: DragHandleProps;
   onSelect?: (id: string) => void;
   isSelected?: boolean;
+  isExpanded?: boolean;
+  onExpand?: (id: string | null) => void;
 }
 
-export function TaskItem({ task, goals, contexts, categories, onComplete, onUpdate, onMove, dragHandleProps, onSelect, isSelected }: TaskItemProps) {
+export function TaskItem({ task, goals, contexts, categories, onComplete, onUpdate, onMove, dragHandleProps, onSelect, isSelected, isExpanded = false, onExpand }: TaskItemProps) {
   const { t } = useTranslation();
   const { progress: checklistProgress, hasUnsyncedItems } = useChecklist(task.id);
   const isTaskUnsynced = useIsUnsynced(task);
   const isUnsynced = isTaskUnsynced || hasUnsyncedItems;
   const isDesktop = useIsDesktop();
-  const [isExpanded, setIsExpanded] = useState(false);
   const [isConfirmingRestore, setIsConfirmingRestore] = useState(false);
 
   useEffect(() => {
-    if (isDesktop && isExpanded) {
-      setIsExpanded(false);
+    if (isDesktop && isExpanded && onExpand) {
+      onExpand(null);
     }
-  }, [isDesktop, isExpanded]);
+  }, [isDesktop, isExpanded, onExpand]);
 
   const handleBodyClick = useCallback(() => {
     if (isDesktop && onSelect) {
       onSelect(task.id);
-    } else {
-      setIsExpanded((previous) => !previous);
+    } else if (onExpand) {
+      onExpand(isExpanded ? null : task.id);
     }
-  }, [isDesktop, onSelect, task.id]);
+  }, [isDesktop, onSelect, task.id, isExpanded, onExpand]);
 
   const handleOpenEdit = useCallback(() => {
     if (onSelect) {
       onSelect(task.id);
     }
-    setIsExpanded(false);
-  }, [onSelect, task.id]);
+    if (onExpand) {
+      onExpand(null);
+    }
+  }, [onSelect, task.id, onExpand]);
 
   const handleCompleteClick = useCallback(() => {
     if (task.is_completed) {

@@ -1,3 +1,4 @@
+import { useState } from "react";
 import {
   DndContext,
   closestCenter,
@@ -34,9 +35,11 @@ interface SortableTaskItemProps {
   onDelete: (id: string) => void;
   onSelect?: (id: string) => void;
   selectedTaskId?: string | null;
+  expandedTaskId?: string | null;
+  onExpand?: (id: string | null) => void;
 }
 
-function SortableTaskItem({ task, goals, contexts, categories, onComplete, onUpdate, onMove, onDelete, onSelect, selectedTaskId }: SortableTaskItemProps) {
+function SortableTaskItem({ task, goals, contexts, categories, onComplete, onUpdate, onMove, onDelete, onSelect, selectedTaskId, expandedTaskId, onExpand }: SortableTaskItemProps) {
   const {
     attributes,
     listeners,
@@ -71,6 +74,8 @@ function SortableTaskItem({ task, goals, contexts, categories, onComplete, onUpd
         }}
         onSelect={onSelect}
         isSelected={selectedTaskId === task.id}
+        isExpanded={expandedTaskId === task.id}
+        onExpand={onExpand}
       />
     </li>
   );
@@ -93,6 +98,8 @@ interface TaskListProps {
 }
 
 export function TaskList({ tasks, goals, contexts, categories, onComplete, onUpdate, onMove, onDelete, onReorder, emptyMessage, onEmptyClick, onSelect, selectedTaskId }: TaskListProps) {
+  const [expandedTaskId, setExpandedTaskId] = useState<string | null>(null);
+
   const pointerSensor = useSensor(PointerSensor, {
     activationConstraint: { distance: DRAG_ACTIVATION_DISTANCE_PX },
   });
@@ -152,6 +159,8 @@ export function TaskList({ tasks, goals, contexts, categories, onComplete, onUpd
               onDelete={onDelete}
               onSelect={onSelect}
               isSelected={selectedTaskId === task.id}
+              isExpanded={expandedTaskId === task.id}
+              onExpand={setExpandedTaskId}
             />
           </li>
         ))}
@@ -176,6 +185,8 @@ export function TaskList({ tasks, goals, contexts, categories, onComplete, onUpd
               onDelete={onDelete}
               onSelect={onSelect}
               selectedTaskId={selectedTaskId}
+              expandedTaskId={expandedTaskId}
+              onExpand={setExpandedTaskId}
             />
           ))}
         </ul>
