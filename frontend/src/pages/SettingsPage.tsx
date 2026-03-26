@@ -107,7 +107,7 @@ export default function SettingsPage() {
                     aria-pressed={defaultBox === box}
                     onClick={() => handleBoxSelect(box)}
                     className={cn(
-                      "px-4 py-2 rounded-lg text-sm font-medium border transition-colors",
+                      "px-3 py-1.5 rounded-lg text-sm font-medium border transition-colors",
                       defaultBox === box
                         ? "bg-accent border-accent text-white"
                         : "bg-white border-gray-200 text-gray-700 hover:border-gray-300",
@@ -157,7 +157,7 @@ export default function SettingsPage() {
                     aria-pressed={panelSide === side}
                     onClick={() => handlePanelSideSelect(side)}
                     className={cn(
-                      "px-4 py-2 rounded-lg text-sm font-medium border transition-colors",
+                      "px-3 py-1.5 rounded-lg text-sm font-medium border transition-colors",
                       panelSide === side
                         ? "bg-accent border-accent text-white"
                         : "bg-white border-gray-200 text-gray-700 hover:border-gray-300",
@@ -182,7 +182,7 @@ export default function SettingsPage() {
                     aria-pressed={language === lang}
                     onClick={() => handleLanguageSelect(lang)}
                     className={cn(
-                      "px-4 py-2 rounded-lg text-sm font-medium border transition-colors",
+                      "px-3 py-1.5 rounded-lg text-sm font-medium border transition-colors",
                       language === lang
                         ? "bg-accent border-accent text-white"
                         : "bg-white border-gray-200 text-gray-700 hover:border-gray-300",

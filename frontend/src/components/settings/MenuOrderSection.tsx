@@ -42,7 +42,7 @@ function SortableMenuOrderItem({ config, onToggle }: SortableMenuOrderItemProps)
     <div
       ref={setNodeRef}
       style={dragStyle}
-      className={cn("flex items-center gap-3 px-4 py-3", isDragging && "opacity-50")}
+      className={cn("flex items-center gap-2 px-3 py-2", isDragging && "opacity-50")}
     >
       <button
         type="button"
@@ -71,15 +71,15 @@ function SortableMenuOrderItem({ config, onToggle }: SortableMenuOrderItemProps)
         aria-label={t("settings.menuOrderToggle", { label: t(filterItem.labelKey) })}
         onClick={onToggle}
         className={cn(
-          "relative inline-flex w-10 h-6 rounded-full transition-colors duration-200 flex-shrink-0",
+          "relative inline-flex w-9 h-5 rounded-full transition-colors duration-200 flex-shrink-0",
           "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2",
           config.visible ? "bg-accent" : "bg-gray-200",
         )}
       >
         <span
           className={cn(
-            "absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow-sm transition-transform duration-200",
-            config.visible && "translate-x-[18px]",
+            "absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white shadow-sm transition-transform duration-200",
+            config.visible && "translate-x-[16px]",
           )}
         />
       </button>
