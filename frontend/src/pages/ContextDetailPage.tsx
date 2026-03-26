@@ -1,18 +1,19 @@
 import { useState, useCallback, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { ArrowLeft, MapPin, Plus } from "lucide-react";
+import { ArrowLeft, MapPin, Plus, Pencil, Check, Trash2 } from "lucide-react";
 import { useContextTasks } from "@/hooks/useContextTasks";
 import { useContexts } from "@/hooks/useContexts";
 import { useGoals } from "@/hooks/useGoals";
 import { useCategories } from "@/hooks/useCategories";
 import { usePanelSide } from "@/hooks/usePanelSide";
 import { usePanelOpen } from "@/hooks/usePanelOpen";
+import { useIsUnsynced } from "@/hooks/useIsUnsynced";
 import { TaskCreateSheet } from "@/components/tasks/TaskCreateSheet";
 import { BoxSectionList } from "@/components/tasks/BoxSectionList";
-import { EntityEditSheet } from "@/components/EntityEditSheet";
 import { RightFilterPanel, type RightPanelMode } from "@/components/tasks/RightFilterPanel";
 import { BOX, ROUTES } from "@/constants";
+import { cn } from "@/shared/lib/cn";
 import type { Task } from "@/types/entities";
 import type { Box } from "@/types/common";
 import { TodayBoxIcon, WeekBoxIcon, LaterBoxIcon } from "@/components/tasks/BoxIcons";
@@ -40,13 +41,17 @@ export default function ContextDetailPage() {
     useContextTasks(id ?? "");
 
   const { isPanelOpen, togglePanelOpen } = usePanelOpen();
-  const [isEditSheetOpen, setIsEditSheetOpen] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editName, setEditName] = useState("");
+  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [isCreateTaskSheetOpen, setIsCreateTaskSheetOpen] = useState(false);
 
   const context = useMemo(
     () => contexts.find((c) => c.id === id && !c.is_deleted),
     [contexts, id],
   );
+
+  const isUnsynced = useIsUnsynced(context ?? { updated_at: "" });
 
   const tasksByBox = useMemo(() => {
     const grouped: Record<Box, Task[]> = {
@@ -74,6 +79,20 @@ export default function ContextDetailPage() {
     await deleteContext(id);
     navigate(ROUTES.CONTEXTS);
   }, [id, deleteContext, navigate]);
+
+  const handleStartEdit = useCallback(() => {
+    setEditName(context?.name ?? "");
+    setIsEditing(true);
+  }, [context]);
+
+  const handleConfirmEdit = useCallback(async () => {
+    const trimmedName = editName.trim();
+    if (!trimmedName) return;
+    await handleSaveContext(trimmedName);
+    setIsEditing(false);
+  }, [editName, handleSaveContext]);
+
+  const handleCancelEdit = useCallback(() => setIsEditing(false), []);
 
   const handleCreateTask = useCallback(
     async (title: string, box: Box, notes: string) => {
@@ -121,17 +140,69 @@ export default function ContextDetailPage() {
         <main className="flex-1 overflow-y-auto">
           {/* Context card */}
           {context && (
-            <button
-              type="button"
+            <div
               data-testid="context-card"
-              onClick={() => setIsEditSheetOpen(true)}
-              className="w-full flex items-center gap-3 px-4 py-4 hover:bg-gray-50 active:bg-gray-100 transition-colors border-b border-gray-100"
+              className={cn(
+                "flex items-center gap-3 px-4 py-4 border-b border-gray-100 border-l-2 transition-colors",
+                isUnsynced ? "border-l-amber-400" : "border-l-transparent",
+              )}
             >
+              {isEditing && (
+                <button
+                  type="button"
+                  aria-label={t("context.deleteLabel")}
+                  onClick={() => setIsDeleteConfirmOpen(true)}
+                  className="w-8 h-8 flex items-center justify-center rounded-full text-red-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+                  data-testid="context-delete-btn"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              )}
+
               <div className="w-9 h-9 rounded-xl bg-accent/10 flex items-center justify-center flex-shrink-0">
                 <MapPin className="w-5 h-5 text-accent" />
               </div>
-              <span className="text-gray-800 font-medium">{context.name}</span>
-            </button>
+
+              {isEditing ? (
+                <input
+                  autoFocus
+                  type="text"
+                  value={editName}
+                  onChange={(e) => setEditName(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") void handleConfirmEdit();
+                    if (e.key === "Escape") handleCancelEdit();
+                  }}
+                  className="flex-1 text-gray-800 font-medium text-sm border-b border-accent outline-none bg-transparent"
+                  data-testid="context-name-input"
+                />
+              ) : (
+                <span className="flex-1 text-gray-800 font-medium">{context.name}</span>
+              )}
+
+              {isEditing ? (
+                <button
+                  type="button"
+                  aria-label={t("context.saveName")}
+                  onClick={() => void handleConfirmEdit()}
+                  disabled={!editName.trim()}
+                  className="w-8 h-8 flex items-center justify-center rounded-full text-accent hover:bg-accent/10 transition-colors disabled:opacity-40"
+                  data-testid="context-save-btn"
+                >
+                  <Check className="w-4 h-4" />
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  aria-label={t("context.editName")}
+                  onClick={handleStartEdit}
+                  className="w-8 h-8 flex items-center justify-center rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
+                  data-testid="context-edit-btn"
+                >
+                  <Pencil className="w-4 h-4" />
+                </button>
+              )}
+            </div>
           )}
 
           {/* Task content */}
@@ -162,19 +233,33 @@ export default function ContextDetailPage() {
           </button>
         </div>
 
-        {/* Context edit sheet */}
-        {isEditSheetOpen && context && (
-          <EntityEditSheet
-            testId="context-edit-sheet"
-            title={t("context.editTitle")}
-            initialName={context.name}
-            namePlaceholder={t("context.nameLabel")}
-            deleteLabel={t("context.deleteLabel")}
-            nameInputTestId="context-edit-name-input"
-            onSave={handleSaveContext}
-            onDelete={handleDeleteContext}
-            onClose={() => setIsEditSheetOpen(false)}
-          />
+        {/* Delete confirmation dialog */}
+        {isDeleteConfirmOpen && context && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center">
+            <div className="absolute inset-0 bg-black/40" onClick={() => setIsDeleteConfirmOpen(false)} />
+            <div className="relative w-full max-w-sm mx-4 rounded-2xl bg-white p-6 shadow-xl">
+              <p className="text-base font-semibold text-gray-900 mb-2">{t("context.deleteLabel")}?</p>
+              <p className="text-sm text-gray-500 mb-6">{context.name}</p>
+              <div className="flex justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => setIsDeleteConfirmOpen(false)}
+                  className="rounded-lg bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-200 transition-colors"
+                  data-testid="context-delete-cancel-btn"
+                >
+                  {t("task.cancel")}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => void handleDeleteContext()}
+                  className="rounded-lg bg-red-500 px-4 py-2 text-sm font-medium text-white hover:bg-red-600 transition-colors"
+                  data-testid="context-delete-confirm-btn"
+                >
+                  {t("taskEdit.delete")}
+                </button>
+              </div>
+            </div>
+          </div>
         )}
 
         {/* Task create sheet */}

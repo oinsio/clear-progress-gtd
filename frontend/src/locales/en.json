@@ -94,7 +94,9 @@
     "back": "Back",
     "notFound": "Context not found",
     "editTitle": "Edit context",
-    "deleteLabel": "Delete context"
+    "deleteLabel": "Delete context",
+    "editName": "Edit name",
+    "saveName": "Save name"
   },
   "category": {
     "empty": "No categories yet",
@@ -108,7 +110,9 @@
     "back": "Back",
     "notFound": "Category not found",
     "editTitle": "Edit category",
-    "deleteLabel": "Delete category"
+    "deleteLabel": "Delete category",
+    "editName": "Edit name",
+    "saveName": "Save name"
   },
   "search": {
     "placeholder": "Tasks and goals...",
