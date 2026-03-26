@@ -32,12 +32,12 @@ function CollapsibleSection({ sectionKey, title, count, children }: CollapsibleS
         type="button"
         onClick={toggleCollapse}
         aria-expanded={!isCollapsed}
-        className="w-full flex items-center justify-between px-4 py-2 border-b border-gray-100 bg-white sticky top-0 z-10 hover:bg-gray-50 transition-colors"
+        className="w-full flex items-center justify-between px-4 py-2 bg-gray-50 sticky top-0 z-10"
       >
-        <h2 className="text-xs font-medium text-gray-400 uppercase tracking-wide">
+        <h2 className="text-sm font-semibold text-accent">
           {title}
           {count > 0 && (
-            <span className="ml-2 text-gray-300">({count})</span>
+            <span className="ml-2 text-accent/50">({count})</span>
           )}
         </h2>
         <ChevronDown
@@ -119,8 +119,8 @@ export default function DeletedPage() {
     <div data-testid="deleted-page" className="relative flex flex-1 overflow-hidden bg-white">
       <div className="flex flex-1 flex-col overflow-hidden">
         <header className="px-4 py-3 border-b border-gray-100 flex items-center gap-2 bg-white">
-          <Trash2 size={16} className="text-gray-400 flex-shrink-0" aria-hidden="true" />
-          <h1 className="text-sm font-medium text-gray-600">{t("deleted.pageTitle")}</h1>
+          <Trash2 size={16} className="text-accent flex-shrink-0" aria-hidden="true" />
+          <h1 className="text-lg font-semibold text-accent">{t("deleted.pageTitle")}</h1>
         </header>
 
         <main className="flex-1 overflow-y-auto">
@@ -152,6 +152,35 @@ export default function DeletedPage() {
                       </button>
                     </div>
                   )}
+                />
+
+                <DeletedSection
+                  sectionKey={SECTION_KEY_CHECKLISTS}
+                  title={t("deleted.checklists")}
+                  items={checklistItems}
+                  renderItem={(item) => {
+                    const parentTaskTitle = taskTitleMap.get(item.task_id);
+                    return (
+                      <div className="flex items-start justify-between gap-2">
+                        <div>
+                          <span className="text-sm text-gray-400 line-through">{item.title}</span>
+                          {parentTaskTitle !== undefined && (
+                            <p className="text-xs text-gray-300 mt-0.5">
+                              {t("deleted.checklistParent", { task: parentTaskTitle })}
+                            </p>
+                          )}
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => void restoreChecklistItem(item.id)}
+                          aria-label={t("deleted.restoreAriaLabel", { title: item.title })}
+                          className="flex-shrink-0 p-1.5 text-gray-300 hover:text-gray-500 transition-colors"
+                        >
+                          <ArchiveRestore size={16} aria-hidden="true" />
+                        </button>
+                      </div>
+                    );
+                  }}
                 />
 
                 <DeletedSection
@@ -209,35 +238,6 @@ export default function DeletedPage() {
                       </button>
                     </div>
                   )}
-                />
-
-                <DeletedSection
-                  sectionKey={SECTION_KEY_CHECKLISTS}
-                  title={t("deleted.checklists")}
-                  items={checklistItems}
-                  renderItem={(item) => {
-                    const parentTaskTitle = taskTitleMap.get(item.task_id);
-                    return (
-                      <div className="flex items-start justify-between gap-2">
-                        <div>
-                          <span className="text-sm text-gray-400 line-through">{item.title}</span>
-                          {parentTaskTitle !== undefined && (
-                            <p className="text-xs text-gray-300 mt-0.5">
-                              {t("deleted.checklistParent", { task: parentTaskTitle })}
-                            </p>
-                          )}
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => void restoreChecklistItem(item.id)}
-                          aria-label={t("deleted.restoreAriaLabel", { title: item.title })}
-                          className="flex-shrink-0 p-1.5 text-gray-300 hover:text-gray-500 transition-colors"
-                        >
-                          <ArchiveRestore size={16} aria-hidden="true" />
-                        </button>
-                      </div>
-                    );
-                  }}
                 />
               </>
             )}
