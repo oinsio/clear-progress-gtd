@@ -9,12 +9,16 @@ const DEFAULT_MENU_MODE_ORDER: MenuMode[] = [
   "goals",
   "tasks",
   "completed",
+  "deleted",
 ];
 
-const DEFAULT_MENU_ORDER: MenuItemConfig[] = DEFAULT_MENU_MODE_ORDER.map((mode) => ({
-  mode,
-  visible: true,
-}));
+const DEFAULT_MENU_ORDER: MenuItemConfig[] = [
+  ...DEFAULT_MENU_MODE_ORDER.filter((mode) => mode !== "deleted").map((mode) => ({
+    mode,
+    visible: true,
+  })),
+  { mode: "deleted", visible: false },
+];
 
 function loadMenuOrder(): MenuItemConfig[] {
   try {

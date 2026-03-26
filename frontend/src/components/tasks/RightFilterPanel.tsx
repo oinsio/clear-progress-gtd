@@ -8,6 +8,7 @@ import {
   Inbox,
   CircleUser,
   RefreshCw,
+  Trash2,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
@@ -26,6 +27,7 @@ export type RightPanelMode =
   | "goals"
   | "contexts"
   | "categories"
+  | "deleted"
   | "search"
   | null;
 
@@ -43,6 +45,7 @@ export const FILTER_ITEMS: FilterItem[] = [
   { mode: "goals", labelKey: "filter.goals", Icon: Target, route: ROUTES.GOALS },
   { mode: "tasks", labelKey: "filter.tasks", Icon: CheckSquare },
   { mode: "completed", labelKey: "filter.completed", Icon: CheckCheck },
+  { mode: "deleted", labelKey: "filter.deleted", Icon: Trash2, route: ROUTES.DELETED },
 ];
 
 const FILTER_ITEMS_MAP: Record<MenuMode, FilterItem> = Object.fromEntries(

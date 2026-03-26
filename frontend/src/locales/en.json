@@ -130,7 +130,8 @@
     "completed": "Completed",
     "close": "Close panel",
     "open": "Open panel",
-    "search": "Search"
+    "search": "Search",
+    "deleted": "Deleted"
   },
   "settings": {
     "title": "Settings",
@@ -269,6 +270,18 @@
     "emptyHint": "Click on a task to view its details",
     "delete": "Delete task",
     "close": "Close"
+  },
+  "deleted": {
+    "pageTitle": "Deleted",
+    "loading": "Loading...",
+    "empty": "No deleted records",
+    "sectionEmpty": "Nothing deleted",
+    "tasks": "Tasks",
+    "goals": "Goals",
+    "contexts": "Contexts",
+    "categories": "Categories",
+    "checklists": "Checklists",
+    "checklistParent": "Task: {{task}}"
   },
   "sync": {
     "syncing": "Syncing...",

@@ -14,6 +14,7 @@ export const ROUTES = {
   SEARCH: "/search",
   SETTINGS: "/settings",
   SETUP: "/setup",
+  DELETED: "/deleted",
 } as const;
 
 export const BOX = {

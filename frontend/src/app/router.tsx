@@ -15,6 +15,7 @@ import ContextDetailPage from "@/pages/ContextDetailPage";
 import SearchPage from "@/pages/SearchPage";
 import SettingsPage from "@/pages/SettingsPage";
 import SetupPage from "@/pages/SetupPage";
+import DeletedPage from "@/pages/DeletedPage";
 
 /** All routes share AppShell (provides SideNav on tablet/desktop) */
 function AppLayout() {
@@ -52,6 +53,7 @@ export const router = createBrowserRouter([
       { path: ROUTES.GOALS, element: <GoalsPage /> },
       { path: ROUTES.GOAL, element: <GoalDetailPage /> },
       { path: ROUTES.SEARCH, element: <SearchPage /> },
+      { path: ROUTES.DELETED, element: <DeletedPage /> },
       {
         element: <PageLayout />,
         children: [
