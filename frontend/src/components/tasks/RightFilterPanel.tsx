@@ -12,10 +12,11 @@ import {
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/shared/lib/cn";
-import type { PanelSide } from "@/types/common";
+import type { PanelSide, MenuMode } from "@/types/common";
 import { ROUTES } from "@/constants";
 import { useSync } from "@/app/providers/SyncProvider";
 import { useBackendConnected } from "@/hooks/useBackendConnected";
+import { useMenuOrder } from "@/hooks/useMenuOrder";
 import * as React from "react";
 
 export type RightPanelMode =
@@ -28,14 +29,14 @@ export type RightPanelMode =
   | "search"
   | null;
 
-interface FilterItem {
-  mode: Exclude<RightPanelMode, "search" | null>;
+export interface FilterItem {
+  mode: MenuMode;
   labelKey: string;
   Icon: React.ElementType;
   route?: string;
 }
 
-const FILTER_ITEMS: FilterItem[] = [
+export const FILTER_ITEMS: FilterItem[] = [
   { mode: "inbox", labelKey: "filter.inbox", Icon: Inbox },
   { mode: "contexts", labelKey: "filter.contexts", Icon: MapPin, route: ROUTES.CONTEXTS },
   { mode: "categories", labelKey: "filter.categories", Icon: Tag, route: ROUTES.CATEGORIES },
@@ -43,6 +44,10 @@ const FILTER_ITEMS: FilterItem[] = [
   { mode: "tasks", labelKey: "filter.tasks", Icon: CheckSquare },
   { mode: "completed", labelKey: "filter.completed", Icon: CheckCheck },
 ];
+
+const FILTER_ITEMS_MAP: Record<MenuMode, FilterItem> = Object.fromEntries(
+  FILTER_ITEMS.map((item) => [item.mode, item]),
+) as Record<MenuMode, FilterItem>;
 
 interface RightFilterPanelProps {
   mode: RightPanelMode;
@@ -63,6 +68,11 @@ export function RightFilterPanel({
   const { t } = useTranslation();
   const { syncStatus, pull } = useSync();
   const isBackendConnected = useBackendConnected();
+  const { menuOrder } = useMenuOrder();
+
+  const visibleFilterItems = menuOrder
+    .filter((config) => config.visible)
+    .map((config) => FILTER_ITEMS_MAP[config.mode]);
 
   const isSyncing = syncStatus === "syncing";
   const hasSyncError = syncStatus === "error" || syncStatus === "offline";
@@ -154,7 +164,7 @@ export function RightFilterPanel({
 
           {/* Filter items */}
           <nav className="flex-1 px-2 py-2 overflow-y-auto" aria-label={t("filter.open")}>
-            {FILTER_ITEMS.map(({ mode: itemMode, labelKey, Icon, route }) => {
+            {visibleFilterItems.map(({ mode: itemMode, labelKey, Icon, route }) => {
               const isActive = mode === itemMode;
               const label = t(labelKey);
               return (
@@ -241,7 +251,7 @@ export function RightFilterPanel({
 
           {/* All filter icons */}
           <nav className="flex-1 flex flex-col items-center gap-1 py-1 overflow-y-auto" aria-label={t("filter.open")}>
-            {FILTER_ITEMS.map(({ mode: itemMode, labelKey, Icon, route }) => {
+            {visibleFilterItems.map(({ mode: itemMode, labelKey, Icon, route }) => {
               const isActive = mode === itemMode;
               const label = t(labelKey);
               return (

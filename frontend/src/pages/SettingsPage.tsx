@@ -10,6 +10,7 @@ import { useSync } from "@/app/providers/SyncProvider";
 import { RightFilterPanel, type RightPanelMode } from "@/components/tasks/RightFilterPanel";
 import { ConfirmFullSyncDialog } from "@/components/settings/ConfirmFullSyncDialog";
 import { ConfirmDisconnectDialog } from "@/components/settings/ConfirmDisconnectDialog";
+import { MenuOrderSection } from "@/components/settings/MenuOrderSection";
 import { BOX_ORDER, ACCENT_COLORS, ACCENT_COLOR_VALUES, PANEL_SIDES, ROUTES, STORAGE_KEYS, SUPPORTED_LANGUAGES, BACKEND_CONNECTION_EVENT } from "@/constants";
 import type { Box, AccentColor, PanelSide } from "@/types/common";
 import type { Language } from "@/constants";
@@ -192,6 +193,9 @@ export default function SettingsPage() {
                 ))}
               </div>
             </section>
+
+            {/* Menu order section */}
+            <MenuOrderSection />
 
             {/* Sync section */}
             <section data-testid="settings-sync" className="space-y-3">

@@ -160,7 +160,11 @@
     "disconnectConfirmTitle": "Отключить синхронизацию?",
     "disconnectConfirmDescription": "Приложение перестанет синхронизироваться с сервером. Локальные данные сохранятся.",
     "disconnectConfirm": "Отключить",
-    "disconnectCancel": "Отмена"
+    "disconnectCancel": "Отмена",
+    "menuOrder": "Пункты диагностики",
+    "menuOrderHint": "Тащите. Выключайте. Хаус одобряет.",
+    "menuOrderDragHandle": "Переместить: {{label}}",
+    "menuOrderToggle": "Показать/скрыть: {{label}}"
   },
   "setup": {
     "title": "Подключение к кислороду",

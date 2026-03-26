@@ -34,6 +34,13 @@ export type RepeatRuleType =
 
 export type PanelSide = "left" | "right";
 
+export type MenuMode = "inbox" | "contexts" | "categories" | "goals" | "tasks" | "completed";
+
+export interface MenuItemConfig {
+  mode: MenuMode;
+  visible: boolean;
+}
+
 export interface RepeatRule {
   type: RepeatRuleType;
   days?: number[];

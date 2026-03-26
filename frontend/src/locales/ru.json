@@ -160,7 +160,11 @@
     "disconnectConfirmTitle": "Отключить синхронизацию?",
     "disconnectConfirmDescription": "Приложение перестанет синхронизироваться с сервером. Локальные данные сохранятся.",
     "disconnectConfirm": "Отключить",
-    "disconnectCancel": "Отмена"
+    "disconnectCancel": "Отмена",
+    "menuOrder": "Пункты меню",
+    "menuOrderHint": "Перетащите, чтобы изменить порядок. Отключённые пункты скрыты в панели.",
+    "menuOrderDragHandle": "Переместить: {{label}}",
+    "menuOrderToggle": "Показать/скрыть: {{label}}"
   },
   "setup": {
     "title": "Подключение к аккаунту",

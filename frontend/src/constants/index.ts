@@ -83,6 +83,7 @@ export const SYNC_DEBOUNCE_MS = 15 * 1000;
 export const PING_INTERVAL_MS = 30 * 1000;
 
 export const BACKEND_CONNECTION_EVENT = "backend_connection_changed";
+export const MENU_ORDER_CHANGED_EVENT = "menu_order_changed";
 
 export const DB_NAME = "clear-progress";
 export const DB_VERSION = 3;
@@ -97,6 +98,7 @@ export const STORAGE_KEYS = {
   PANEL_OPEN: "panel_open",
   LANGUAGE: "language",
   PANEL_SPLIT: "panel_split",
+  MENU_ORDER: "menu_order",
 } as const;
 
 export const PANEL_SPLIT_DEFAULT_RATIO = 0.5;

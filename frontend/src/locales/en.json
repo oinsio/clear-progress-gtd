@@ -160,7 +160,11 @@
     "disconnectConfirmTitle": "Disconnect sync?",
     "disconnectConfirmDescription": "The app will stop syncing with the server. Local data will be preserved.",
     "disconnectConfirm": "Disconnect",
-    "disconnectCancel": "Cancel"
+    "disconnectCancel": "Cancel",
+    "menuOrder": "Menu items",
+    "menuOrderHint": "Drag to reorder. Hidden items won't appear in the panel.",
+    "menuOrderDragHandle": "Move: {{label}}",
+    "menuOrderToggle": "Show/hide: {{label}}"
   },
   "setup": {
     "title": "Backend connection",
