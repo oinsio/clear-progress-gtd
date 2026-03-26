@@ -1,7 +1,8 @@
-import { useState, useCallback, useRef, useEffect, useMemo } from "react";
+import { useState, useCallback, useMemo, useRef } from "react";
 import { useLocation } from "react-router-dom";
 import { Plus, ChevronDown } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { AddTaskInput } from "@/components/tasks/AddTaskInput";
 import { TaskList } from "@/components/tasks/TaskList";
 import { TaskDetailPanel } from "@/components/tasks/TaskDetailPanel";
 import { BoxFilterBar } from "@/components/tasks/BoxFilterBar";
@@ -95,52 +96,6 @@ function TaskSection({
   );
 }
 
-function AddTaskInput({
-  targetBox,
-  onAdd,
-  onCancel,
-}: {
-  targetBox: string;
-  onAdd: (title: string) => Promise<void>;
-  onCancel: () => void;
-}) {
-  const { t } = useTranslation();
-  const [inputValue, setInputValue] = useState("");
-  const inputRef = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    inputRef.current?.focus();
-  }, []);
-
-  const handleKeyDown = useCallback(
-    async (event: React.KeyboardEvent<HTMLInputElement>) => {
-      if (event.key === "Enter" && inputValue.trim()) {
-        await onAdd(inputValue.trim());
-        setInputValue("");
-      } else if (event.key === "Escape") {
-        onCancel();
-      }
-    },
-    [inputValue, onAdd, onCancel],
-  );
-
-  return (
-    <div className="px-4 py-3 border-b border-gray-100 flex items-center gap-3">
-      <div className="w-5 h-5 rounded-full border-2 border-accent flex-shrink-0" />
-      <input
-        ref={inputRef}
-        type="text"
-        value={inputValue}
-        onChange={(event) => setInputValue(event.target.value)}
-        onKeyDown={handleKeyDown}
-        onBlur={onCancel}
-        placeholder={t("task.addPlaceholder", { box: targetBox })}
-        className="flex-1 text-sm outline-none placeholder:text-gray-400"
-        data-testid="add-task-input"
-      />
-    </div>
-  );
-}
 
 export default function InboxPage() {
   const { t } = useTranslation();

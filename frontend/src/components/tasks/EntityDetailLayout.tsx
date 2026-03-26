@@ -8,7 +8,8 @@ import { usePanelOpen } from "@/hooks/usePanelOpen";
 import { useIsUnsynced } from "@/hooks/useIsUnsynced";
 import { useIsDesktop } from "@/hooks/useIsDesktop";
 import { usePanelSplit } from "@/hooks/usePanelSplit";
-import { TaskCreateSheet } from "@/components/tasks/TaskCreateSheet";
+import { useSettings } from "@/hooks/useSettings";
+import { AddTaskInput } from "@/components/tasks/AddTaskInput";
 import { TaskDetailPanel } from "@/components/tasks/TaskDetailPanel";
 import { BoxSectionList } from "@/components/tasks/BoxSectionList";
 import { RightFilterPanel, type RightPanelMode } from "@/components/tasks/RightFilterPanel";
@@ -82,7 +83,8 @@ export function EntityDetailLayout({
   const [isEditing, setIsEditing] = useState(false);
   const [editName, setEditName] = useState("");
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
-  const [isCreateTaskSheetOpen, setIsCreateTaskSheetOpen] = useState(false);
+  const [isAddingTask, setIsAddingTask] = useState(false);
+  const { defaultBox } = useSettings();
 
   const tasksByBox = useMemo(() => {
     const grouped: Record<Box, Task[]> = {
@@ -224,6 +226,18 @@ export function EntityDetailLayout({
             </div>
           )}
 
+          {/* Inline task creation input */}
+          {isAddingTask && (
+            <AddTaskInput
+              targetBox={t(`box.${defaultBox}`)}
+              onAdd={async (title) => {
+                await onCreateTask(title, defaultBox, "");
+                setIsAddingTask(false);
+              }}
+              onCancel={() => setIsAddingTask(false)}
+            />
+          )}
+
           {/* Task content */}
           <BoxSectionList
             isLoading={isLoading}
@@ -231,7 +245,7 @@ export function EntityDetailLayout({
             goals={goals}
             contexts={contexts}
             categories={categories}
-            onAddPromptClick={() => setIsCreateTaskSheetOpen(true)}
+            onAddPromptClick={() => setIsAddingTask(true)}
             onComplete={onCompleteTask}
             onUpdate={onUpdateTask}
             onMove={onMoveTask}
@@ -247,7 +261,7 @@ export function EntityDetailLayout({
             type="button"
             aria-label={t("task.add")}
             data-testid="add-task-button"
-            onClick={() => setIsCreateTaskSheetOpen(true)}
+            onClick={() => setIsAddingTask(true)}
             className="w-10 h-10 bg-accent text-white rounded-full flex items-center justify-center shadow-md hover:bg-accent/80 active:bg-accent/70 transition-colors"
           >
             <Plus className="w-5 h-5" aria-hidden="true" />
@@ -283,16 +297,7 @@ export function EntityDetailLayout({
           </div>
         )}
 
-        {/* Task create sheet */}
-        {isCreateTaskSheetOpen && entity && (
-          <TaskCreateSheet
-            entityLabel={t(i18nKeys.title)}
-            entityName={entity.name}
-            entityIcon={Icon}
-            onSave={onCreateTask}
-            onClose={() => setIsCreateTaskSheetOpen(false)}
-          />
-        )}
+
       </div>
 
       {/* Resize handle between task list and detail panel */}

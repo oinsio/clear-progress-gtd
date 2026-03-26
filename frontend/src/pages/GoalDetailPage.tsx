@@ -6,7 +6,6 @@ import {
   Pencil,
   CheckCheck,
   Plus,
-  Target,
   CircleMinus,
   Pause,
   Square,
@@ -27,7 +26,8 @@ import { usePanelOpen } from "@/hooks/usePanelOpen";
 import { useRightPanelNavigation } from "@/hooks/useRightPanelNavigation";
 import { useIsDesktop } from "@/hooks/useIsDesktop";
 import { usePanelSplit } from "@/hooks/usePanelSplit";
-import { TaskCreateSheet } from "@/components/tasks/TaskCreateSheet";
+import { useSettings } from "@/hooks/useSettings";
+import { AddTaskInput } from "@/components/tasks/AddTaskInput";
 import { TaskDetailPanel } from "@/components/tasks/TaskDetailPanel";
 import { BoxSectionList } from "@/components/tasks/BoxSectionList";
 import { TaskList } from "@/components/tasks/TaskList";
@@ -86,9 +86,11 @@ export default function GoalDetailPage() {
   const isDesktop = useIsDesktop();
   const { ratio, containerRef: splitContainerRef, handleResizeMouseDown } = usePanelSplit();
 
+  const { defaultBox } = useSettings();
+
   // view state
   const [isEditing, setIsEditing] = useState(false);
-  const [isCreateTaskSheetOpen, setIsCreateTaskSheetOpen] = useState(false);
+  const [isAddingTask, setIsAddingTask] = useState(false);
   const [showCompleted, setShowCompleted] = useState(false);
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
 
@@ -492,6 +494,18 @@ export default function GoalDetailPage() {
               </div>
             )}
 
+            {/* Inline task creation input */}
+            {isAddingTask && (
+              <AddTaskInput
+                targetBox={t(`box.${defaultBox}`)}
+                onAdd={async (title) => {
+                  await handleCreateTask(title, defaultBox, "");
+                  setIsAddingTask(false);
+                }}
+                onCancel={() => setIsAddingTask(false)}
+              />
+            )}
+
             {/* Active tasks by box */}
             <BoxSectionList
               isLoading={isLoading}
@@ -499,7 +513,7 @@ export default function GoalDetailPage() {
               goals={goals}
               contexts={contexts}
               categories={categories}
-              onAddPromptClick={() => setIsCreateTaskSheetOpen(true)}
+              onAddPromptClick={() => setIsAddingTask(true)}
               onComplete={completeTask}
               onUpdate={updateTask}
               onMove={moveTask}
@@ -536,23 +550,13 @@ export default function GoalDetailPage() {
               type="button"
               aria-label={t("task.add")}
               data-testid="add-task-button"
-              onClick={() => setIsCreateTaskSheetOpen(true)}
+              onClick={() => setIsAddingTask(true)}
               className="w-10 h-10 bg-accent text-white rounded-full flex items-center justify-center shadow-md hover:bg-accent/80 active:bg-accent/70 transition-colors"
             >
               <Plus className="w-5 h-5" aria-hidden="true" />
             </button>
           </div>
 
-          {/* Task create sheet */}
-          {isCreateTaskSheetOpen && goal && (
-            <TaskCreateSheet
-              entityLabel={t("selector.goal")}
-              entityName={goal.title}
-              entityIcon={Target}
-              onSave={handleCreateTask}
-              onClose={() => setIsCreateTaskSheetOpen(false)}
-            />
-          )}
         </div>
 
         {/* Resize handle between task list and detail panel */}
