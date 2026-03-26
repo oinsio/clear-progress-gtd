@@ -252,7 +252,7 @@ describe("TaskEditModal", () => {
 });
 
 describe("TaskEditModal — checklist tab", () => {
-  it("should show Детали and Чеклист tabs", async () => {
+  it("should show Детали and Чек-лист tabs", async () => {
     renderModal({ checklistService: buildMockChecklistService() });
     expect(screen.getByTestId("task-edit-tab-details")).toBeInTheDocument();
     expect(screen.getByTestId("task-edit-tab-checklist")).toBeInTheDocument();
@@ -264,7 +264,7 @@ describe("TaskEditModal — checklist tab", () => {
     expect(screen.queryByTestId("task-edit-checklist-panel")).not.toBeInTheDocument();
   });
 
-  it("should show checklist panel when Чеклист tab is clicked", async () => {
+  it("should show checklist panel when Чек-лист tab is clicked", async () => {
     renderModal({ checklistService: buildMockChecklistService() });
     await userEvent.click(screen.getByTestId("task-edit-tab-checklist"));
     expect(screen.getByTestId("task-edit-checklist-panel")).toBeInTheDocument();
@@ -281,12 +281,12 @@ describe("TaskEditModal — checklist tab", () => {
       buildChecklistItem({ task_id: taskId, is_completed: false }),
     ];
     renderModal({ task, checklistService: buildMockChecklistService(items) });
-    expect(await screen.findByTestId("task-edit-tab-checklist")).toHaveTextContent("Чеклист (2/4)");
+    expect(await screen.findByTestId("task-edit-tab-checklist")).toHaveTextContent("Чек-лист (2/4)");
   });
 
-  it("should show Чеклист without progress when no items", async () => {
+  it("should show Чек-лист without progress when no items", async () => {
     renderModal({ checklistService: buildMockChecklistService([]) });
-    expect(await screen.findByTestId("task-edit-tab-checklist")).toHaveTextContent("Чеклист");
+    expect(await screen.findByTestId("task-edit-tab-checklist")).toHaveTextContent("Чек-лист");
     expect(screen.getByTestId("task-edit-tab-checklist")).not.toHaveTextContent("(");
   });
 
