@@ -1,5 +1,7 @@
+import { ChevronDown } from "lucide-react";
 import { TaskList } from "@/components/tasks/TaskList";
 import { BOX, BOX_FILTER_LABELS } from "@/constants";
+import { useSectionCollapse } from "@/hooks/useSectionCollapse";
 import type { Task, Goal, Context, Category } from "@/types/entities";
 import type { Box } from "@/types/common";
 
@@ -13,6 +15,65 @@ const BOX_SECTION_LABELS: Record<Box, string> = {
   [BOX.WEEK]: BOX_FILTER_LABELS.week,
   [BOX.LATER]: BOX_FILTER_LABELS.later,
 };
+
+const BOX_SECTION_KEYS: Record<Box, string> = {
+  [BOX.INBOX]: "inbox",
+  [BOX.TODAY]: "today",
+  [BOX.WEEK]: "week",
+  [BOX.LATER]: "later",
+};
+
+interface BoxSectionProps {
+  box: Box;
+  tasks: Task[];
+  goals: Goal[];
+  contexts: Context[];
+  categories: Category[];
+  onComplete: (id: string) => void;
+  onUpdate: (id: string, changes: Partial<Task>) => Promise<void>;
+  onMove: (id: string, box: Box) => Promise<void>;
+  onDelete: (id: string) => void;
+}
+
+function BoxSection({
+  box,
+  tasks,
+  goals,
+  contexts,
+  categories,
+  onComplete,
+  onUpdate,
+  onMove,
+  onDelete,
+}: BoxSectionProps) {
+  const { isCollapsed, toggleCollapse } = useSectionCollapse(BOX_SECTION_KEYS[box]);
+  return (
+    <section>
+      <button
+        type="button"
+        onClick={toggleCollapse}
+        className="w-full flex items-center justify-between px-4 py-2 text-sm font-semibold text-accent bg-gray-50 sticky top-0"
+      >
+        <span>{BOX_SECTION_LABELS[box]} ({tasks.length})</span>
+        <ChevronDown
+          className={`w-4 h-4 transition-transform duration-200 ${isCollapsed ? "-rotate-90" : ""}`}
+        />
+      </button>
+      {!isCollapsed && (
+        <TaskList
+          tasks={tasks}
+          goals={goals}
+          contexts={contexts}
+          categories={categories}
+          onComplete={onComplete}
+          onUpdate={onUpdate}
+          onMove={onMove}
+          onDelete={onDelete}
+        />
+      )}
+    </section>
+  );
+}
 
 interface BoxSectionListProps {
   isLoading: boolean;
@@ -60,21 +121,18 @@ export function BoxSectionList({
         const boxTasks = tasksByBox[box];
         if (boxTasks.length === 0) return null;
         return (
-          <section key={box}>
-            <h2 className="px-4 py-2 text-sm font-semibold text-accent bg-gray-50 sticky top-0">
-              {BOX_SECTION_LABELS[box]} ({boxTasks.length})
-            </h2>
-            <TaskList
-              tasks={boxTasks}
-              goals={goals}
-              contexts={contexts}
-              categories={categories}
-              onComplete={onComplete}
-              onUpdate={onUpdate}
-              onMove={onMove}
-              onDelete={onDelete}
-            />
-          </section>
+          <BoxSection
+            key={box}
+            box={box}
+            tasks={boxTasks}
+            goals={goals}
+            contexts={contexts}
+            categories={categories}
+            onComplete={onComplete}
+            onUpdate={onUpdate}
+            onMove={onMove}
+            onDelete={onDelete}
+          />
         );
       })}
     </>

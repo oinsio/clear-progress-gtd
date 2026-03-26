@@ -1,6 +1,6 @@
 import { useState, useCallback, useRef, useEffect, useMemo } from "react";
 import { useLocation } from "react-router-dom";
-import { Plus } from "lucide-react";
+import { Plus, ChevronDown } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { TaskList } from "@/components/tasks/TaskList";
 import { TaskDetailPanel } from "@/components/tasks/TaskDetailPanel";
@@ -14,6 +14,7 @@ import { useCompletedTasks } from "@/hooks/useCompletedTasks";
 import { useSearch } from "@/hooks/useSearch";
 import { usePanelSide } from "@/hooks/usePanelSide";
 import { usePanelOpen } from "@/hooks/usePanelOpen";
+import { useSectionCollapse } from "@/hooks/useSectionCollapse";
 import { useIsDesktop } from "@/hooks/useIsDesktop";
 import { usePanelSplit } from "@/hooks/usePanelSplit";
 import type { BoxFilter, Box } from "@/types/common";
@@ -26,6 +27,7 @@ import * as React from "react";
 const SEARCH_DEBOUNCE_MS = 300;
 
 function TaskSection({
+  sectionKey,
   label,
   tasks,
   goals,
@@ -42,6 +44,7 @@ function TaskSection({
   onSelect,
   selectedTaskId,
 }: {
+  sectionKey: string;
   label: string;
   tasks: Task[];
   goals: ReturnType<typeof useGoals>["goals"];
@@ -58,12 +61,20 @@ function TaskSection({
   onSelect?: (id: string) => void;
   selectedTaskId?: string | null;
 }) {
+  const { isCollapsed, toggleCollapse } = useSectionCollapse(sectionKey);
   return (
     <section>
-      <h2 className="px-4 py-2 text-sm font-semibold text-accent bg-gray-50 sticky top-0">
-        {label} ({tasks.length})
-      </h2>
-      {(!hideEmptyState || tasks.length > 0) && (
+      <button
+        type="button"
+        onClick={toggleCollapse}
+        className="w-full flex items-center justify-between px-4 py-2 text-sm font-semibold text-accent bg-gray-50 sticky top-0"
+      >
+        <span>{label} ({tasks.length})</span>
+        <ChevronDown
+          className={`w-4 h-4 transition-transform duration-200 ${isCollapsed ? "-rotate-90" : ""}`}
+        />
+      </button>
+      {!isCollapsed && (!hideEmptyState || tasks.length > 0) && (
         <TaskList
           tasks={tasks}
           goals={goals}
@@ -385,6 +396,8 @@ export default function InboxPage() {
             />
           )}
           <TaskSection
+            key="inbox"
+            sectionKey="inbox"
             label={t("section.inbox")}
             tasks={applyFilters(inboxTasks)}
             goals={goals}
@@ -408,6 +421,8 @@ export default function InboxPage() {
         <>
           {todayCompletedTasks.length > 0 && (
             <TaskSection
+              key="completed_today"
+              sectionKey="completed_today"
               label={t("section.today")}
               tasks={todayCompletedTasks}
               goals={goals}
@@ -422,6 +437,8 @@ export default function InboxPage() {
           )}
           {yesterdayCompletedTasks.length > 0 && (
             <TaskSection
+              key="completed_yesterday"
+              sectionKey="completed_yesterday"
               label={t("section.completedYesterday")}
               tasks={yesterdayCompletedTasks}
               goals={goals}
@@ -436,6 +453,8 @@ export default function InboxPage() {
           )}
           {weekCompletedTasks.length > 0 && (
             <TaskSection
+              key="completed_week"
+              sectionKey="completed_week"
               label={t("section.completedWeek")}
               tasks={weekCompletedTasks}
               goals={goals}
@@ -450,6 +469,8 @@ export default function InboxPage() {
           )}
           {monthCompletedTasks.length > 0 && (
             <TaskSection
+              key="completed_month"
+              sectionKey="completed_month"
               label={t("section.completedMonth")}
               tasks={monthCompletedTasks}
               goals={goals}
@@ -464,6 +485,8 @@ export default function InboxPage() {
           )}
           {earlierCompletedTasks.length > 0 && (
             <TaskSection
+              key="completed_earlier"
+              sectionKey="completed_earlier"
               label={t("section.completedEarlier")}
               tasks={earlierCompletedTasks}
               goals={goals}
@@ -507,6 +530,8 @@ export default function InboxPage() {
             />
           )}
           <TaskSection
+            key="today"
+            sectionKey="today"
             label={t("section.today")}
             tasks={visibleTodayTasks}
             goals={goals}
@@ -521,6 +546,8 @@ export default function InboxPage() {
             {...sharedSelectProps}
           />
           <TaskSection
+            key="week"
+            sectionKey="week"
             label={t("section.week")}
             tasks={visibleWeekTasks}
             goals={goals}
@@ -535,6 +562,8 @@ export default function InboxPage() {
             {...sharedSelectProps}
           />
           <TaskSection
+            key="later"
+            sectionKey="later"
             label={t("section.later")}
             tasks={visibleLaterTasks}
             goals={goals}
@@ -550,6 +579,8 @@ export default function InboxPage() {
           />
           {todayCompletedTasks.length > 0 && (
             <TaskSection
+              key="all_completed_today"
+              sectionKey="all_completed_today"
               label={t("section.completedToday")}
               tasks={todayCompletedTasks}
               goals={goals}

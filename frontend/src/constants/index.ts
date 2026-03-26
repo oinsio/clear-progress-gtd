@@ -99,6 +99,7 @@ export const STORAGE_KEYS = {
   LANGUAGE: "language",
   PANEL_SPLIT: "panel_split",
   MENU_ORDER: "menu_order",
+  SECTION_COLLAPSE: "section_collapse",
 } as const;
 
 export const PANEL_SPLIT_DEFAULT_RATIO = 0.5;
