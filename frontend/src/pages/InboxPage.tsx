@@ -256,6 +256,7 @@ export default function InboxPage() {
 
   const handleModeChange = useCallback(
     (newMode: RightPanelMode) => {
+      setSelectedTaskId(null);
       setFilterMode(newMode);
       if (newMode !== "search") {
         setSearchQuery("");
@@ -346,10 +347,10 @@ export default function InboxPage() {
   );
 
   const selectedTask = useMemo(() => {
-    if (!selectedTaskId || !isDesktop) return null;
+    if (!selectedTaskId) return null;
     const allTasks = [...inboxTasks, ...todayTasks, ...weekTasks, ...laterTasks, ...completedTasks];
     return allTasks.find((task) => task.id === selectedTaskId) ?? null;
-  }, [selectedTaskId, isDesktop, inboxTasks, todayTasks, weekTasks, laterTasks, completedTasks]);
+  }, [selectedTaskId, inboxTasks, todayTasks, weekTasks, laterTasks, completedTasks]);
 
   const sharedSelectProps = {
     onSelect: handleTaskSelect,
@@ -610,7 +611,7 @@ export default function InboxPage() {
 
       {/* Main content column */}
       <div
-        className="flex flex-col overflow-hidden"
+        className={cn("flex flex-col overflow-hidden", !isDesktop && selectedTask && "hidden")}
         style={isDesktop && selectedTask ? { width: `${ratio * 100}%`, flexShrink: 0 } : { flex: "1 1 0" }}
       >
         {/* Search header */}
@@ -668,8 +669,8 @@ export default function InboxPage() {
         />
       )}
 
-      {/* Task detail panel — shown on desktop when a task is selected */}
-      {isDesktop && selectedTask && (
+      {/* Task detail panel — shown when a task is selected (desktop: side panel, mobile: full screen) */}
+      {selectedTask && (
         <TaskDetailPanel
           task={selectedTask}
           goals={goals}
@@ -688,7 +689,7 @@ export default function InboxPage() {
             void deleteFn(id);
           }}
           onClose={handleDetailPanelClose}
-          style={{ width: `${(1 - ratio) * 100}%`, flexShrink: 0 }}
+          style={isDesktop ? { width: `${(1 - ratio) * 100}%`, flexShrink: 0 } : { flex: "1 1 0" }}
         />
       )}
 

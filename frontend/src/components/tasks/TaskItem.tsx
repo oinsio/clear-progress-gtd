@@ -7,7 +7,6 @@ import type { Box } from "@/types/common";
 import { cn } from "@/shared/lib/cn";
 import { formatCompletedAt } from "@/shared/lib/utils";
 import { TaskQuickActions } from "./TaskQuickActions";
-import { TaskEditModal } from "./TaskEditModal";
 import { useChecklist } from "@/hooks/useChecklist";
 import { useIsUnsynced } from "@/hooks/useIsUnsynced";
 import { useIsDesktop } from "@/hooks/useIsDesktop";
@@ -33,14 +32,13 @@ interface TaskItemProps {
   isSelected?: boolean;
 }
 
-export function TaskItem({ task, goals, contexts, categories, onComplete, onUpdate, onMove, onDelete, dragHandleProps, onSelect, isSelected }: TaskItemProps) {
+export function TaskItem({ task, goals, contexts, categories, onComplete, onUpdate, onMove, dragHandleProps, onSelect, isSelected }: TaskItemProps) {
   const { t } = useTranslation();
-  const { progress: checklistProgress, hasUnsyncedItems, reload: reloadChecklist } = useChecklist(task.id);
+  const { progress: checklistProgress, hasUnsyncedItems } = useChecklist(task.id);
   const isTaskUnsynced = useIsUnsynced(task);
   const isUnsynced = isTaskUnsynced || hasUnsyncedItems;
   const isDesktop = useIsDesktop();
   const [isExpanded, setIsExpanded] = useState(false);
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isConfirmingRestore, setIsConfirmingRestore] = useState(false);
 
   const handleBodyClick = useCallback(() => {
@@ -52,17 +50,11 @@ export function TaskItem({ task, goals, contexts, categories, onComplete, onUpda
   }, [isDesktop, onSelect, task.id]);
 
   const handleOpenEdit = useCallback(() => {
-    if (isDesktop && onSelect) {
+    if (onSelect) {
       onSelect(task.id);
-    } else {
-      setIsEditModalOpen(true);
-      setIsExpanded(false);
     }
-  }, [isDesktop, onSelect, task.id]);
-
-  const handleCloseEdit = useCallback(() => {
-    setIsEditModalOpen(false);
-  }, []);
+    setIsExpanded(false);
+  }, [onSelect, task.id]);
 
   const handleCompleteClick = useCallback(() => {
     if (task.is_completed) {
@@ -216,18 +208,6 @@ export function TaskItem({ task, goals, contexts, categories, onComplete, onUpda
         )}
       </div>
 
-      {/* Full edit modal */}
-      <TaskEditModal
-        task={task}
-        goals={goals}
-        contexts={contexts}
-        categories={categories}
-        isOpen={isEditModalOpen}
-        onClose={handleCloseEdit}
-        onUpdate={onUpdate}
-        onDelete={onDelete}
-        onChecklistChange={reloadChecklist}
-      />
     </>
   );
 }
