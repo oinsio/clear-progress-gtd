@@ -31,16 +31,16 @@ describe("BottomNav", () => {
     expect(screen.getByRole("link", { name: /поиск/i })).toBeInTheDocument();
   });
 
-  it("should mark Inbox as active when on /inbox route", () => {
-    renderWithRouter(["/inbox"]);
+  it("should mark Inbox as active when on /tasks route", () => {
+    renderWithRouter(["/tasks"]);
     expect(screen.getByRole("link", { name: /входящие/i })).toHaveAttribute(
       "aria-current",
       "page",
     );
   });
 
-  it("should not mark Today as active when on /inbox route", () => {
-    renderWithRouter(["/inbox"]);
+  it("should not mark Today as active when on /tasks route", () => {
+    renderWithRouter(["/tasks"]);
     expect(screen.getByRole("link", { name: /сегодня/i })).not.toHaveAttribute(
       "aria-current",
     );

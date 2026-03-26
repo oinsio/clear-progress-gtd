@@ -31,8 +31,8 @@ describe("ROUTES", () => {
     }
   });
 
-  it("should define INBOX as /inbox", () => {
-    expect(ROUTES.INBOX).toBe("/inbox");
+  it("should define INBOX as /tasks", () => {
+    expect(ROUTES.INBOX).toBe("/tasks");
   });
 
   it("should define TODAY as /today", () => {

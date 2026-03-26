@@ -1,7 +1,7 @@
 import type { Box, BoxFilter, AccentColor, PanelSide, RepeatRuleType } from "@/types/common";
 
 export const ROUTES = {
-  INBOX: "/inbox",
+  INBOX: "/tasks",
   TODAY: "/today",
   WEEK: "/week",
   LATER: "/later",
