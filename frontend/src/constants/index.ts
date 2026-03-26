@@ -1,4 +1,4 @@
-import type { Box, BoxFilter, AccentColor, PanelSide, RepeatRuleType } from "@/types/common";
+import type { Box, BoxFilter, AccentColor, PanelSide, RepeatRuleType, ColorScheme } from "@/types/common";
 
 export const ROUTES = {
   INBOX: "/tasks",
@@ -43,6 +43,9 @@ export const DEFAULT_PANEL_SIDE: PanelSide = "right";
 export const PANEL_SIDES: PanelSide[] = ["left", "right"];
 
 export const DEFAULT_ACCENT_COLOR: AccentColor = "green";
+
+export const COLOR_SCHEMES: ColorScheme[] = ["system", "light", "dark"];
+export const DEFAULT_COLOR_SCHEME: ColorScheme = "system";
 
 export const ACCENT_COLORS: AccentColor[] = [
   "coral",
@@ -100,6 +103,7 @@ export const STORAGE_KEYS = {
   PANEL_SPLIT: "panel_split",
   MENU_ORDER: "menu_order",
   SECTION_COLLAPSE: "section_collapse",
+  COLOR_SCHEME: "color_scheme",
 } as const;
 
 export const PANEL_SPLIT_DEFAULT_RATIO = 0.5;

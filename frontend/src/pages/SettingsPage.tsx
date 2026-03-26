@@ -11,8 +11,8 @@ import { RightFilterPanel, type RightPanelMode } from "@/components/tasks/RightF
 import { ConfirmFullSyncDialog } from "@/components/settings/ConfirmFullSyncDialog";
 import { ConfirmDisconnectDialog } from "@/components/settings/ConfirmDisconnectDialog";
 import { MenuOrderSection } from "@/components/settings/MenuOrderSection";
-import { BOX_ORDER, ACCENT_COLORS, ACCENT_COLOR_VALUES, PANEL_SIDES, ROUTES, STORAGE_KEYS, SUPPORTED_LANGUAGES, BACKEND_CONNECTION_EVENT } from "@/constants";
-import type { Box, AccentColor, PanelSide } from "@/types/common";
+import { BOX_ORDER, ACCENT_COLORS, ACCENT_COLOR_VALUES, COLOR_SCHEMES, PANEL_SIDES, ROUTES, STORAGE_KEYS, SUPPORTED_LANGUAGES, BACKEND_CONNECTION_EVENT } from "@/constants";
+import type { Box, AccentColor, ColorScheme, PanelSide } from "@/types/common";
 import type { Language } from "@/constants";
 import { cn } from "@/shared/lib/cn";
 
@@ -25,7 +25,7 @@ export default function SettingsPage() {
 
   const navigate = useNavigate();
   const { defaultBox, setDefaultBox } = useSettings();
-  const { accentColor, setAccentColor } = useTheme();
+  const { accentColor, setAccentColor, colorScheme, setColorScheme } = useTheme();
   const { panelSide, setPanelSide } = usePanelSide();
   const { language, setLanguage } = useLanguage();
 
@@ -48,6 +48,10 @@ export default function SettingsPage() {
 
   const handleColorSelect = (color: AccentColor): void => {
     void setAccentColor(color);
+  };
+
+  const handleColorSchemeSelect = (scheme: ColorScheme): void => {
+    setColorScheme(scheme);
   };
 
   const handlePanelSideSelect = (side: PanelSide): void => {
@@ -144,6 +148,31 @@ export default function SettingsPage() {
                 })}
               </div>
             </section>
+            {/* Theme section */}
+            <section data-testid="settings-theme" className="space-y-3">
+              <h2 className="text-sm font-medium text-gray-500 uppercase tracking-wide">
+                {t("settings.theme")}
+              </h2>
+              <div className="flex flex-wrap gap-2">
+                {COLOR_SCHEMES.map((scheme) => (
+                  <button
+                    key={scheme}
+                    data-testid={`settings-theme-option-${scheme}`}
+                    aria-pressed={colorScheme === scheme}
+                    onClick={() => handleColorSchemeSelect(scheme)}
+                    className={cn(
+                      "px-3 py-1.5 rounded-lg text-sm font-medium border transition-colors",
+                      colorScheme === scheme
+                        ? "bg-accent border-accent text-white"
+                        : "bg-white border-gray-200 text-gray-700 hover:border-gray-300",
+                    )}
+                  >
+                    {t(`theme.${scheme}`)}
+                  </button>
+                ))}
+              </div>
+            </section>
+
             {/* Panel side section */}
             <section data-testid="settings-panel-side" className="space-y-3">
               <h2 className="text-sm font-medium text-gray-500 uppercase tracking-wide">

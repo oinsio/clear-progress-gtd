@@ -165,6 +165,7 @@
     "disconnectConfirmDescription": "Приложение перестанет синхронизироваться с сервером. Локальные данные сохранятся.",
     "disconnectConfirm": "Отключить",
     "disconnectCancel": "Отмена",
+    "theme": "Тема",
     "menuOrder": "Пункты меню",
     "menuOrderHint": "Перетащите, чтобы изменить порядок. Отключённые пункты скрыты в панели.",
     "menuOrderDragHandle": "Переместить: {{label}}",
@@ -259,6 +260,11 @@
     "ru": "Русский",
     "en": "English",
     "house": "Доктор Хаус"
+  },
+  "theme": {
+    "system": "Системная",
+    "light": "Светлая",
+    "dark": "Тёмная"
   },
   "taskDetail": {
     "empty": "Выберите задачу",

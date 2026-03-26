@@ -39,6 +39,41 @@
     --color-accent: 251 113 133;
   }
 
+  /* Dark mode overrides */
+  html.dark body,
+  html.dark #root {
+    background-color: rgb(17 24 39);
+    color: rgb(243 244 246);
+  }
+
+  html.dark .bg-white { background-color: rgb(31 41 55); }
+  html.dark .bg-gray-50 { background-color: rgb(17 24 39); }
+  html.dark .bg-gray-100 { background-color: rgb(31 41 55); }
+  html.dark .text-gray-900 { color: rgb(243 244 246); }
+  html.dark .text-gray-800 { color: rgb(229 231 235); }
+  html.dark .text-gray-700 { color: rgb(209 213 219); }
+  html.dark .text-gray-600 { color: rgb(156 163 175); }
+  html.dark .text-gray-500 { color: rgb(107 114 128); }
+  html.dark .text-gray-400 { color: rgb(75 85 99); }
+  html.dark .border-gray-200 { border-color: rgb(55 65 81); }
+  html.dark .border-gray-300 { border-color: rgb(75 85 99); }
+  html.dark .hover\:border-gray-300:hover { border-color: rgb(75 85 99); }
+  html.dark .divide-gray-100 > * + * { border-color: rgb(31 41 55); }
+
+  /* Native form elements */
+  html.dark input,
+  html.dark textarea,
+  html.dark select {
+    background-color: rgb(31 41 55);
+    color: rgb(229 231 235);
+    border-color: rgb(55 65 81);
+  }
+
+  html.dark input::placeholder,
+  html.dark textarea::placeholder {
+    color: rgb(107 114 128);
+  }
+
   * {
     box-sizing: border-box;
   }

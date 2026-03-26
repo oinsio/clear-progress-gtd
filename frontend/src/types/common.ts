@@ -34,6 +34,8 @@ export type RepeatRuleType =
 
 export type PanelSide = "left" | "right";
 
+export type ColorScheme = "system" | "light" | "dark";
+
 export type MenuMode = "inbox" | "contexts" | "categories" | "goals" | "tasks" | "completed";
 
 export interface MenuItemConfig {

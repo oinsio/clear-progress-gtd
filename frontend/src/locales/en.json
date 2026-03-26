@@ -165,6 +165,7 @@
     "disconnectConfirmDescription": "The app will stop syncing with the server. Local data will be preserved.",
     "disconnectConfirm": "Disconnect",
     "disconnectCancel": "Cancel",
+    "theme": "Theme",
     "menuOrder": "Menu items",
     "menuOrderHint": "Drag to reorder. Hidden items won't appear in the panel.",
     "menuOrderDragHandle": "Move: {{label}}",
@@ -257,6 +258,11 @@
     "ru": "Русский",
     "en": "English",
     "house": "Dr. House"
+  },
+  "theme": {
+    "system": "System",
+    "light": "Light",
+    "dark": "Dark"
   },
   "taskDetail": {
     "empty": "Select a task",
