@@ -60,6 +60,10 @@ export class GoalService {
     return this.update(id, { is_deleted: true });
   }
 
+  async restore(id: string): Promise<Goal> {
+    return this.update(id, { is_deleted: false });
+  }
+
   async searchByTitle(query: string): Promise<Goal[]> {
     const allGoals = await this.goalRepository.getActive();
     const lowerQuery = query.toLowerCase();

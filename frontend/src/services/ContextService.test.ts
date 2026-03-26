@@ -186,4 +186,33 @@ describe("ContextService", () => {
       ).rejects.toThrow("Context not found: nonexistent-id");
     });
   });
+
+  describe("restore", () => {
+    it("should set is_deleted to false", async () => {
+      const context = buildContext({ is_deleted: true });
+      mockContextRepository = createMockContextRepository({
+        getById: vi.fn().mockResolvedValue(context),
+      });
+      const contextService = new ContextService(mockContextRepository);
+      const restored = await contextService.restore(context.id);
+      expect(restored.is_deleted).toBe(false);
+    });
+
+    it("should increment version on restore", async () => {
+      const context = buildContext({ is_deleted: true, version: 4 });
+      mockContextRepository = createMockContextRepository({
+        getById: vi.fn().mockResolvedValue(context),
+      });
+      const contextService = new ContextService(mockContextRepository);
+      const restored = await contextService.restore(context.id);
+      expect(restored.version).toBe(5);
+    });
+
+    it("should throw when context not found", async () => {
+      const contextService = new ContextService(mockContextRepository);
+      await expect(
+        contextService.restore("nonexistent-id"),
+      ).rejects.toThrow("Context not found: nonexistent-id");
+    });
+  });
 });

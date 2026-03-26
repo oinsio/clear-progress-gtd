@@ -58,4 +58,33 @@ describe("GoalService", () => {
       expect(results).toEqual([]);
     });
   });
+
+  describe("restore", () => {
+    it("should set is_deleted to false", async () => {
+      const goal = buildGoal({ is_deleted: true });
+      mockGoalRepository = createMockGoalRepository({
+        getById: vi.fn().mockResolvedValue(goal),
+      });
+      const goalService = new GoalService(mockGoalRepository);
+      const restored = await goalService.restore(goal.id);
+      expect(restored.is_deleted).toBe(false);
+    });
+
+    it("should increment version on restore", async () => {
+      const goal = buildGoal({ is_deleted: true, version: 3 });
+      mockGoalRepository = createMockGoalRepository({
+        getById: vi.fn().mockResolvedValue(goal),
+      });
+      const goalService = new GoalService(mockGoalRepository);
+      const restored = await goalService.restore(goal.id);
+      expect(restored.version).toBe(4);
+    });
+
+    it("should throw when goal not found", async () => {
+      const goalService = new GoalService(mockGoalRepository);
+      await expect(goalService.restore("nonexistent-id")).rejects.toThrow(
+        "Goal not found: nonexistent-id",
+      );
+    });
+  });
 });

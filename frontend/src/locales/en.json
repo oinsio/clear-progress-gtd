@@ -281,7 +281,9 @@
     "contexts": "Contexts",
     "categories": "Categories",
     "checklists": "Checklists",
-    "checklistParent": "Task: {{task}}"
+    "checklistParent": "Task: {{task}}",
+    "restore": "Restore",
+    "restoreAriaLabel": "Restore {{title}}"
   },
   "sync": {
     "syncing": "Syncing...",

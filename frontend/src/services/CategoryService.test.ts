@@ -188,4 +188,33 @@ describe("CategoryService", () => {
       ).rejects.toThrow("Category not found: nonexistent-id");
     });
   });
+
+  describe("restore", () => {
+    it("should set is_deleted to false", async () => {
+      const category = buildCategory({ is_deleted: true });
+      mockCategoryRepository = createMockCategoryRepository({
+        getById: vi.fn().mockResolvedValue(category),
+      });
+      const categoryService = new CategoryService(mockCategoryRepository);
+      const restored = await categoryService.restore(category.id);
+      expect(restored.is_deleted).toBe(false);
+    });
+
+    it("should increment version on restore", async () => {
+      const category = buildCategory({ is_deleted: true, version: 2 });
+      mockCategoryRepository = createMockCategoryRepository({
+        getById: vi.fn().mockResolvedValue(category),
+      });
+      const categoryService = new CategoryService(mockCategoryRepository);
+      const restored = await categoryService.restore(category.id);
+      expect(restored.version).toBe(3);
+    });
+
+    it("should throw when category not found", async () => {
+      const categoryService = new CategoryService(mockCategoryRepository);
+      await expect(
+        categoryService.restore("nonexistent-id"),
+      ).rejects.toThrow("Category not found: nonexistent-id");
+    });
+  });
 });

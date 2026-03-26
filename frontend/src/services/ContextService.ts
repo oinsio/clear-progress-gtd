@@ -38,6 +38,10 @@ export class ContextService {
     return this.applyChanges(id, { is_deleted: true });
   }
 
+  async restore(id: string): Promise<Context> {
+    return this.applyChanges(id, { is_deleted: false });
+  }
+
   async reorderContexts(orderedContexts: Context[]): Promise<void> {
     if (orderedContexts.length === 0) return;
     const now = new Date().toISOString();

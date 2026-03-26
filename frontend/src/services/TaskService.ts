@@ -89,6 +89,10 @@ export class TaskService {
     return this.update(id, { is_deleted: true });
   }
 
+  async restore(id: string): Promise<Task> {
+    return this.update(id, { is_deleted: false });
+  }
+
   async moveToBox(id: string, box: Box): Promise<Task> {
     return this.update(id, { box });
   }

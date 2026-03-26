@@ -59,6 +59,10 @@ export class ChecklistService {
     return this.applyChanges(id, { is_deleted: true });
   }
 
+  async restore(id: string): Promise<ChecklistItem> {
+    return this.applyChanges(id, { is_deleted: false });
+  }
+
   async reorderItems(items: ChecklistItem[]): Promise<void> {
     if (items.length === 0) return;
     const now = new Date().toISOString();

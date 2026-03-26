@@ -38,6 +38,10 @@ export class CategoryService {
     return this.applyChanges(id, { is_deleted: true });
   }
 
+  async restore(id: string): Promise<Category> {
+    return this.applyChanges(id, { is_deleted: false });
+  }
+
   async reorderCategories(orderedCategories: Category[]): Promise<void> {
     if (orderedCategories.length === 0) return;
     const now = new Date().toISOString();

@@ -361,6 +361,35 @@ describe("TaskService", () => {
     });
   });
 
+  describe("restore", () => {
+    it("should set is_deleted to false", async () => {
+      const task = buildTask({ is_deleted: true });
+      mockTaskRepository = createMockTaskRepository({
+        getById: vi.fn().mockResolvedValue(task),
+      });
+      const taskService = new TaskService(mockTaskRepository);
+      const restored = await taskService.restore(task.id);
+      expect(restored.is_deleted).toBe(false);
+    });
+
+    it("should increment version on restore", async () => {
+      const task = buildTask({ is_deleted: true, version: 5 });
+      mockTaskRepository = createMockTaskRepository({
+        getById: vi.fn().mockResolvedValue(task),
+      });
+      const taskService = new TaskService(mockTaskRepository);
+      const restored = await taskService.restore(task.id);
+      expect(restored.version).toBe(6);
+    });
+
+    it("should throw when task not found", async () => {
+      const taskService = new TaskService(mockTaskRepository);
+      await expect(taskService.restore("nonexistent-id")).rejects.toThrow(
+        "Task not found: nonexistent-id",
+      );
+    });
+  });
+
   describe("moveToBox", () => {
     it("should update task box", async () => {
       const task = buildTask({ box: "inbox" });

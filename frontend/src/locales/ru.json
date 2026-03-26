@@ -283,7 +283,9 @@
     "contexts": "Контексты",
     "categories": "Категории",
     "checklists": "Чек-листы",
-    "checklistParent": "Задача: {{task}}"
+    "checklistParent": "Задача: {{task}}",
+    "restore": "Восстановить",
+    "restoreAriaLabel": "Восстановить {{title}}"
   },
   "sync": {
     "syncing": "Обновляю...",

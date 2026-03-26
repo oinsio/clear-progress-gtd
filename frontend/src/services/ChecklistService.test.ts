@@ -212,6 +212,33 @@ describe("ChecklistService", () => {
     });
   });
 
+  describe("restore", () => {
+    it("should set is_deleted to false", async () => {
+      const item = buildChecklistItem({ is_deleted: true });
+      const { service } = createService({
+        getById: vi.fn().mockResolvedValue(item),
+      });
+      const restored = await service.restore(item.id);
+      expect(restored.is_deleted).toBe(false);
+    });
+
+    it("should increment version on restore", async () => {
+      const item = buildChecklistItem({ is_deleted: true, version: 2 });
+      const { service } = createService({
+        getById: vi.fn().mockResolvedValue(item),
+      });
+      const restored = await service.restore(item.id);
+      expect(restored.version).toBe(3);
+    });
+
+    it("should throw when item not found", async () => {
+      const { service } = createService();
+      await expect(service.restore("nonexistent-id")).rejects.toThrow(
+        "ChecklistItem not found: nonexistent-id",
+      );
+    });
+  });
+
   describe("reorderItems", () => {
     it("should do nothing when items array is empty", async () => {
       const { service, repository } = createService();
