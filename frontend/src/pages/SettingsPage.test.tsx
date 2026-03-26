@@ -12,6 +12,7 @@ vi.mock("@/hooks/useLanguage");
 vi.mock("@/hooks/usePanelSide");
 vi.mock("@/hooks/usePanelOpen");
 vi.mock("@/components/tasks/RightFilterPanel");
+vi.mock("@/components/settings/MenuOrderSection", () => ({ MenuOrderSection: () => null }));
 vi.mock("@/components/settings/ConfirmFullSyncDialog");
 vi.mock("@/app/providers/SyncProvider");
 vi.mock("@/i18n", () => ({ default: {} }));

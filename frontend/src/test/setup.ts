@@ -31,6 +31,17 @@ Object.defineProperty(globalThis, "localStorage", {
   configurable: true,
 });
 
+// jsdom doesn't implement window.matchMedia
+Object.defineProperty(window, "matchMedia", {
+  writable: true,
+  value: vi.fn().mockImplementation((query: string) => ({
+    matches: false,
+    media: query,
+    addEventListener: vi.fn(),
+    removeEventListener: vi.fn(),
+  })),
+});
+
 // jsdom doesn't support URL.createObjectURL/revokeObjectURL
 global.URL.createObjectURL = vi.fn(() => "blob:mock-url");
 global.URL.revokeObjectURL = vi.fn();
