@@ -214,8 +214,8 @@
     "close": "Закрыть",
     "back": "Назад",
     "tabDetails": "Детали",
-    "tabChecklist": "Чеклист",
-    "tabChecklistProgress": "Чеклист ({{completed}}/{{total}})",
+    "tabChecklist": "Чек-лист",
+    "tabChecklistProgress": "Чек-лист ({{completed}}/{{total}})",
     "fieldTitle": "Название",
     "fieldNotes": "Заметки",
     "fieldBox": "Коробочка",
@@ -251,6 +251,12 @@
     "ru": "Русский",
     "en": "English",
     "house": "Доктор Хаус"
+  },
+  "taskDetail": {
+    "empty": "Выберите задачу",
+    "emptyHint": "Нажмите на задачу, чтобы открыть детали",
+    "delete": "Удалить задачу",
+    "close": "Закрыть"
   },
   "sync": {
     "syncing": "Обновляю...",

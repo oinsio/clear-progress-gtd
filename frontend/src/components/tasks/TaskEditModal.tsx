@@ -1,5 +1,8 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import { X, Inbox, ChevronRight, ArrowLeft, GripVertical } from "lucide-react";
+import { useChecklistItemEditing } from "@/hooks/useChecklistItemEditing";
+import { useTaskEditLabels } from "@/hooks/useTaskEditLabels";
+import { useTaskFormState } from "@/hooks/useTaskFormState";
+import { X, ChevronRight, ArrowLeft } from "lucide-react";
 import {
   DndContext,
   closestCenter,
@@ -7,24 +10,30 @@ import {
 } from "@dnd-kit/core";
 import {
   SortableContext,
-  useSortable,
   verticalListSortingStrategy,
   arrayMove,
 } from "@dnd-kit/sortable";
-import { CSS } from "@dnd-kit/utilities";
 import { useDndSensors } from "@/hooks/useDndSensors";
 import type { ChecklistItem } from "@/types/entities";
 import { useTranslation } from "react-i18next";
 import type { Task, Goal, Context, Category } from "@/types/entities";
-import type { Box, RepeatRule } from "@/types/common";
 import { cn } from "@/shared/lib/cn";
-import { BOX } from "@/constants";
-import { TodayBoxIcon, WeekBoxIcon, LaterBoxIcon } from "./BoxIcons";
 import { useChecklist } from "@/hooks/useChecklist";
 import { useSync } from "@/app/providers/SyncProvider";
 import type { ChecklistService } from "@/services/ChecklistService";
 import { parseRepeatRule, serializeRepeatRule, formatRepeatRuleLabel } from "@/utils/repeatRule";
 import { RepeatRuleSelector } from "./RepeatRuleSelector";
+import {
+  ACTIVE_TAB,
+  type ActiveTab,
+  BOX_OPTIONS,
+  BOX_ICONS,
+  SELECTOR_TYPE,
+  type SelectorType,
+  SELECTOR_TITLE_KEYS,
+  CHECKLIST_ITEM_VARIANT
+} from "./taskEditShared";
+import { SortableChecklistItem } from "./SortableChecklistItem";
 import * as React from "react";
 
 interface TaskEditModalProps {
@@ -40,191 +49,6 @@ interface TaskEditModalProps {
   checklistService?: ChecklistService;
 }
 
-const ACTIVE_TAB = {
-  DETAILS: "details",
-  CHECKLIST: "checklist",
-} as const;
-
-type ActiveTab = (typeof ACTIVE_TAB)[keyof typeof ACTIVE_TAB];
-
-const BOX_OPTIONS: Box[] = [BOX.INBOX, BOX.TODAY, BOX.WEEK, BOX.LATER];
-
-const BOX_ICONS: Record<Box, React.FC<{ className?: string }>> = {
-  [BOX.INBOX]: ({ className }: { className?: string }) => <Inbox className={className} />,
-  [BOX.TODAY]: TodayBoxIcon,
-  [BOX.WEEK]: WeekBoxIcon,
-  [BOX.LATER]: LaterBoxIcon,
-};
-
-const SELECTOR_TYPE = {
-  GOAL: "goal",
-  CONTEXT: "context",
-  CATEGORY: "category",
-  REPEAT: "repeat",
-} as const;
-
-type SelectorType = (typeof SELECTOR_TYPE)[keyof typeof SELECTOR_TYPE];
-
-const SELECTOR_TITLE_KEYS: Record<SelectorType, string> = {
-  [SELECTOR_TYPE.GOAL]: "selector.goal",
-  [SELECTOR_TYPE.CONTEXT]: "selector.context",
-  [SELECTOR_TYPE.CATEGORY]: "selector.category",
-  [SELECTOR_TYPE.REPEAT]: "taskEdit.fieldRepeat",
-};
-
-const CHECKLIST_ITEM_VARIANT = {
-  ACTIVE: "active",
-  COMPLETED: "completed",
-} as const;
-
-type ChecklistItemVariant = (typeof CHECKLIST_ITEM_VARIANT)[keyof typeof CHECKLIST_ITEM_VARIANT];
-
-interface SortableChecklistItemProps {
-  item: ChecklistItem;
-  isEditing: boolean;
-  editingTitle: string;
-  lastSyncedAt: string | null;
-  variant: ChecklistItemVariant;
-  toggleAriaLabel: string;
-  deleteAriaLabel: string;
-  onToggle: () => void;
-  onStartEdit: () => void;
-  onEditChange: (value: string) => void;
-  onEditBlur: () => void;
-  onEditKeyDown: (event: React.KeyboardEvent<HTMLInputElement>) => void;
-  onDelete: () => void;
-}
-
-function SortableChecklistItem({
-  item,
-  isEditing,
-  editingTitle,
-  lastSyncedAt,
-  variant,
-  toggleAriaLabel,
-  deleteAriaLabel,
-  onToggle,
-  onStartEdit,
-  onEditChange,
-  onEditBlur,
-  onEditKeyDown,
-  onDelete,
-}: SortableChecklistItemProps) {
-  const isCompleted = variant === CHECKLIST_ITEM_VARIANT.COMPLETED;
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    setActivatorNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({ id: item.id });
-
-  const dragStyle = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-    opacity: isDragging ? 0.5 : 1,
-  };
-
-  return (
-    <div ref={setNodeRef} style={dragStyle} className="flex items-center gap-3 py-1.5">
-      <div className="flex items-center gap-1.5 flex-shrink-0">
-        {!isEditing ? (
-          <button
-            type="button"
-            ref={setActivatorNodeRef}
-            {...attributes}
-            {...listeners}
-            className="text-gray-300 hover:text-gray-500 transition-colors cursor-grab active:cursor-grabbing flex-shrink-0"
-            aria-label="drag"
-          >
-            <GripVertical size={14} />
-          </button>
-        ) : (
-          <span className="w-3.5 h-5 flex-shrink-0" />
-        )}
-        <span
-          className={cn(
-            "w-0.5 h-5 rounded-sm transition-colors",
-            lastSyncedAt === null || item.updated_at > lastSyncedAt
-              ? "bg-amber-400"
-              : "bg-transparent",
-          )}
-        />
-        <button
-          type="button"
-          data-testid={`checklist-item-checkbox-${item.id}`}
-          aria-label={toggleAriaLabel}
-          onClick={onToggle}
-          className={
-            isCompleted
-              ? "w-5 h-5 rounded border-2 border-accent bg-accent flex-shrink-0 flex items-center justify-center hover:opacity-80 transition-opacity"
-              : "w-5 h-5 rounded border-2 border-gray-300 flex-shrink-0 flex items-center justify-center hover:border-accent transition-colors"
-          }
-        >
-          {isCompleted && (
-            <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
-              <path
-                d="M1 4L3.5 6.5L9 1"
-                stroke="white"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-          )}
-        </button>
-      </div>
-      {isEditing ? (
-        <input
-          type="text"
-          data-testid={`checklist-item-edit-input-${item.id}`}
-          value={editingTitle}
-          onChange={(event) => onEditChange(event.target.value)}
-          onBlur={onEditBlur}
-          onKeyDown={onEditKeyDown}
-          autoFocus
-          className={cn(
-            "flex-1 text-sm outline-none",
-            isCompleted ? "text-gray-400 line-through" : "text-gray-800",
-          )}
-        />
-      ) : (
-        <span
-          data-testid={`checklist-item-title-${item.id}`}
-          onClick={onStartEdit}
-          className={cn(
-            "flex-1 text-sm cursor-text",
-            isCompleted ? "text-gray-400 line-through" : "text-gray-800",
-          )}
-        >
-          {item.title}
-        </span>
-      )}
-      {isEditing && (
-        <button
-          type="button"
-          data-testid={`checklist-item-delete-btn-${item.id}`}
-          aria-label={deleteAriaLabel}
-          onMouseDown={(event) => event.preventDefault()}
-          onClick={onDelete}
-          className="flex-shrink-0 text-red-500 hover:text-red-700 transition-colors"
-        >
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-            <path
-              d="M2 4h12M5 4V2.5A.5.5 0 0 1 5.5 2h5a.5.5 0 0 1 .5.5V4M6 7v5M10 7v5M3 4l1 9.5A.5.5 0 0 0 4.5 14h7a.5.5 0 0 0 .5-.5L13 4"
-              stroke="currentColor"
-              strokeWidth="1.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
-        </button>
-      )}
-    </div>
-  );
-}
 
 export function TaskEditModal({
   task,
@@ -239,22 +63,20 @@ export function TaskEditModal({
   checklistService,
 }: TaskEditModalProps) {
   const { t } = useTranslation();
-  const [title, setTitle] = useState(task.title);
-  const [notes, setNotes] = useState(task.notes);
-  const [selectedGoalId, setSelectedGoalId] = useState(task.goal_id);
-  const [selectedContextId, setSelectedContextId] = useState(task.context_id);
-  const [selectedCategoryId, setSelectedCategoryId] = useState(task.category_id);
-  const [selectedBox, setSelectedBox] = useState<Box>(task.box);
-  const [selectedRepeatRule, setSelectedRepeatRule] = useState<RepeatRule | null>(() =>
-    parseRepeatRule(task.repeat_rule),
-  );
+  const {
+    title, setTitle,
+    notes, setNotes,
+    selectedGoalId, setSelectedGoalId,
+    selectedContextId, setSelectedContextId,
+    selectedCategoryId, setSelectedCategoryId,
+    selectedBox, setSelectedBox,
+    selectedRepeatRule, setSelectedRepeatRule,
+  } = useTaskFormState(task);
   const [isSaving, setIsSaving] = useState(false);
   const [openSelector, setOpenSelector] = useState<SelectorType | null>(null);
   const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
   const [activeTab, setActiveTab] = useState<ActiveTab>(ACTIVE_TAB.DETAILS);
   const [newItemTitle, setNewItemTitle] = useState("");
-  const [editingItemId, setEditingItemId] = useState<string | null>(null);
-  const [editingItemTitle, setEditingItemTitle] = useState("");
   const newItemInputRef = useRef<HTMLInputElement>(null);
 
   const { items, progress, createItem: rawCreateItem, toggleItem: rawToggleItem, deleteItem: rawDeleteItem, updateItem: rawUpdateItem, reorderItems: rawReorderItems } = useChecklist(task.id, checklistService);
@@ -284,6 +106,15 @@ export function TaskEditModal({
     await rawReorderItems(reorderedItems);
     onChecklistChange?.();
   }, [rawReorderItems, onChecklistChange]);
+
+  const {
+    editingItemId,
+    editingItemTitle,
+    setEditingItemTitle,
+    handleItemTitleClick,
+    commitItemEdit,
+    handleItemEditKeyDown,
+  } = useChecklistItemEditing(updateItem);
 
   useEffect(() => {
     if (isOpen) {
@@ -343,79 +174,28 @@ export function TaskEditModal({
     [newItemTitle, createItem],
   );
 
-  const handleItemTitleClick = useCallback((item: { id: string; title: string }) => {
-    setEditingItemId(item.id);
-    setEditingItemTitle(item.title);
-  }, []);
-
-  const commitItemEdit = useCallback(
-    async (id: string) => {
-      const trimmedTitle = editingItemTitle.trim();
-      if (trimmedTitle) {
-        await updateItem(id, trimmedTitle);
-      }
-      setEditingItemId(null);
-      setEditingItemTitle("");
-    },
-    [editingItemTitle, updateItem],
-  );
-
-  const handleItemEditKeyDown = useCallback(
-    async (event: React.KeyboardEvent<HTMLInputElement>, id: string) => {
-      if (event.key === "Enter") {
-        await commitItemEdit(id);
-      }
-    },
-    [commitItemEdit],
-  );
 
   const dndSensors = useDndSensors();
 
   const activeItems = items.filter((item) => !item.is_completed);
   const completedItems = items.filter((item) => item.is_completed);
 
-  const handleActiveItemsDragEnd = useCallback(
-    (event: DragEndEvent) => {
+  const handleSectionDragEnd = useCallback(
+    (sectionItems: ChecklistItem[], event: DragEndEvent) => {
       const { active, over } = event;
       if (!over || active.id === over.id) return;
-      const oldIndex = activeItems.findIndex((item) => item.id === active.id);
-      const newIndex = activeItems.findIndex((item) => item.id === over.id);
-      const reordered = arrayMove(activeItems, oldIndex, newIndex);
+      const oldIndex = sectionItems.findIndex((item) => item.id === active.id);
+      const newIndex = sectionItems.findIndex((item) => item.id === over.id);
+      const reordered = arrayMove(sectionItems, oldIndex, newIndex);
       void reorderItems(reordered);
     },
-    [activeItems, reorderItems],
+    [reorderItems],
   );
 
-  const handleCompletedItemsDragEnd = useCallback(
-    (event: DragEndEvent) => {
-      const { active, over } = event;
-      if (!over || active.id === over.id) return;
-      const oldIndex = completedItems.findIndex((item) => item.id === active.id);
-      const newIndex = completedItems.findIndex((item) => item.id === over.id);
-      const reordered = arrayMove(completedItems, oldIndex, newIndex);
-      void reorderItems(reordered);
-    },
-    [completedItems, reorderItems],
-  );
+  const { selectedGoalTitle, selectedContextName, selectedCategoryName, checklistTabLabel } =
+    useTaskEditLabels(selectedGoalId, selectedContextId, selectedCategoryId, goals, contexts, categories, progress);
 
   if (!isOpen) return null;
-
-  const selectedGoalTitle = selectedGoalId
-    ? (goals.find((goal) => goal.id === selectedGoalId)?.title ?? t("selector.noGoal"))
-    : t("selector.noGoal");
-
-  const selectedContextName = selectedContextId
-    ? (contexts.find((context) => context.id === selectedContextId)?.name ?? t("selector.noContext"))
-    : t("selector.noContext");
-
-  const selectedCategoryName = selectedCategoryId
-    ? (categories.find((category) => category.id === selectedCategoryId)?.name ?? t("selector.noCategory"))
-    : t("selector.noCategory");
-
-  const checklistTabLabel =
-    progress.total > 0
-      ? t("taskEdit.tabChecklistProgress", { completed: progress.completed, total: progress.total })
-      : t("taskEdit.tabChecklist");
 
   return (
     <div data-testid="task-edit-modal" className="fixed inset-0 z-50 flex flex-col justify-end">
@@ -611,7 +391,7 @@ export function TaskEditModal({
               <DndContext
                 sensors={dndSensors}
                 collisionDetection={closestCenter}
-                onDragEnd={handleActiveItemsDragEnd}
+                onDragEnd={(event) => handleSectionDragEnd(activeItems, event)}
               >
                 <SortableContext
                   items={activeItems.map((item) => item.id)}
@@ -668,7 +448,7 @@ export function TaskEditModal({
                 <DndContext
                   sensors={dndSensors}
                   collisionDetection={closestCenter}
-                  onDragEnd={handleCompletedItemsDragEnd}
+                  onDragEnd={(event) => handleSectionDragEnd(completedItems, event)}
                 >
                   <SortableContext
                     items={completedItems.map((item) => item.id)}

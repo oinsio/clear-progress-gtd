@@ -96,7 +96,12 @@ export const STORAGE_KEYS = {
   PANEL_SIDE: "panel_side",
   PANEL_OPEN: "panel_open",
   LANGUAGE: "language",
+  PANEL_SPLIT: "panel_split",
 } as const;
+
+export const PANEL_SPLIT_DEFAULT_RATIO = 0.5;
+export const PANEL_SPLIT_MIN_RATIO = 0.2;
+export const PANEL_SPLIT_MAX_RATIO = 0.8;
 
 export const SUPPORTED_LANGUAGES = ["ru", "en", "house"] as const;
 export type Language = (typeof SUPPORTED_LANGUAGES)[number];
@@ -119,6 +124,8 @@ export const PUSH_RESULT_STATUS = {
   CONFLICT: "conflict",
   REJECTED: "rejected",
 } as const;
+
+export const LG_BREAKPOINT_PX = 1024;
 
 export const REPEAT_RULE_TYPE = {
   DAILY: "daily",

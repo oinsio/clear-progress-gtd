@@ -214,8 +214,8 @@
     "close": "Закрыть",
     "back": "Назад",
     "tabDetails": "Детали",
-    "tabChecklist": "Чеклист",
-    "tabChecklistProgress": "Чеклист ({{completed}}/{{total}})",
+    "tabChecklist": "Чек-лист",
+    "tabChecklistProgress": "Чек-лист ({{completed}}/{{total}})",
     "fieldTitle": "Название",
     "fieldNotes": "Заметки",
     "fieldBox": "Палата",
@@ -251,6 +251,12 @@
     "ru": "Русский",
     "en": "English",
     "house": "Доктор Хаус"
+  },
+  "taskDetail": {
+    "empty": "Выберите страдание",
+    "emptyHint": "Нажмите на страдание, чтобы поставить неверный диагноз",
+    "delete": "Ампутировать",
+    "close": "Выйти из палаты"
   },
   "sync": {
     "syncing": "Обновляю...",

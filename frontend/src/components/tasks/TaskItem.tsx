@@ -10,6 +10,7 @@ import { TaskQuickActions } from "./TaskQuickActions";
 import { TaskEditModal } from "./TaskEditModal";
 import { useChecklist } from "@/hooks/useChecklist";
 import { useIsUnsynced } from "@/hooks/useIsUnsynced";
+import { useIsDesktop } from "@/hooks/useIsDesktop";
 import * as React from "react";
 
 export interface DragHandleProps {
@@ -28,25 +29,36 @@ interface TaskItemProps {
   onMove: (id: string, box: Box) => Promise<void>;
   onDelete: (id: string) => void;
   dragHandleProps?: DragHandleProps;
+  onSelect?: (id: string) => void;
+  isSelected?: boolean;
 }
 
-export function TaskItem({ task, goals, contexts, categories, onComplete, onUpdate, onMove, onDelete, dragHandleProps }: TaskItemProps) {
+export function TaskItem({ task, goals, contexts, categories, onComplete, onUpdate, onMove, onDelete, dragHandleProps, onSelect, isSelected }: TaskItemProps) {
   const { t } = useTranslation();
   const { progress: checklistProgress, hasUnsyncedItems, reload: reloadChecklist } = useChecklist(task.id);
   const isTaskUnsynced = useIsUnsynced(task);
   const isUnsynced = isTaskUnsynced || hasUnsyncedItems;
+  const isDesktop = useIsDesktop();
   const [isExpanded, setIsExpanded] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isConfirmingRestore, setIsConfirmingRestore] = useState(false);
 
   const handleBodyClick = useCallback(() => {
-    setIsExpanded((previous) => !previous);
-  }, []);
+    if (isDesktop && onSelect) {
+      onSelect(task.id);
+    } else {
+      setIsExpanded((previous) => !previous);
+    }
+  }, [isDesktop, onSelect, task.id]);
 
   const handleOpenEdit = useCallback(() => {
-    setIsEditModalOpen(true);
-    setIsExpanded(false);
-  }, []);
+    if (isDesktop && onSelect) {
+      onSelect(task.id);
+    } else {
+      setIsEditModalOpen(true);
+      setIsExpanded(false);
+    }
+  }, [isDesktop, onSelect, task.id]);
 
   const handleCloseEdit = useCallback(() => {
     setIsEditModalOpen(false);
@@ -84,7 +96,8 @@ export function TaskItem({ task, goals, contexts, categories, onComplete, onUpda
         data-testid="task-item"
         className={cn(
           "border-b border-gray-100 border-l-2 transition-colors hover:bg-gray-50",
-          isUnsynced ? "border-l-amber-400" : "border-l-transparent",
+          isUnsynced ? "border-l-amber-400" : isSelected ? "border-l-accent" : "border-l-transparent",
+          isSelected && "bg-accent/5",
         )}
       >
         {/* Main task row */}

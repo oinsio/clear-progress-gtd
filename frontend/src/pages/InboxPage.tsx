@@ -3,6 +3,7 @@ import { useLocation } from "react-router-dom";
 import { Plus } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { TaskList } from "@/components/tasks/TaskList";
+import { TaskDetailPanel } from "@/components/tasks/TaskDetailPanel";
 import { BoxFilterBar } from "@/components/tasks/BoxFilterBar";
 import { RightFilterPanel, type RightPanelMode } from "@/components/tasks/RightFilterPanel";
 import { useTasks } from "@/hooks/useTasks";
@@ -13,6 +14,8 @@ import { useCompletedTasks } from "@/hooks/useCompletedTasks";
 import { useSearch } from "@/hooks/useSearch";
 import { usePanelSide } from "@/hooks/usePanelSide";
 import { usePanelOpen } from "@/hooks/usePanelOpen";
+import { useIsDesktop } from "@/hooks/useIsDesktop";
+import { usePanelSplit } from "@/hooks/usePanelSplit";
 import type { BoxFilter, Box } from "@/types/common";
 import type { Task } from "@/types/entities";
 import { BOX_FILTER_ALL, BOX } from "@/constants";
@@ -36,6 +39,8 @@ function TaskSection({
   emptyMessage,
   hideEmptyState,
   onEmptyClick,
+  onSelect,
+  selectedTaskId,
 }: {
   label: string;
   tasks: Task[];
@@ -50,6 +55,8 @@ function TaskSection({
   emptyMessage?: string;
   hideEmptyState?: boolean;
   onEmptyClick?: () => void;
+  onSelect?: (id: string) => void;
+  selectedTaskId?: string | null;
 }) {
   return (
     <section>
@@ -69,6 +76,8 @@ function TaskSection({
           onReorder={onReorder}
           emptyMessage={emptyMessage}
           onEmptyClick={onEmptyClick}
+          onSelect={onSelect}
+          selectedTaskId={selectedTaskId}
         />
       )}
     </section>
@@ -133,6 +142,10 @@ export default function InboxPage() {
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
   const [isAddingTask, setIsAddingTask] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
+  const isDesktop = useIsDesktop();
+  const { ratio, setRatio } = usePanelSplit();
+  const splitContainerRef = useRef<HTMLDivElement>(null);
 
   const { tasks: inboxTasks, completeTask: completeInbox, deleteTask: deleteInbox, createTask: createInboxTask, updateTask: updateInbox, moveTask: moveInbox, reorderTasks: reorderInbox, reload: reloadInbox } = useTasks(BOX.INBOX);
   const { tasks: todayTasks, completeTask: completeToday, deleteTask: deleteToday, createTask: createTodayTask, updateTask: updateToday, moveTask: moveToday, reorderTasks: reorderToday, reload: reloadToday } = useTasks(BOX.TODAY);
@@ -194,6 +207,38 @@ export default function InboxPage() {
     },
     [inboxTasks, todayTasks, weekTasks, laterTasks, updateInbox, updateToday, updateWeek, updateLater, handleMoveTask, reloadAllBoxes],
   );
+
+  const handleTaskSelect = useCallback((id: string) => {
+    setSelectedTaskId((previous) => (previous === id ? null : id));
+  }, []);
+
+  const handleDetailPanelClose = useCallback(() => {
+    setSelectedTaskId(null);
+  }, []);
+
+  const handleResizeMouseDown = useCallback((event: React.MouseEvent) => {
+    event.preventDefault();
+    const container = splitContainerRef.current;
+    if (!container) return;
+
+    const handleMouseMove = (moveEvent: MouseEvent) => {
+      const containerRect = container.getBoundingClientRect();
+      const newRatio = (moveEvent.clientX - containerRect.left) / containerRect.width;
+      setRatio(newRatio);
+    };
+
+    const handleMouseUp = () => {
+      document.removeEventListener("mousemove", handleMouseMove);
+      document.removeEventListener("mouseup", handleMouseUp);
+      document.body.style.cursor = "";
+      document.body.style.userSelect = "";
+    };
+
+    document.body.style.cursor = "col-resize";
+    document.body.style.userSelect = "none";
+    document.addEventListener("mousemove", handleMouseMove);
+    document.addEventListener("mouseup", handleMouseUp);
+  }, [setRatio]);
 
   const handleSearchChange = useCallback(
     (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -300,6 +345,17 @@ export default function InboxPage() {
     [completedTasks],
   );
 
+  const selectedTask = useMemo(() => {
+    if (!selectedTaskId || !isDesktop) return null;
+    const allTasks = [...inboxTasks, ...todayTasks, ...weekTasks, ...laterTasks, ...completedTasks];
+    return allTasks.find((task) => task.id === selectedTaskId) ?? null;
+  }, [selectedTaskId, isDesktop, inboxTasks, todayTasks, weekTasks, laterTasks, completedTasks]);
+
+  const sharedSelectProps = {
+    onSelect: handleTaskSelect,
+    selectedTaskId,
+  };
+
   const renderContent = () => {
     if (filterMode === "search") {
       return (
@@ -312,6 +368,7 @@ export default function InboxPage() {
           onUpdate={handleUpdateTask}
           onMove={handleMoveTask}
           onDelete={deleteToday}
+          {...sharedSelectProps}
         />
       );
     }
@@ -339,6 +396,7 @@ export default function InboxPage() {
             onReorder={reorderInbox}
             emptyMessage={t("task.emptyInbox")}
             onEmptyClick={handleAddTask}
+            {...sharedSelectProps}
           />
         </>
       );
@@ -358,6 +416,7 @@ export default function InboxPage() {
               onUpdate={handleUpdateTask}
               onMove={handleMoveTask}
               onDelete={deleteToday}
+              {...sharedSelectProps}
             />
           )}
           {yesterdayCompletedTasks.length > 0 && (
@@ -371,6 +430,7 @@ export default function InboxPage() {
               onUpdate={handleUpdateTask}
               onMove={handleMoveTask}
               onDelete={deleteToday}
+              {...sharedSelectProps}
             />
           )}
           {weekCompletedTasks.length > 0 && (
@@ -384,6 +444,7 @@ export default function InboxPage() {
               onUpdate={handleUpdateTask}
               onMove={handleMoveTask}
               onDelete={deleteToday}
+              {...sharedSelectProps}
             />
           )}
           {monthCompletedTasks.length > 0 && (
@@ -397,6 +458,7 @@ export default function InboxPage() {
               onUpdate={handleUpdateTask}
               onMove={handleMoveTask}
               onDelete={deleteToday}
+              {...sharedSelectProps}
             />
           )}
           {earlierCompletedTasks.length > 0 && (
@@ -410,6 +472,7 @@ export default function InboxPage() {
               onUpdate={handleUpdateTask}
               onMove={handleMoveTask}
               onDelete={deleteToday}
+              {...sharedSelectProps}
             />
           )}
           {completedTasks.length === 0 && (
@@ -422,6 +485,7 @@ export default function InboxPage() {
               onUpdate={handleUpdateTask}
               onMove={handleMoveTask}
               onDelete={deleteToday}
+              {...sharedSelectProps}
             />
           )}
         </>
@@ -453,6 +517,7 @@ export default function InboxPage() {
             onDelete={deleteToday}
             onReorder={reorderToday}
             emptyMessage={t("task.emptyToday")}
+            {...sharedSelectProps}
           />
           <TaskSection
             label={t("section.week")}
@@ -466,6 +531,7 @@ export default function InboxPage() {
             onDelete={deleteWeek}
             onReorder={reorderWeek}
             hideEmptyState
+            {...sharedSelectProps}
           />
           <TaskSection
             label={t("section.later")}
@@ -479,6 +545,7 @@ export default function InboxPage() {
             onDelete={deleteLater}
             onReorder={reorderLater}
             hideEmptyState
+            {...sharedSelectProps}
           />
           {todayCompletedTasks.length > 0 && (
             <TaskSection
@@ -491,6 +558,7 @@ export default function InboxPage() {
               onUpdate={handleUpdateTask}
               onMove={handleMoveTask}
               onDelete={deleteToday}
+              {...sharedSelectProps}
             />
           )}
         </>
@@ -526,6 +594,7 @@ export default function InboxPage() {
           onMove={handleMoveTask}
           onDelete={onDelete}
           onReorder={onReorder}
+          {...sharedSelectProps}
         />
       </>
     );
@@ -536,8 +605,14 @@ export default function InboxPage() {
       data-testid="inbox-page"
       className="relative flex flex-1 overflow-hidden bg-white"
     >
+      {/* Split container: task list + optional task detail panel */}
+      <div ref={splitContainerRef} className="flex flex-1 overflow-hidden">
+
       {/* Main content column */}
-      <div className="flex flex-1 flex-col overflow-hidden">
+      <div
+        className="flex flex-col overflow-hidden"
+        style={isDesktop && selectedTask ? { width: `${ratio * 100}%`, flexShrink: 0 } : { flex: "1 1 0" }}
+      >
         {/* Search header */}
         {filterMode === "search" && (
           <header className="px-4 py-2 border-b border-gray-100 flex items-center gap-2">
@@ -585,7 +660,41 @@ export default function InboxPage() {
         )}
       </div>
 
-      {/* Right quick filter panel — full height, outside main column */}
+      {/* Resize handle between task list and detail panel */}
+      {isDesktop && selectedTask && (
+        <div
+          className="w-1 flex-shrink-0 cursor-col-resize bg-gray-100 hover:bg-accent/30 active:bg-accent/50 transition-colors"
+          onMouseDown={handleResizeMouseDown}
+        />
+      )}
+
+      {/* Task detail panel — shown on desktop when a task is selected */}
+      {isDesktop && selectedTask && (
+        <TaskDetailPanel
+          task={selectedTask}
+          goals={goals}
+          contexts={contexts}
+          categories={categories}
+          onUpdate={handleUpdateTask}
+          onDelete={(id) => {
+            setSelectedTaskId(null);
+            const allBoxDelete: Record<string, (id: string) => Promise<void>> = {
+              [BOX.INBOX]: deleteInbox,
+              [BOX.TODAY]: deleteToday,
+              [BOX.WEEK]: deleteWeek,
+              [BOX.LATER]: deleteLater,
+            };
+            const deleteFn = allBoxDelete[selectedTask.box] ?? deleteToday;
+            void deleteFn(id);
+          }}
+          onClose={handleDetailPanelClose}
+          style={{ width: `${(1 - ratio) * 100}%`, flexShrink: 0 }}
+        />
+      )}
+
+      </div>{/* end splitContainerRef */}
+
+      {/* Right quick filter panel — always visible */}
       <RightFilterPanel
         mode={filterMode}
         isOpen={isPanelOpen}

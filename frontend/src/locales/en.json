@@ -250,6 +250,12 @@
     "en": "English",
     "house": "Dr. House"
   },
+  "taskDetail": {
+    "empty": "Select a task",
+    "emptyHint": "Click on a task to view its details",
+    "delete": "Delete task",
+    "close": "Close"
+  },
   "sync": {
     "syncing": "Syncing...",
     "synced": "Synced",

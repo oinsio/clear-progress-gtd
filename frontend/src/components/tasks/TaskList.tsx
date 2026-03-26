@@ -32,9 +32,11 @@ interface SortableTaskItemProps {
   onUpdate: (id: string, changes: Partial<Task>) => Promise<void>;
   onMove: (id: string, box: Box) => Promise<void>;
   onDelete: (id: string) => void;
+  onSelect?: (id: string) => void;
+  selectedTaskId?: string | null;
 }
 
-function SortableTaskItem({ task, goals, contexts, categories, onComplete, onUpdate, onMove, onDelete }: SortableTaskItemProps) {
+function SortableTaskItem({ task, goals, contexts, categories, onComplete, onUpdate, onMove, onDelete, onSelect, selectedTaskId }: SortableTaskItemProps) {
   const {
     attributes,
     listeners,
@@ -67,6 +69,8 @@ function SortableTaskItem({ task, goals, contexts, categories, onComplete, onUpd
           attributes,
           listeners,
         }}
+        onSelect={onSelect}
+        isSelected={selectedTaskId === task.id}
       />
     </li>
   );
@@ -84,9 +88,11 @@ interface TaskListProps {
   onReorder?: (tasks: Task[]) => Promise<void>;
   emptyMessage?: string;
   onEmptyClick?: () => void;
+  onSelect?: (id: string) => void;
+  selectedTaskId?: string | null;
 }
 
-export function TaskList({ tasks, goals, contexts, categories, onComplete, onUpdate, onMove, onDelete, onReorder, emptyMessage, onEmptyClick }: TaskListProps) {
+export function TaskList({ tasks, goals, contexts, categories, onComplete, onUpdate, onMove, onDelete, onReorder, emptyMessage, onEmptyClick, onSelect, selectedTaskId }: TaskListProps) {
   const pointerSensor = useSensor(PointerSensor, {
     activationConstraint: { distance: DRAG_ACTIVATION_DISTANCE_PX },
   });
@@ -144,6 +150,8 @@ export function TaskList({ tasks, goals, contexts, categories, onComplete, onUpd
               onUpdate={onUpdate}
               onMove={onMove}
               onDelete={onDelete}
+              onSelect={onSelect}
+              isSelected={selectedTaskId === task.id}
             />
           </li>
         ))}
@@ -166,6 +174,8 @@ export function TaskList({ tasks, goals, contexts, categories, onComplete, onUpd
               onUpdate={onUpdate}
               onMove={onMove}
               onDelete={onDelete}
+              onSelect={onSelect}
+              selectedTaskId={selectedTaskId}
             />
           ))}
         </ul>
