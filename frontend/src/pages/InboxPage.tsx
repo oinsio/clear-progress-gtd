@@ -155,8 +155,7 @@ export default function InboxPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const isDesktop = useIsDesktop();
-  const { ratio, setRatio } = usePanelSplit();
-  const splitContainerRef = useRef<HTMLDivElement>(null);
+  const { ratio, containerRef: splitContainerRef, handleResizeMouseDown } = usePanelSplit();
 
   const { tasks: inboxTasks, completeTask: completeInbox, deleteTask: deleteInbox, createTask: createInboxTask, updateTask: updateInbox, moveTask: moveInbox, reorderTasks: reorderInbox, reload: reloadInbox } = useTasks(BOX.INBOX);
   const { tasks: todayTasks, completeTask: completeToday, deleteTask: deleteToday, createTask: createTodayTask, updateTask: updateToday, moveTask: moveToday, reorderTasks: reorderToday, reload: reloadToday } = useTasks(BOX.TODAY);
@@ -226,30 +225,6 @@ export default function InboxPage() {
   const handleDetailPanelClose = useCallback(() => {
     setSelectedTaskId(null);
   }, []);
-
-  const handleResizeMouseDown = useCallback((event: React.MouseEvent) => {
-    event.preventDefault();
-    const container = splitContainerRef.current;
-    if (!container) return;
-
-    const handleMouseMove = (moveEvent: MouseEvent) => {
-      const containerRect = container.getBoundingClientRect();
-      const newRatio = (moveEvent.clientX - containerRect.left) / containerRect.width;
-      setRatio(newRatio);
-    };
-
-    const handleMouseUp = () => {
-      document.removeEventListener("mousemove", handleMouseMove);
-      document.removeEventListener("mouseup", handleMouseUp);
-      document.body.style.cursor = "";
-      document.body.style.userSelect = "";
-    };
-
-    document.body.style.cursor = "col-resize";
-    document.body.style.userSelect = "none";
-    document.addEventListener("mousemove", handleMouseMove);
-    document.addEventListener("mouseup", handleMouseUp);
-  }, [setRatio]);
 
   const handleSearchChange = useCallback(
     (event: React.ChangeEvent<HTMLInputElement>) => {

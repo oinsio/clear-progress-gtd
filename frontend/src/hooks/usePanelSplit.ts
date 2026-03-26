@@ -1,4 +1,5 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
+import type * as React from "react";
 import {
   STORAGE_KEYS,
   PANEL_SPLIT_DEFAULT_RATIO,
@@ -25,6 +26,7 @@ function readStoredRatio(): number {
 
 export function usePanelSplit() {
   const [ratio, setRatioState] = useState<number>(readStoredRatio);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   const setRatio = useCallback((newRatio: number) => {
     const clamped = clampRatio(newRatio);
@@ -36,5 +38,32 @@ export function usePanelSplit() {
     }
   }, []);
 
-  return { ratio, setRatio };
+  const handleResizeMouseDown = useCallback(
+    (event: React.MouseEvent) => {
+      event.preventDefault();
+      const container = containerRef.current;
+      if (!container) return;
+
+      const handleMouseMove = (moveEvent: MouseEvent) => {
+        const containerRect = container.getBoundingClientRect();
+        const newRatio = (moveEvent.clientX - containerRect.left) / containerRect.width;
+        setRatio(newRatio);
+      };
+
+      const handleMouseUp = () => {
+        document.removeEventListener("mousemove", handleMouseMove);
+        document.removeEventListener("mouseup", handleMouseUp);
+        document.body.style.cursor = "";
+        document.body.style.userSelect = "";
+      };
+
+      document.body.style.cursor = "col-resize";
+      document.body.style.userSelect = "none";
+      document.addEventListener("mousemove", handleMouseMove);
+      document.addEventListener("mouseup", handleMouseUp);
+    },
+    [setRatio],
+  );
+
+  return { ratio, setRatio, containerRef, handleResizeMouseDown };
 }

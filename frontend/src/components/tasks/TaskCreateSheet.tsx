@@ -19,7 +19,7 @@ const BOX_PICKER_ICONS: Partial<Record<Box, React.FC<{ className?: string }>>> =
 interface TaskCreateSheetProps {
   entityLabel: string;
   entityName: string;
-  entityIcon: React.FC<{ className?: string }>;
+  entityIcon: React.ComponentType<{ className?: string }>;
   onSave: (title: string, box: Box, notes: string) => Promise<void>;
   onClose: () => void;
 }

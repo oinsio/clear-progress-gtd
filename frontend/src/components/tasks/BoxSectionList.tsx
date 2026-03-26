@@ -33,6 +33,8 @@ interface BoxSectionProps {
   onUpdate: (id: string, changes: Partial<Task>) => Promise<void>;
   onMove: (id: string, box: Box) => Promise<void>;
   onDelete: (id: string) => void;
+  onSelect?: (id: string) => void;
+  selectedTaskId?: string | null;
 }
 
 function BoxSection({
@@ -45,6 +47,8 @@ function BoxSection({
   onUpdate,
   onMove,
   onDelete,
+  onSelect,
+  selectedTaskId,
 }: BoxSectionProps) {
   const { isCollapsed, toggleCollapse } = useSectionCollapse(BOX_SECTION_KEYS[box]);
   return (
@@ -69,6 +73,8 @@ function BoxSection({
           onUpdate={onUpdate}
           onMove={onMove}
           onDelete={onDelete}
+          onSelect={onSelect}
+          selectedTaskId={selectedTaskId}
         />
       )}
     </section>
@@ -86,6 +92,8 @@ interface BoxSectionListProps {
   onUpdate: (id: string, changes: Partial<Task>) => Promise<void>;
   onMove: (id: string, box: Box) => Promise<void>;
   onDelete: (id: string) => void;
+  onSelect?: (id: string) => void;
+  selectedTaskId?: string | null;
 }
 
 export function BoxSectionList({
@@ -99,6 +107,8 @@ export function BoxSectionList({
   onUpdate,
   onMove,
   onDelete,
+  onSelect,
+  selectedTaskId,
 }: BoxSectionListProps) {
   const hasAnyTasks = BOX_SECTION_ORDER.some((box) => tasksByBox[box].length > 0);
 
@@ -132,6 +142,8 @@ export function BoxSectionList({
             onUpdate={onUpdate}
             onMove={onMove}
             onDelete={onDelete}
+            onSelect={onSelect}
+            selectedTaskId={selectedTaskId}
           />
         );
       })}
