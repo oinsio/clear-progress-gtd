@@ -21,6 +21,7 @@ import { useGoalTasks } from "@/hooks/useGoalTasks";
 import { useGoals } from "@/hooks/useGoals";
 import { useContexts } from "@/hooks/useContexts";
 import { useCategories } from "@/hooks/useCategories";
+import { useIsUnsynced } from "@/hooks/useIsUnsynced";
 import { usePanelSide } from "@/hooks/usePanelSide";
 import { usePanelOpen } from "@/hooks/usePanelOpen";
 import { useRightPanelNavigation } from "@/hooks/useRightPanelNavigation";
@@ -87,6 +88,7 @@ export default function GoalDetailPage() {
   const { ratio, containerRef: splitContainerRef, handleResizeMouseDown } = usePanelSplit();
 
   const { defaultBox } = useSettings();
+  const isUnsynced = useIsUnsynced(goal ?? { updated_at: "" });
 
   // view state
   const [isEditing, setIsEditing] = useState(false);
@@ -284,7 +286,11 @@ export default function GoalDetailPage() {
             {goal && (
               <div
                 data-testid="goal-card"
-                className={cn("border-b border-gray-100 relative", isEditing && "pb-2")}
+                className={cn(
+                  "border-b border-gray-100 relative border-l-2 transition-colors",
+                  isUnsynced ? "border-l-amber-400" : "border-l-transparent",
+                  isEditing && "pb-2",
+                )}
               >
                 {isEditing ? (
                   /* Edit mode */
