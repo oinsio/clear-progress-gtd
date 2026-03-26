@@ -1,9 +1,10 @@
-import { useState, useCallback, useEffect, useRef } from "react";
+import { useState, useCallback } from "react";
 import { X, CircleMinus, Pause, Square, Play, Check } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useGoal } from "@/hooks/useGoal";
 import { useCoverUrl } from "@/hooks/useCoverUrl";
+import { useCoverPreview } from "@/hooks/useCoverPreview";
 import { cn } from "@/shared/lib/cn";
 import type { GoalStatus } from "@/types/common";
 import { GoalCoverPicker } from "@/components/goals/GoalCoverPicker";
@@ -42,38 +43,15 @@ export default function GoalPage({
   const [description, setDescription] = useState<string | undefined>(undefined);
   const [pendingCoverFile, setPendingCoverFile] = useState<File | null>(null);
   const [isCoverRemoved, setIsCoverRemoved] = useState(false);
-  const [coverPreviewSrc, setCoverPreviewSrc] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
 
-  const objectUrlRef = useRef<string | null>(null);
+  const coverPreviewSrc = useCoverPreview({ pendingCoverFile, isCoverRemoved, existingCoverUrl });
 
   const currentTitle = title ?? goal?.title ?? "";
   const currentDescription = description ?? goal?.description ?? "";
   const canSave = currentTitle.trim().length > 0 && !isSaving;
-
-  useEffect(() => {
-    if (objectUrlRef.current) {
-      URL.revokeObjectURL(objectUrlRef.current);
-      objectUrlRef.current = null;
-    }
-    if (pendingCoverFile) {
-      const url = URL.createObjectURL(pendingCoverFile);
-      objectUrlRef.current = url;
-      setCoverPreviewSrc(url);
-    } else if (isCoverRemoved) {
-      setCoverPreviewSrc(null);
-    } else {
-      setCoverPreviewSrc(existingCoverUrl);
-    }
-    return () => {
-      if (objectUrlRef.current) {
-        URL.revokeObjectURL(objectUrlRef.current);
-        objectUrlRef.current = null;
-      }
-    };
-  }, [pendingCoverFile, isCoverRemoved, existingCoverUrl]);
 
   const handleCoverSelect = useCallback((file: File) => {
     setPendingCoverFile(file);
