@@ -3,9 +3,10 @@ import type { Task } from "@/types/entities";
 import type { Box } from "@/types/common";
 import { TaskService } from "@/services/TaskService";
 import { TaskRepository } from "@/db/repositories/TaskRepository";
+import { ChecklistRepository } from "@/db/repositories/ChecklistRepository";
 import { useTaskMutations } from "./useTaskMutations";
 
-const defaultTaskService = new TaskService(new TaskRepository());
+const defaultTaskService = new TaskService(new TaskRepository(), new ChecklistRepository());
 
 export interface UseGoalTasksReturn {
   tasks: Task[];

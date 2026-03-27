@@ -27,8 +27,9 @@ import type { Category } from "@/types/entities";
 import { useIsUnsynced } from "@/hooks/useIsUnsynced";
 import { TaskService } from "@/services/TaskService";
 import { TaskRepository } from "@/db/repositories/TaskRepository";
+import { ChecklistRepository } from "@/db/repositories/ChecklistRepository";
 
-const defaultTaskService = new TaskService(new TaskRepository());
+const defaultTaskService = new TaskService(new TaskRepository(), new ChecklistRepository());
 
 function SortableCategoryItem({
   category,

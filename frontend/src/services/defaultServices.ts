@@ -1,5 +1,6 @@
 import { TaskService } from "./TaskService";
 import { TaskRepository } from "@/db/repositories/TaskRepository";
+import { ChecklistRepository } from "@/db/repositories/ChecklistRepository";
 import { GoalService } from "./GoalService";
 import { GoalRepository } from "@/db/repositories/GoalRepository";
 import { CoverService } from "./CoverService";
@@ -10,7 +11,7 @@ import { ApiClient } from "./ApiClient";
 
 export const defaultApiClient = new ApiClient();
 
-export const defaultTaskService = new TaskService(new TaskRepository());
+export const defaultTaskService = new TaskService(new TaskRepository(), new ChecklistRepository());
 export const defaultGoalService = new GoalService(new GoalRepository());
 export const defaultCoverService = new CoverService(
   new ApiClient(),

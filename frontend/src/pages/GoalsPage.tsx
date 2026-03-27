@@ -29,6 +29,7 @@ import { BOX } from "@/constants";
 import { cn } from "@/shared/lib/cn";
 import { TaskService } from "@/services/TaskService";
 import { TaskRepository } from "@/db/repositories/TaskRepository";
+import { ChecklistRepository } from "@/db/repositories/ChecklistRepository";
 import type { Goal } from "@/types/entities";
 
 function SortableGoalItem({
@@ -82,7 +83,7 @@ function SortableGoalItem({
   );
 }
 
-const defaultTaskService = new TaskService(new TaskRepository());
+const defaultTaskService = new TaskService(new TaskRepository(), new ChecklistRepository());
 
 export default function GoalsPage() {
   const { t } = useTranslation();

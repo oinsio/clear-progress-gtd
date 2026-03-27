@@ -1,9 +1,13 @@
-import type { Task } from "@/types/entities";
+import type { Task, ChecklistItem } from "@/types/entities";
 import type { Box } from "@/types/common";
 import { TaskRepository } from "@/db/repositories/TaskRepository";
+import { ChecklistRepository } from "@/db/repositories/ChecklistRepository";
 
 export class TaskService {
-  constructor(private readonly taskRepository: TaskRepository) {}
+  constructor(
+    private readonly taskRepository: TaskRepository,
+    private readonly checklistRepository: ChecklistRepository,
+  ) {}
 
   async getByBox(box: Box): Promise<Task[]> {
     const tasks = await this.taskRepository.getByBox(box);
@@ -71,7 +75,27 @@ export class TaskService {
 
   private async createRecurringCopy(task: Task): Promise<Task> {
     const { id: _id, version: _version, created_at: _ca, updated_at: _ua, is_completed: _ic, completed_at: _cat, ...taskProps } = task;
-    return this.create({ ...taskProps, is_completed: false, completed_at: "" });
+    const newTask = await this.create({ ...taskProps, is_completed: false, completed_at: "" });
+    await this.copyChecklistItems(task.id, newTask.id);
+    return newTask;
+  }
+
+  private async copyChecklistItems(sourceTaskId: string, targetTaskId: string): Promise<void> {
+    const checklistItems = await this.checklistRepository.getByTaskId(sourceTaskId);
+    if (checklistItems.length === 0) return;
+    const now = new Date().toISOString();
+    for (const item of checklistItems) {
+      const copiedItem: ChecklistItem = {
+        ...item,
+        id: crypto.randomUUID(),
+        task_id: targetTaskId,
+        is_completed: false,
+        created_at: now,
+        updated_at: now,
+        version: 1,
+      };
+      await this.checklistRepository.create(copiedItem);
+    }
   }
 
   async noncomplete(id: string): Promise<Task> {
