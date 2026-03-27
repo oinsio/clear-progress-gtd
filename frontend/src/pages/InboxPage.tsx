@@ -260,7 +260,8 @@ export default function InboxPage() {
 
   const handleCompleteTodayAndReload = useCallback(
     async (id: string) => {
-      await completeToday(id);
+      const recurringId = await completeToday(id);
+      if (recurringId) setSelectedTaskId(recurringId);
       await reloadCompleted();
     },
     [completeToday, reloadCompleted],
@@ -268,7 +269,8 @@ export default function InboxPage() {
 
   const handleCompleteWeekAndReload = useCallback(
     async (id: string) => {
-      await completeWeek(id);
+      const recurringId = await completeWeek(id);
+      if (recurringId) setSelectedTaskId(recurringId);
       await reloadCompleted();
     },
     [completeWeek, reloadCompleted],
@@ -276,10 +278,43 @@ export default function InboxPage() {
 
   const handleCompleteLaterAndReload = useCallback(
     async (id: string) => {
-      await completeLater(id);
+      const recurringId = await completeLater(id);
+      if (recurringId) setSelectedTaskId(recurringId);
       await reloadCompleted();
     },
     [completeLater, reloadCompleted],
+  );
+
+  const handleCompleteInbox = useCallback(
+    async (id: string) => {
+      const recurringId = await completeInbox(id);
+      if (recurringId) setSelectedTaskId(recurringId);
+    },
+    [completeInbox],
+  );
+
+  const handleCompleteToday = useCallback(
+    async (id: string) => {
+      const recurringId = await completeToday(id);
+      if (recurringId) setSelectedTaskId(recurringId);
+    },
+    [completeToday],
+  );
+
+  const handleCompleteWeek = useCallback(
+    async (id: string) => {
+      const recurringId = await completeWeek(id);
+      if (recurringId) setSelectedTaskId(recurringId);
+    },
+    [completeWeek],
+  );
+
+  const handleCompleteLater = useCallback(
+    async (id: string) => {
+      const recurringId = await completeLater(id);
+      if (recurringId) setSelectedTaskId(recurringId);
+    },
+    [completeLater],
   );
 
   const { todayTasks: todayCompletedTasks, yesterdayTasks: yesterdayCompletedTasks, weekTasks: weekCompletedTasks, monthTasks: monthCompletedTasks, earlierTasks: earlierCompletedTasks } = useMemo(
@@ -306,7 +341,7 @@ export default function InboxPage() {
           goals={goals}
           contexts={contexts}
           categories={categories}
-          onComplete={completeToday}
+          onComplete={handleCompleteToday}
           onUpdate={handleUpdateTask}
           onMove={handleMoveTask}
           onDelete={deleteToday}
@@ -333,7 +368,7 @@ export default function InboxPage() {
             goals={goals}
             contexts={contexts}
             categories={categories}
-            onComplete={completeInbox}
+            onComplete={handleCompleteInbox}
             onUpdate={handleUpdateTask}
             onMove={handleMoveTask}
             onDelete={deleteInbox}
@@ -528,10 +563,10 @@ export default function InboxPage() {
     }
 
     const boxConfig = {
-      [BOX.INBOX]: { tasks: inboxTasks, onComplete: completeInbox, onDelete: deleteInbox, onReorder: reorderInbox },
-      [BOX.TODAY]: { tasks: todayTasks, onComplete: completeToday, onDelete: deleteToday, onReorder: reorderToday },
-      [BOX.WEEK]: { tasks: weekTasks, onComplete: completeWeek, onDelete: deleteWeek, onReorder: reorderWeek },
-      [BOX.LATER]: { tasks: laterTasks, onComplete: completeLater, onDelete: deleteLater, onReorder: reorderLater },
+      [BOX.INBOX]: { tasks: inboxTasks, onComplete: handleCompleteInbox, onDelete: deleteInbox, onReorder: reorderInbox },
+      [BOX.TODAY]: { tasks: todayTasks, onComplete: handleCompleteToday, onDelete: deleteToday, onReorder: reorderToday },
+      [BOX.WEEK]: { tasks: weekTasks, onComplete: handleCompleteWeek, onDelete: deleteWeek, onReorder: reorderWeek },
+      [BOX.LATER]: { tasks: laterTasks, onComplete: handleCompleteLater, onDelete: deleteLater, onReorder: reorderLater },
     };
 
     const { tasks, onComplete, onDelete, onReorder } = boxConfig[activeBox];

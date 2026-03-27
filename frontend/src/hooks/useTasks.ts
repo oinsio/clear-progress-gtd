@@ -9,7 +9,7 @@ export interface UseTasksReturn {
   tasks: Task[];
   isLoading: boolean;
   createTask: (title: string) => Promise<void>;
-  completeTask: (id: string) => Promise<void>;
+  completeTask: (id: string) => Promise<string | null>;
   deleteTask: (id: string) => Promise<void>;
   moveTask: (id: string, box: Box) => Promise<void>;
   updateTask: (id: string, changes: Partial<Task>) => Promise<void>;
@@ -46,16 +46,19 @@ export function useTasks(
   );
 
   const completeTask = useCallback(
-    async (id: string) => {
+    async (id: string): Promise<string | null> => {
       const task = await taskService.getById(id);
-      if (!task) return;
+      if (!task) return null;
+      let recurringId: string | null = null;
       if (task.is_completed) {
         await taskService.noncomplete(id);
       } else {
-        await taskService.complete(id);
+        const { recurring } = await taskService.complete(id);
+        recurringId = recurring?.id ?? null;
       }
       await loadTasks();
       schedulePush();
+      return recurringId;
     },
     [taskService, loadTasks, schedulePush],
   );

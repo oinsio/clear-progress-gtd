@@ -12,7 +12,7 @@ export interface UseCategoryTasksReturn {
   tasks: Task[];
   isLoading: boolean;
   createTask: (title: string, box: Box, notes?: string) => Promise<void>;
-  completeTask: (id: string) => Promise<void>;
+  completeTask: (id: string) => Promise<string | null>;
   updateTask: (id: string, changes: Partial<Task>) => Promise<void>;
   moveTask: (id: string, box: Box) => Promise<void>;
   deleteTask: (id: string) => Promise<void>;

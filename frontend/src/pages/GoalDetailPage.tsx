@@ -150,6 +150,14 @@ export default function GoalDetailPage() {
     setSelectedTaskId(null);
   }, []);
 
+  const handleCompleteTask = useCallback(
+    async (id: string) => {
+      const recurringId = await completeTask(id);
+      if (recurringId) setSelectedTaskId(recurringId);
+    },
+    [completeTask],
+  );
+
   const handleCreateTask = useCallback(
     async (title: string, box: Box, notes: string) => {
       await createTask(title, box, notes);
@@ -520,7 +528,7 @@ export default function GoalDetailPage() {
               contexts={contexts}
               categories={categories}
               onAddPromptClick={() => setIsAddingTask(true)}
-              onComplete={completeTask}
+              onComplete={handleCompleteTask}
               onUpdate={updateTask}
               onMove={moveTask}
               onDelete={deleteTask}
@@ -539,7 +547,7 @@ export default function GoalDetailPage() {
                   goals={goals}
                   contexts={contexts}
                   categories={categories}
-                  onComplete={completeTask}
+                  onComplete={handleCompleteTask}
                   onUpdate={updateTask}
                   onMove={moveTask}
                   onDelete={deleteTask}

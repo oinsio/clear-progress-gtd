@@ -126,6 +126,39 @@ describe("useTaskMutations", () => {
 
       expect(mockSchedulePush).not.toHaveBeenCalled();
     });
+
+    it("should return null when task has no repeat_rule", async () => {
+      const task = buildTask({ is_completed: false, repeat_rule: "" });
+      mockTaskService = createMockTaskService({
+        getById: vi.fn().mockResolvedValue(task),
+        complete: vi.fn().mockResolvedValue({ completed: task, recurring: null }),
+      });
+      const { result } = renderHook(() => useTaskMutations(mockTaskService, onReload));
+
+      let recurringId: string | null = "placeholder";
+      await act(async () => {
+        recurringId = await result.current.completeTask(task.id);
+      });
+
+      expect(recurringId).toBeNull();
+    });
+
+    it("should return the recurring task id when task has repeat_rule", async () => {
+      const task = buildTask({ is_completed: false, repeat_rule: JSON.stringify({ type: "daily" }) });
+      const recurringTask = buildTask({ id: "new-recurring-id" });
+      mockTaskService = createMockTaskService({
+        getById: vi.fn().mockResolvedValue(task),
+        complete: vi.fn().mockResolvedValue({ completed: task, recurring: recurringTask }),
+      });
+      const { result } = renderHook(() => useTaskMutations(mockTaskService, onReload));
+
+      let recurringId: string | null = null;
+      await act(async () => {
+        recurringId = await result.current.completeTask(task.id);
+      });
+
+      expect(recurringId).toBe("new-recurring-id");
+    });
   });
 
   describe("updateTask", () => {

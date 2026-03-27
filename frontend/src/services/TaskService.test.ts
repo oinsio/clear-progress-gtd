@@ -199,7 +199,7 @@ describe("TaskService", () => {
         getById: vi.fn().mockResolvedValue(task),
       });
       const taskService = new TaskService(mockTaskRepository, mockChecklistRepository);
-      const completed = await taskService.complete(task.id);
+      const { completed } = await taskService.complete(task.id);
       expect(completed.is_completed).toBe(true);
     });
 
@@ -209,8 +209,29 @@ describe("TaskService", () => {
         getById: vi.fn().mockResolvedValue(task),
       });
       const taskService = new TaskService(mockTaskRepository, mockChecklistRepository);
-      const completed = await taskService.complete(task.id);
+      const { completed } = await taskService.complete(task.id);
       expect(completed.completed_at).not.toBe("");
+    });
+
+    it("should return null for recurring when repeat_rule is empty", async () => {
+      const task = buildTask({ repeat_rule: "" });
+      mockTaskRepository = createMockTaskRepository({
+        getById: vi.fn().mockResolvedValue(task),
+      });
+      const taskService = new TaskService(mockTaskRepository, mockChecklistRepository);
+      const { recurring } = await taskService.complete(task.id);
+      expect(recurring).toBeNull();
+    });
+
+    it("should return the new recurring task when repeat_rule is set", async () => {
+      const task = buildTask({ repeat_rule: JSON.stringify({ type: "daily" }) });
+      mockTaskRepository = createMockTaskRepository({
+        getById: vi.fn().mockResolvedValue(task),
+      });
+      const taskService = new TaskService(mockTaskRepository, mockChecklistRepository);
+      const { recurring } = await taskService.complete(task.id);
+      expect(recurring).not.toBeNull();
+      expect(recurring!.id).not.toBe(task.id);
     });
 
     it("should NOT create a recurring copy when repeat_rule is empty", async () => {

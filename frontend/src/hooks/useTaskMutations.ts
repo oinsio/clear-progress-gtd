@@ -5,7 +5,7 @@ import { TaskService } from "@/services/TaskService";
 import { useSync } from "@/app/providers/SyncProvider";
 
 export interface UseTaskMutationsReturn {
-  completeTask: (id: string) => Promise<void>;
+  completeTask: (id: string) => Promise<string | null>;
   updateTask: (id: string, changes: Partial<Task>) => Promise<void>;
   moveTask: (id: string, box: Box) => Promise<void>;
   deleteTask: (id: string) => Promise<void>;
@@ -18,16 +18,19 @@ export function useTaskMutations(
   const { schedulePush } = useSync();
 
   const completeTask = useCallback(
-    async (id: string) => {
+    async (id: string): Promise<string | null> => {
       const task = await taskService.getById(id);
-      if (!task) return;
+      if (!task) return null;
+      let recurringId: string | null = null;
       if (task.is_completed) {
         await taskService.noncomplete(id);
       } else {
-        await taskService.complete(id);
+        const { recurring } = await taskService.complete(id);
+        recurringId = recurring?.id ?? null;
       }
       await onReload();
       schedulePush();
+      return recurringId;
     },
     [taskService, onReload, schedulePush],
   );

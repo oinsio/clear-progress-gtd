@@ -11,7 +11,7 @@ export function createMockTaskService(
       getById: vi.fn().mockResolvedValue(undefined),
       create: vi.fn().mockResolvedValue(undefined),
       update: vi.fn().mockResolvedValue(undefined),
-      complete: vi.fn().mockResolvedValue(undefined),
+      complete: vi.fn().mockResolvedValue({ completed: undefined, recurring: null }),
       noncomplete: vi.fn().mockResolvedValue(undefined),
       softDelete: vi.fn().mockResolvedValue(undefined),
       moveToBox: vi.fn().mockResolvedValue(undefined),

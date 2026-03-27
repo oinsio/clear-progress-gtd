@@ -164,6 +164,44 @@ describe("useTasks", () => {
     expect(mockTaskService.noncomplete).not.toHaveBeenCalled();
   });
 
+  it("should return null from completeTask when task has no repeat_rule", async () => {
+    const taskData = buildTask({ box: "today", is_completed: false, repeat_rule: "" });
+    const service = createMockTaskService({
+      getByBox: vi.fn().mockResolvedValue([taskData]),
+      getById: vi.fn().mockResolvedValue(taskData),
+      complete: vi.fn().mockResolvedValue({ completed: taskData, recurring: null }),
+    });
+    const { result } = renderHook(() => useTasks(BOX.TODAY, service));
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    let recurringId: string | null = "placeholder";
+    await act(async () => {
+      recurringId = await result.current.completeTask(taskData.id);
+    });
+
+    expect(recurringId).toBeNull();
+    expect(service.complete).toHaveBeenCalledWith(taskData.id);
+  });
+
+  it("should return recurring task id from completeTask when task has repeat_rule", async () => {
+    const taskData = buildTask({ box: "today", is_completed: false, repeat_rule: JSON.stringify({ type: "daily" }) });
+    const recurringTask = buildTask({ id: "recurring-task-id" });
+    const service = createMockTaskService({
+      getByBox: vi.fn().mockResolvedValue([taskData]),
+      getById: vi.fn().mockResolvedValue(taskData),
+      complete: vi.fn().mockResolvedValue({ completed: taskData, recurring: recurringTask }),
+    });
+    const { result } = renderHook(() => useTasks(BOX.TODAY, service));
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    let recurringId: string | null = null;
+    await act(async () => {
+      recurringId = await result.current.completeTask(taskData.id);
+    });
+
+    expect(recurringId).toBe("recurring-task-id");
+  });
+
   describe("reorderTasks", () => {
     let reorderResult: Awaited<ReturnType<typeof renderHook<ReturnType<typeof useTasks>, unknown>>>;
     let reorderedTasks: ReturnType<typeof buildTask>[];
