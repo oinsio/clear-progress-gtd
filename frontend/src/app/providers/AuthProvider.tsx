@@ -4,7 +4,8 @@ import { useGoogleLogin } from "@react-oauth/google";
 import { setAccessToken } from "@/services/ApiClient";
 import { STORAGE_KEYS } from "@/constants";
 
-const GOOGLE_OAUTH_SCOPES = "https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/spreadsheets";
+const GOOGLE_OAUTH_SCOPES =
+  "https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/spreadsheets";
 
 interface AuthContextValue {
   accessToken: string | null;
@@ -71,7 +72,7 @@ function GoogleAuthInner({ children }: { children: React.ReactNode }) {
   );
 }
 
-/** Used when VITE_GOOGLE_CLIENT_ID is not set — app works offline without auth. */
+/** Used when Google Client ID is not configured — app works offline without auth. */
 function NoAuthInner({ children }: { children: React.ReactNode }) {
   const signIn = useCallback(() => {}, []);
   const signOut = useCallback(() => {}, []);

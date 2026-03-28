@@ -190,7 +190,8 @@
     "connectedUrl": "Текущий адрес:",
     "clientIdLabel": "Google Client ID",
     "clientIdPlaceholder": "1234567890-xxx.apps.googleusercontent.com",
-    "clientIdDescription": "Создайте OAuth 2.0 Client ID в Google Cloud Console для вашего проекта"
+    "clientIdDescription": "Создайте OAuth 2.0 Client ID в Google Cloud Console для вашего проекта",
+    "awaitingSignin": "Подключение установлено. Войдите в Google для начала синхронизации."
   },
   "selector": {
     "goal": "Цель",
@@ -294,6 +295,7 @@
     "syncing": "Обновляю...",
     "synced": "Обновлено",
     "noConnection": "Нет связи",
+    "unauthorized": "Нет доступа",
     "ariaLabel": "Обновить"
   },
   "auth": {

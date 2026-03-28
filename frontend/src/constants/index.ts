@@ -107,6 +107,8 @@ export const STORAGE_KEYS = {
   MENU_ORDER: "menu_order",
   SECTION_COLLAPSE: "section_collapse",
   COLOR_SCHEME: "color_scheme",
+  SETUP_PENDING_PHASE: "setup_pending_phase",
+  SETUP_NEEDS_INIT: "setup_needs_init",
 } as const;
 
 export const PANEL_SPLIT_DEFAULT_RATIO = 0.5;

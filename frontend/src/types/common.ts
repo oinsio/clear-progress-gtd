@@ -17,7 +17,7 @@ export type AccentColor =
   | "indigo"
   | "purple";
 
-export type SyncStatus = "idle" | "syncing" | "error" | "offline";
+export type SyncStatus = "idle" | "syncing" | "error" | "offline" | "unauthorized";
 
 export type FullSyncStep = "idle" | "upload_covers" | "push" | "pull" | "download_covers" | "done" | "error";
 

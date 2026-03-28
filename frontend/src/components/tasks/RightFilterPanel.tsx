@@ -78,13 +78,16 @@ export function RightFilterPanel({
     .map((config) => FILTER_ITEMS_MAP[config.mode]);
 
   const isSyncing = syncStatus === "syncing";
-  const hasSyncError = syncStatus === "error" || syncStatus === "offline";
+  const isUnauthorized = syncStatus === "unauthorized";
+  const hasSyncError = syncStatus === "error" || syncStatus === "offline" || syncStatus === "unauthorized";
 
   const syncLabel = isSyncing
     ? t("sync.syncing")
-    : hasSyncError
-      ? t("sync.noConnection")
-      : t("sync.synced");
+    : isUnauthorized
+      ? t("sync.unauthorized")
+      : hasSyncError
+        ? t("sync.noConnection")
+        : t("sync.synced");
 
   const handleSyncClick = (e: React.MouseEvent): void => {
     e.stopPropagation();

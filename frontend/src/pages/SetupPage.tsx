@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { ROUTES, STORAGE_KEYS, BACKEND_CONNECTION_EVENT, GOOGLE_CLIENT_ID_CHANGED_EVENT } from "@/constants";
@@ -10,7 +10,26 @@ import { usePanelOpen } from "@/hooks/usePanelOpen";
 import { RightFilterPanel, type RightPanelMode } from "@/components/tasks/RightFilterPanel";
 import { cn } from "@/shared/lib/cn";
 
-type SetupPhase = "input" | "connecting" | "not_initialized" | "initializing" | "connected" | "error";
+type SetupPhase =
+  | "input"
+  | "connecting"
+  | "awaiting_signin"
+  | "not_initialized"
+  | "initializing"
+  | "connected"
+  | "error";
+
+function readPendingPhase(): SetupPhase | null {
+  const saved = sessionStorage.getItem(STORAGE_KEYS.SETUP_PENDING_PHASE) as SetupPhase | null;
+  if (saved) sessionStorage.removeItem(STORAGE_KEYS.SETUP_PENDING_PHASE);
+  return saved;
+}
+
+function readNeedsInit(): boolean {
+  const flag = sessionStorage.getItem(STORAGE_KEYS.SETUP_NEEDS_INIT) === "true";
+  if (flag) sessionStorage.removeItem(STORAGE_KEYS.SETUP_NEEDS_INIT);
+  return flag;
+}
 
 export default function SetupPage() {
   const { t } = useTranslation();
@@ -22,10 +41,33 @@ export default function SetupPage() {
   const { accessToken, signIn } = useAuth();
   const existingUrl = localStorage.getItem(STORAGE_KEYS.GAS_URL) ?? "";
   const existingClientId = localStorage.getItem(STORAGE_KEYS.GOOGLE_CLIENT_ID) ?? "";
+
   const [urlInput, setUrlInput] = useState(existingUrl);
   const [clientIdInput, setClientIdInput] = useState(existingClientId);
-  const [phase, setPhase] = useState<SetupPhase>(existingUrl ? "connected" : "input");
+  const [phase, setPhase] = useState<SetupPhase>(() => {
+    // After GOOGLE_CLIENT_ID_CHANGED_EVENT the app remounts; read persisted phase from sessionStorage.
+    const pendingPhase = readPendingPhase();
+    if (pendingPhase) return pendingPhase;
+    return existingUrl ? "connected" : "input";
+  });
+  const [needsInit, setNeedsInit] = useState<boolean>(() => readNeedsInit());
   const [errorMessage, setErrorMessage] = useState("");
+  const prevAccessTokenRef = useRef<string | null>(accessToken);
+
+  // After sign-in succeeds in "awaiting_signin" phase: initialize backend if needed, then open app.
+  useEffect(() => {
+    const previousToken = prevAccessTokenRef.current;
+    prevAccessTokenRef.current = accessToken;
+    if (previousToken === null && accessToken !== null && phase === "awaiting_signin") {
+      if (needsInit) {
+        void handleInit();
+      } else {
+        navigate(ROUTES.INBOX);
+      }
+    }
+  // handleInit is defined below and is stable within a render cycle; safe to omit from deps.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [accessToken, phase, needsInit, navigate]);
 
   const handleModeChange = useCallback(
     (newMode: RightPanelMode) => {
@@ -55,12 +97,19 @@ export default function SetupPage() {
       }
       localStorage.setItem(STORAGE_KEYS.GAS_URL, resolvedUrl);
       window.dispatchEvent(new Event(BACKEND_CONNECTION_EVENT));
+
       const trimmedClientId = clientIdInput.trim();
       if (trimmedClientId) {
         localStorage.setItem(STORAGE_KEYS.GOOGLE_CLIENT_ID, trimmedClientId);
+        // Persist the desired phase so SetupPage can restore it after the app remounts
+        // (GOOGLE_CLIENT_ID_CHANGED_EVENT causes App to rewrap with GoogleOAuthProvider).
+        sessionStorage.setItem(STORAGE_KEYS.SETUP_PENDING_PHASE, "awaiting_signin");
+        if (!response.initialized) {
+          sessionStorage.setItem(STORAGE_KEYS.SETUP_NEEDS_INIT, "true");
+        }
         window.dispatchEvent(new Event(GOOGLE_CLIENT_ID_CHANGED_EVENT));
-      }
-      if (response.initialized) {
+        // App remounts here; the new SetupPage instance reads the sessionStorage flags above.
+      } else if (response.initialized) {
         navigate(ROUTES.INBOX);
       } else {
         setPhase("not_initialized");
@@ -96,6 +145,7 @@ export default function SetupPage() {
     window.dispatchEvent(new Event(GOOGLE_CLIENT_ID_CHANGED_EVENT));
     setUrlInput("");
     setClientIdInput("");
+    setNeedsInit(false);
     setPhase("input");
   };
 
@@ -136,6 +186,25 @@ export default function SetupPage() {
                   </section>
                 )}
 
+                {/* Sign-in prompt when connected but not authenticated */}
+                {existingClientId && !accessToken && (
+                  <section className="space-y-3">
+                    <div
+                      data-testid="setup-sign-in-required"
+                      className="rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 space-y-2"
+                    >
+                      <p className="text-sm text-blue-800">{t("auth.signInRequired")}</p>
+                      <button
+                        data-testid="setup-sign-in-btn"
+                        onClick={signIn}
+                        className="w-full rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white transition-colors"
+                      >
+                        {t("auth.signInButton")}
+                      </button>
+                    </div>
+                  </section>
+                )}
+
                 {/* Actions section */}
                 <section className="flex gap-2">
                   <button
@@ -155,37 +224,61 @@ export default function SetupPage() {
               </>
             ) : (
               <>
+                {/* Awaiting sign-in step (shown after connect, before OAuth) */}
+                {phase === "awaiting_signin" && (
+                  <section className="space-y-3">
+                    <div
+                      data-testid="setup-awaiting-signin"
+                      className="rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 space-y-2"
+                    >
+                      <p className="text-sm font-medium text-blue-900">{t("setup.awaitingSignin")}</p>
+                      <p className="text-sm text-blue-800">{t("auth.signInRequired")}</p>
+                      <button
+                        data-testid="setup-sign-in-btn"
+                        onClick={signIn}
+                        className="w-full rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white transition-colors"
+                      >
+                        {t("auth.signInButton")}
+                      </button>
+                    </div>
+                  </section>
+                )}
+
                 {/* URL input section */}
-                <section className="space-y-3">
-                  <h2 className="text-sm font-medium uppercase tracking-wide text-gray-500">
-                    {t("setup.urlLabel")}
-                  </h2>
-                  <input
-                    data-testid="setup-url-input"
-                    type="text"
-                    value={urlInput}
-                    onChange={(e) => setUrlInput(e.target.value)}
-                    placeholder={t("setup.urlPlaceholder")}
-                    className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
-                  />
-                  <p className="text-xs text-gray-400">{t("setup.description")}</p>
-                </section>
+                {phase !== "awaiting_signin" && (
+                  <section className="space-y-3">
+                    <h2 className="text-sm font-medium uppercase tracking-wide text-gray-500">
+                      {t("setup.urlLabel")}
+                    </h2>
+                    <input
+                      data-testid="setup-url-input"
+                      type="text"
+                      value={urlInput}
+                      onChange={(e) => setUrlInput(e.target.value)}
+                      placeholder={t("setup.urlPlaceholder")}
+                      className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
+                    />
+                    <p className="text-xs text-gray-400">{t("setup.description")}</p>
+                  </section>
+                )}
 
                 {/* Google Client ID input section */}
-                <section className="space-y-3">
-                  <h2 className="text-sm font-medium uppercase tracking-wide text-gray-500">
-                    {t("setup.clientIdLabel")}
-                  </h2>
-                  <input
-                    data-testid="setup-client-id-input"
-                    type="text"
-                    value={clientIdInput}
-                    onChange={(e) => setClientIdInput(e.target.value)}
-                    placeholder={t("setup.clientIdPlaceholder")}
-                    className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
-                  />
-                  <p className="text-xs text-gray-400">{t("setup.clientIdDescription")}</p>
-                </section>
+                {phase !== "awaiting_signin" && (
+                  <section className="space-y-3">
+                    <h2 className="text-sm font-medium uppercase tracking-wide text-gray-500">
+                      {t("setup.clientIdLabel")}
+                    </h2>
+                    <input
+                      data-testid="setup-client-id-input"
+                      type="text"
+                      value={clientIdInput}
+                      onChange={(e) => setClientIdInput(e.target.value)}
+                      placeholder={t("setup.clientIdPlaceholder")}
+                      className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
+                    />
+                    <p className="text-xs text-gray-400">{t("setup.clientIdDescription")}</p>
+                  </section>
+                )}
 
                 {/* Status feedback */}
                 {isLoading && (
@@ -204,7 +297,7 @@ export default function SetupPage() {
                   </div>
                 )}
 
-                {/* Not initialized flow */}
+                {/* Not initialized flow (no clientId case) */}
                 {phase === "not_initialized" && (
                   <section className="space-y-3">
                     <div className="rounded-lg border border-yellow-200 bg-yellow-50 px-4 py-3 text-sm text-yellow-800">
@@ -242,7 +335,7 @@ export default function SetupPage() {
                 )}
 
                 {/* Connect button */}
-                {phase !== "not_initialized" && (
+                {phase !== "not_initialized" && phase !== "awaiting_signin" && (
                   <section className="space-y-3">
                     <button
                       data-testid="setup-connect-button"

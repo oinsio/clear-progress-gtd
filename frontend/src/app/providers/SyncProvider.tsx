@@ -99,12 +99,13 @@ export function SyncProvider({ children }: { children: React.ReactNode }) {
       stopPingInterval();
     } catch (error) {
       if (error instanceof Error && error.name === API_AUTH_ERROR_NAME) {
+        setSyncStatus("unauthorized");
         signOut();
         return;
       }
       setSyncStatus("error");
     }
-  }, [applySyncResult, stopPingInterval, signOut]);
+  }, [accessToken, applySyncResult, stopPingInterval, signOut]);
 
   const schedulePush = useCallback(() => {
     if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
