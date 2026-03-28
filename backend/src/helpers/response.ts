@@ -24,8 +24,13 @@ export const ERROR_CODES = {
   INTERNAL_ERROR: 'INTERNAL_ERROR',
   FILE_TOO_LARGE: 'FILE_TOO_LARGE',
   FILE_NOT_FOUND: 'FILE_NOT_FOUND',
+  UNAUTHORIZED: 'UNAUTHORIZED',
 } as const;
 
 export function jsonNotInitialized(): GoogleAppsScript.Content.TextOutput {
   return jsonError(ERROR_CODES.NOT_INITIALIZED, ERROR_MESSAGES.INIT_REQUIRED);
+}
+
+export function jsonUnauthorized(): GoogleAppsScript.Content.TextOutput {
+  return jsonError(ERROR_CODES.UNAUTHORIZED, ERROR_MESSAGES.UNAUTHORIZED);
 }

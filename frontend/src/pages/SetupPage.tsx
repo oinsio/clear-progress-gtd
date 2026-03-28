@@ -1,9 +1,10 @@
 import { useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { ROUTES, STORAGE_KEYS, BACKEND_CONNECTION_EVENT } from "@/constants";
+import { ROUTES, STORAGE_KEYS, BACKEND_CONNECTION_EVENT, GOOGLE_CLIENT_ID_CHANGED_EVENT } from "@/constants";
 import { parseGasInput } from "@/utils/gasUrl";
 import { defaultApiClient } from "@/services/defaultServices";
+import { useAuth } from "@/app/providers/AuthProvider";
 import { usePanelSide } from "@/hooks/usePanelSide";
 import { usePanelOpen } from "@/hooks/usePanelOpen";
 import { RightFilterPanel, type RightPanelMode } from "@/components/tasks/RightFilterPanel";
@@ -18,8 +19,11 @@ export default function SetupPage() {
   const { isPanelOpen, togglePanelOpen } = usePanelOpen();
   const { panelSide } = usePanelSide();
 
+  const { accessToken, signIn } = useAuth();
   const existingUrl = localStorage.getItem(STORAGE_KEYS.GAS_URL) ?? "";
+  const existingClientId = localStorage.getItem(STORAGE_KEYS.GOOGLE_CLIENT_ID) ?? "";
   const [urlInput, setUrlInput] = useState(existingUrl);
+  const [clientIdInput, setClientIdInput] = useState(existingClientId);
   const [phase, setPhase] = useState<SetupPhase>(existingUrl ? "connected" : "input");
   const [errorMessage, setErrorMessage] = useState("");
 
@@ -51,6 +55,11 @@ export default function SetupPage() {
       }
       localStorage.setItem(STORAGE_KEYS.GAS_URL, resolvedUrl);
       window.dispatchEvent(new Event(BACKEND_CONNECTION_EVENT));
+      const trimmedClientId = clientIdInput.trim();
+      if (trimmedClientId) {
+        localStorage.setItem(STORAGE_KEYS.GOOGLE_CLIENT_ID, trimmedClientId);
+        window.dispatchEvent(new Event(GOOGLE_CLIENT_ID_CHANGED_EVENT));
+      }
       if (response.initialized) {
         navigate(ROUTES.INBOX);
       } else {
@@ -82,8 +91,11 @@ export default function SetupPage() {
 
   const handleDisconnect = (): void => {
     localStorage.removeItem(STORAGE_KEYS.GAS_URL);
+    localStorage.removeItem(STORAGE_KEYS.GOOGLE_CLIENT_ID);
     window.dispatchEvent(new Event(BACKEND_CONNECTION_EVENT));
+    window.dispatchEvent(new Event(GOOGLE_CLIENT_ID_CHANGED_EVENT));
     setUrlInput("");
+    setClientIdInput("");
     setPhase("input");
   };
 
@@ -111,6 +123,18 @@ export default function SetupPage() {
                     <p className="break-all font-mono text-sm text-gray-800">{existingUrl}</p>
                   </div>
                 </section>
+
+                {/* Google Client ID section */}
+                {existingClientId && (
+                  <section className="space-y-3">
+                    <h2 className="text-sm font-medium uppercase tracking-wide text-gray-500">
+                      {t("setup.clientIdLabel")}
+                    </h2>
+                    <div className="rounded-lg border border-gray-200 bg-gray-50 px-4 py-3">
+                      <p className="break-all font-mono text-sm text-gray-800">{existingClientId}</p>
+                    </div>
+                  </section>
+                )}
 
                 {/* Actions section */}
                 <section className="flex gap-2">
@@ -147,6 +171,22 @@ export default function SetupPage() {
                   <p className="text-xs text-gray-400">{t("setup.description")}</p>
                 </section>
 
+                {/* Google Client ID input section */}
+                <section className="space-y-3">
+                  <h2 className="text-sm font-medium uppercase tracking-wide text-gray-500">
+                    {t("setup.clientIdLabel")}
+                  </h2>
+                  <input
+                    data-testid="setup-client-id-input"
+                    type="text"
+                    value={clientIdInput}
+                    onChange={(e) => setClientIdInput(e.target.value)}
+                    placeholder={t("setup.clientIdPlaceholder")}
+                    className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
+                  />
+                  <p className="text-xs text-gray-400">{t("setup.clientIdDescription")}</p>
+                </section>
+
                 {/* Status feedback */}
                 {isLoading && (
                   <div data-testid="setup-loading" className="flex items-center gap-2 text-sm text-gray-500">
@@ -170,10 +210,31 @@ export default function SetupPage() {
                     <div className="rounded-lg border border-yellow-200 bg-yellow-50 px-4 py-3 text-sm text-yellow-800">
                       {t("setup.notInitializedHint")}
                     </div>
+                    {!accessToken && (
+                      <div
+                        data-testid="setup-sign-in-required"
+                        className="rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 space-y-2"
+                      >
+                        <p className="text-sm text-blue-800">{t("auth.signInRequired")}</p>
+                        <button
+                          data-testid="setup-sign-in-btn"
+                          onClick={signIn}
+                          className="w-full rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white transition-colors"
+                        >
+                          {t("auth.signInButton")}
+                        </button>
+                      </div>
+                    )}
                     <button
                       data-testid="setup-initialize-button"
                       onClick={handleInit}
-                      className="w-full rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white transition-colors"
+                      disabled={!accessToken}
+                      className={cn(
+                        "w-full rounded-lg px-4 py-2 text-sm font-medium transition-colors",
+                        accessToken
+                          ? "bg-accent text-white"
+                          : "cursor-not-allowed bg-gray-100 text-gray-400",
+                      )}
                     >
                       {t("setup.initialize")}
                     </button>

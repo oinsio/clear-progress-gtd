@@ -11,7 +11,26 @@ import type {
   DeleteCoverResponse,
   GetCoversResponse,
 } from "@/types/api";
-import { STORAGE_KEYS, API_ACTIONS } from "@/constants";
+import { STORAGE_KEYS, API_ACTIONS, GAS_AUTH_ERROR_CODE, TOKEN_EXPIRY_BUFFER_S, API_AUTH_ERROR_NAME } from "@/constants";
+
+// Module-level shared state — all ApiClient instances use the same token
+let sharedAccessToken: string | null = null;
+let sharedTokenExpiresAt: number | null = null;
+
+export function setAccessToken(token: string | null, expiresIn?: number): void {
+  sharedAccessToken = token;
+  sharedTokenExpiresAt =
+    token && expiresIn !== undefined
+      ? Date.now() + (expiresIn - TOKEN_EXPIRY_BUFFER_S) * 1000
+      : null;
+}
+
+export class ApiAuthError extends Error {
+  constructor() {
+    super("Authentication required: token is missing, expired, or invalid");
+    this.name = API_AUTH_ERROR_NAME;
+  }
+}
 
 export class ApiClient {
   private getUrl(): string {
@@ -19,22 +38,36 @@ export class ApiClient {
   }
 
   private async request<TResponse>(body: object): Promise<TResponse> {
+    if (sharedTokenExpiresAt !== null && Date.now() > sharedTokenExpiresAt) {
+      throw new ApiAuthError();
+    }
+
     const url = this.getUrl();
     if (!url) {
       throw new Error("GAS URL is not configured");
     }
 
+    const requestBody =
+      sharedAccessToken !== null
+        ? { ...body, access_token: sharedAccessToken }
+        : body;
+
     const response = await fetch(url, {
       method: "POST",
       headers: { "Content-Type": "text/plain" },
-      body: JSON.stringify(body),
+      body: JSON.stringify(requestBody),
     });
 
     if (!response.ok) {
       throw new Error(`HTTP error: ${response.status}`);
     }
 
-    return await response.json() as Promise<TResponse>;
+    const parsed = (await response.json()) as Record<string, unknown>;
+    if (parsed.error === GAS_AUTH_ERROR_CODE) {
+      throw new ApiAuthError();
+    }
+
+    return parsed as TResponse;
   }
 
   async ping(): Promise<PingResponse> {

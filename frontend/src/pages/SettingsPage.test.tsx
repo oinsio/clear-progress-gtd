@@ -12,9 +12,10 @@ vi.mock("@/hooks/useLanguage");
 vi.mock("@/hooks/usePanelSide");
 vi.mock("@/hooks/usePanelOpen");
 vi.mock("@/components/tasks/RightFilterPanel");
-vi.mock("@/components/settings/MenuOrderSection", () => ({ MenuOrderSection: () => null }));
+vi.mock("@/components/settings/MenuOrderSection");
 vi.mock("@/components/settings/ConfirmFullSyncDialog");
 vi.mock("@/app/providers/SyncProvider");
+vi.mock("@/app/providers/AuthProvider");
 vi.mock("@/i18n", () => ({ default: {} }));
 vi.mock("react-i18next", () => ({
   useTranslation: () => ({ t: (key: string) => key }),
@@ -28,6 +29,7 @@ import { useLanguage } from "@/hooks/useLanguage";
 import { usePanelOpen } from "@/hooks/usePanelOpen";
 import { usePanelSide } from "@/hooks/usePanelSide";
 import { useSync } from "@/app/providers/SyncProvider";
+import { useAuth } from "@/app/providers/AuthProvider";
 import { ConfirmFullSyncDialog } from "@/components/settings/ConfirmFullSyncDialog";
 
 const mockUseSettings = vi.mocked(useSettings);
@@ -36,6 +38,7 @@ const mockUseLanguage = vi.mocked(useLanguage);
 const mockUsePanelOpen = vi.mocked(usePanelOpen);
 const mockUsePanelSide = vi.mocked(usePanelSide);
 const mockUseSync = vi.mocked(useSync);
+const mockUseAuth = vi.mocked(useAuth);
 const mockConfirmFullSyncDialog = vi.mocked(ConfirmFullSyncDialog);
 
 function buildSettingsHook(overrides: Partial<UseSettingsReturn> = {}): UseSettingsReturn {
@@ -53,6 +56,8 @@ function buildThemeHook(overrides: { accentColor?: AccentColor; setAccentColor?:
   return {
     accentColor: "green",
     setAccentColor: vi.fn().mockResolvedValue(undefined),
+    colorScheme: "system",
+    setColorScheme: vi.fn(),
     ...overrides,
   };
 }
@@ -90,6 +95,7 @@ describe("SettingsPage", () => {
       schedulePush: vi.fn(),
       triggerFullSync: vi.fn().mockResolvedValue(undefined),
     });
+    mockUseAuth.mockReturnValue({ accessToken: null, userEmail: null, signIn: vi.fn(), signOut: vi.fn() });
     mockConfirmFullSyncDialog.mockReturnValue(null);
   });
 
@@ -183,6 +189,57 @@ describe("SettingsPage", () => {
     renderPage();
     fireEvent.click(screen.getByTestId("settings-language-option-en"));
     expect(setLanguage).toHaveBeenCalledWith("en");
+  });
+
+  describe("account section", () => {
+    it("should render account section", () => {
+      renderPage();
+      expect(screen.getByTestId("settings-account")).toBeInTheDocument();
+    });
+
+    it("should show sign-in button when not authenticated", () => {
+      renderPage();
+      expect(screen.getByTestId("settings-sign-in-btn")).toBeInTheDocument();
+    });
+
+    it("should not show sign-out button when not authenticated", () => {
+      renderPage();
+      expect(screen.queryByTestId("settings-sign-out-btn")).not.toBeInTheDocument();
+    });
+
+    it("should show user email when authenticated", () => {
+      mockUseAuth.mockReturnValue({ accessToken: "token", userEmail: "test@example.com", signIn: vi.fn(), signOut: vi.fn() });
+      renderPage();
+      expect(screen.getByTestId("settings-user-email")).toHaveTextContent("test@example.com");
+    });
+
+    it("should show sign-out button when authenticated", () => {
+      mockUseAuth.mockReturnValue({ accessToken: "token", userEmail: "test@example.com", signIn: vi.fn(), signOut: vi.fn() });
+      renderPage();
+      expect(screen.getByTestId("settings-sign-out-btn")).toBeInTheDocument();
+    });
+
+    it("should not show sign-in button when authenticated", () => {
+      mockUseAuth.mockReturnValue({ accessToken: "token", userEmail: "test@example.com", signIn: vi.fn(), signOut: vi.fn() });
+      renderPage();
+      expect(screen.queryByTestId("settings-sign-in-btn")).not.toBeInTheDocument();
+    });
+
+    it("should call signIn when sign-in button is clicked", () => {
+      const signIn = vi.fn();
+      mockUseAuth.mockReturnValue({ accessToken: null, userEmail: null, signIn, signOut: vi.fn() });
+      renderPage();
+      fireEvent.click(screen.getByTestId("settings-sign-in-btn"));
+      expect(signIn).toHaveBeenCalled();
+    });
+
+    it("should call signOut when sign-out button is clicked", () => {
+      const signOut = vi.fn();
+      mockUseAuth.mockReturnValue({ accessToken: "token", userEmail: "test@example.com", signIn: vi.fn(), signOut });
+      renderPage();
+      fireEvent.click(screen.getByTestId("settings-sign-out-btn"));
+      expect(signOut).toHaveBeenCalled();
+    });
   });
 
   describe("sync section", () => {

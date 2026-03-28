@@ -75,6 +75,12 @@ vi.stubGlobal('Utilities', {
   newBlob: vi.fn().mockReturnValue({}),
 });
 
+// --- UrlFetchApp mock ---
+
+vi.stubGlobal('UrlFetchApp', {
+  fetch: vi.fn(),
+});
+
 // Helpers to reset mocks and state between tests
 export function resetScriptProperties(): void {
   Object.keys(scriptPropertiesStore).forEach(key => delete scriptPropertiesStore[key]);

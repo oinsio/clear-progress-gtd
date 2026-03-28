@@ -27,7 +27,10 @@ export const PROPERTY_KEYS = {
   SPREADSHEET_ID: 'SPREADSHEET_ID',
   FOLDER_ID: 'FOLDER_ID',
   COVERS_FOLDER_ID: 'COVERS_FOLDER_ID',
+  OWNER_EMAIL: 'OWNER_EMAIL',
 } as const;
+
+export const GOOGLE_TOKENINFO_URL = 'https://www.googleapis.com/oauth2/v3/tokeninfo';
 
 export const SHEET_HEADERS: Record<string, string[]> = {
   [SHEET_NAMES.TASKS]: ['id', 'title', 'notes', 'box', 'goal_id', 'context_id', 'category_id', 'is_completed', 'completed_at', 'repeat_rule', 'sort_order', 'is_deleted', 'created_at', 'updated_at', 'version'],
@@ -114,6 +117,8 @@ export function buildFolderQuery(folderId: string): string {
 
 export const ERROR_MESSAGES = {
   UNKNOWN_ACTION: 'Unknown action',
+  UNAUTHORIZED: 'Unauthorized: invalid token or wrong account',
+  TOKEN_REQUIRED: 'access_token is required',
   INVALID_JSON: 'Request body must be valid JSON',
   COVER_TOO_LARGE: 'Cover image must be 2 MB or less',
   FILE_ID_REQUIRED: 'file_id is required',

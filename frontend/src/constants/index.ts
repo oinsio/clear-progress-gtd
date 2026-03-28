@@ -87,6 +87,7 @@ export const SYNC_DEBOUNCE_MS = 15 * 1000;
 export const PING_INTERVAL_MS = 30 * 1000;
 
 export const BACKEND_CONNECTION_EVENT = "backend_connection_changed";
+export const GOOGLE_CLIENT_ID_CHANGED_EVENT = "google_client_id_changed";
 export const MENU_ORDER_CHANGED_EVENT = "menu_order_changed";
 
 export const DB_NAME = "clear-progress";
@@ -95,6 +96,7 @@ export const LOCAL_COVER_ID_PREFIX = "local:";
 
 export const STORAGE_KEYS = {
   GAS_URL: "gas_url",
+  GOOGLE_CLIENT_ID: "google_client_id",
   LAST_SYNC: "last_sync",
   ACCENT_COLOR: "accent_color",
   DEFAULT_BOX: "default_box",
@@ -134,6 +136,10 @@ export const PUSH_RESULT_STATUS = {
 } as const;
 
 export const LG_BREAKPOINT_PX = 1024;
+
+export const TOKEN_EXPIRY_BUFFER_S = 60;
+export const GAS_AUTH_ERROR_CODE = "UNAUTHORIZED";
+export const API_AUTH_ERROR_NAME = "ApiAuthError";
 
 export const REPEAT_RULE_TYPE = {
   DAILY: "daily",

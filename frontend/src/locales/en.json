@@ -187,7 +187,10 @@
     "goToApp": "Go to tasks",
     "errorConnection": "Could not connect. Please check the URL.",
     "errorInit": "Initialization failed. Please try again.",
-    "connectedUrl": "Current URL:"
+    "connectedUrl": "Current URL:",
+    "clientIdLabel": "Google Client ID",
+    "clientIdPlaceholder": "1234567890-xxx.apps.googleusercontent.com",
+    "clientIdDescription": "Create an OAuth 2.0 Client ID in Google Cloud Console for your project"
   },
   "selector": {
     "goal": "Goal",
@@ -290,5 +293,14 @@
     "synced": "Synced",
     "noConnection": "No connection",
     "ariaLabel": "Sync"
+  },
+  "auth": {
+    "signInButton": "Sign in with Google",
+    "signOutButton": "Sign out",
+    "signedInAs": "Signed in as {{email}}",
+    "errorSignIn": "Failed to sign in. Please try again.",
+    "sessionExpired": "Session expired. Sign in again to sync.",
+    "accountSection": "Account",
+    "signInRequired": "Sign in with Google to initialize storage."
   }
 }

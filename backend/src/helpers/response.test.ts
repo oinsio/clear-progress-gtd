@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { jsonOk, jsonError, jsonNotInitialized, ERROR_CODES } from './response';
+import { jsonOk, jsonError, jsonNotInitialized, jsonUnauthorized, ERROR_CODES } from './response';
 import { ERROR_MESSAGES } from './constants';
 
 function parseLastOutput(): Record<string, unknown> {
@@ -87,5 +87,26 @@ describe('jsonNotInitialized', () => {
   it('should use INIT_REQUIRED error message', () => {
     jsonNotInitialized();
     expect(parseLastOutput().message).toBe(ERROR_MESSAGES.INIT_REQUIRED);
+  });
+});
+
+describe('jsonUnauthorized', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('should set ok: false', () => {
+    jsonUnauthorized();
+    expect(parseLastOutput().ok).toBe(false);
+  });
+
+  it('should use UNAUTHORIZED error code', () => {
+    jsonUnauthorized();
+    expect(parseLastOutput().error).toBe(ERROR_CODES.UNAUTHORIZED);
+  });
+
+  it('should use UNAUTHORIZED error message', () => {
+    jsonUnauthorized();
+    expect(parseLastOutput().message).toBe(ERROR_MESSAGES.UNAUTHORIZED);
   });
 });

@@ -187,7 +187,10 @@
     "goToApp": "Перейти к задачам",
     "errorConnection": "Не удалось подключиться. Проверьте URL.",
     "errorInit": "Ошибка инициализации. Попробуйте ещё раз.",
-    "connectedUrl": "Текущий адрес:"
+    "connectedUrl": "Текущий адрес:",
+    "clientIdLabel": "Google Client ID",
+    "clientIdPlaceholder": "1234567890-xxx.apps.googleusercontent.com",
+    "clientIdDescription": "Создайте OAuth 2.0 Client ID в Google Cloud Console для вашего проекта"
   },
   "selector": {
     "goal": "Цель",
@@ -292,5 +295,14 @@
     "synced": "Обновлено",
     "noConnection": "Нет связи",
     "ariaLabel": "Обновить"
+  },
+  "auth": {
+    "signInButton": "Войти через Google",
+    "signOutButton": "Выйти",
+    "signedInAs": "Вы вошли как {{email}}",
+    "errorSignIn": "Не удалось войти. Попробуйте ещё раз.",
+    "sessionExpired": "Сессия истекла. Войдите снова для синхронизации.",
+    "accountSection": "Аккаунт",
+    "signInRequired": "Войдите в Google, чтобы инициализировать хранилище."
   }
 }

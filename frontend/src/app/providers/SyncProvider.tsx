@@ -11,6 +11,8 @@ import type { VersionMap } from "@/types/api";
 import { SYNC_INTERVAL_MS, PING_INTERVAL_MS, SYNC_DEBOUNCE_MS, STORAGE_KEYS } from "@/constants";
 import { SyncService } from "@/services/SyncService";
 import { ApiClient } from "@/services/ApiClient";
+import { useAuth } from "@/app/providers/AuthProvider";
+import { API_AUTH_ERROR_NAME } from "@/constants";
 import { TaskRepository } from "@/db/repositories/TaskRepository";
 import { GoalRepository } from "@/db/repositories/GoalRepository";
 import { ContextRepository } from "@/db/repositories/ContextRepository";
@@ -52,6 +54,7 @@ const syncService = new SyncService(
 );
 
 export function SyncProvider({ children }: { children: React.ReactNode }) {
+  const { accessToken, signOut } = useAuth();
   const [syncStatus, setSyncStatus] = useState<SyncStatus>("idle");
   const [syncVersion, setSyncVersion] = useState(0);
   const [lastSyncedAt, setLastSyncedAt] = useState<string | null>(
@@ -85,6 +88,7 @@ export function SyncProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const sync = useCallback(async (): Promise<void> => {
+    if (!accessToken) return;
     if (!navigator.onLine) {
       setSyncStatus("offline");
       return;
@@ -93,10 +97,14 @@ export function SyncProvider({ children }: { children: React.ReactNode }) {
     try {
       await applySyncResult();
       stopPingInterval();
-    } catch {
+    } catch (error) {
+      if (error instanceof Error && error.name === API_AUTH_ERROR_NAME) {
+        signOut();
+        return;
+      }
       setSyncStatus("error");
     }
-  }, [applySyncResult, stopPingInterval]);
+  }, [applySyncResult, stopPingInterval, signOut]);
 
   const schedulePush = useCallback(() => {
     if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
@@ -134,6 +142,7 @@ export function SyncProvider({ children }: { children: React.ReactNode }) {
   }, [stopPingInterval]);
 
   const performPing = useCallback(async (): Promise<void> => {
+    if (!accessToken) return;
     try {
       const pingResult = await apiClient.ping();
       stopPingInterval();
@@ -144,7 +153,7 @@ export function SyncProvider({ children }: { children: React.ReactNode }) {
     } catch {
       // Still unreachable — keep pinging
     }
-  }, [applySyncResult, stopPingInterval]);
+  }, [accessToken, applySyncResult, stopPingInterval]);
 
   const startPingInterval = useCallback(() => {
     if (pingIntervalRef.current) return;
@@ -152,6 +161,8 @@ export function SyncProvider({ children }: { children: React.ReactNode }) {
   }, [performPing]);
 
   useEffect(() => {
+    if (!accessToken) return;
+
     void defaultCoverSyncService.initializeLocalCovers();
     void defaultCoverSyncService.sync();
     void sync();
@@ -172,7 +183,7 @@ export function SyncProvider({ children }: { children: React.ReactNode }) {
       stopPingInterval();
       window.removeEventListener("online", handleOnline);
     };
-  }, [sync, performPing, stopPingInterval]);
+  }, [accessToken, sync, performPing, stopPingInterval]);
 
   useEffect(() => {
     if (syncStatus === "offline" || syncStatus === "error") {

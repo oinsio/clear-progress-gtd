@@ -1,5 +1,6 @@
 import { ACTIONS, ERROR_MESSAGES } from './helpers/constants';
-import { jsonError, ERROR_CODES } from './helpers/response';
+import { jsonError, jsonUnauthorized, ERROR_CODES } from './helpers/response';
+import { verifyToken } from './helpers/auth';
 import { ping } from './actions/ping';
 import { init } from './actions/init';
 import { pull } from './actions/pull';
@@ -18,7 +19,7 @@ function doGet(e: GoogleAppsScript.Events.DoGet): GoogleAppsScript.Content.TextO
 }
 
 function doPost(e: GoogleAppsScript.Events.DoPost): GoogleAppsScript.Content.TextOutput {
-  let body: { action?: string; [key: string]: unknown };
+  let body: { action?: string; access_token?: unknown; [key: string]: unknown };
 
   try {
     body = JSON.parse(e.postData?.contents ?? '{}');
@@ -26,7 +27,15 @@ function doPost(e: GoogleAppsScript.Events.DoPost): GoogleAppsScript.Content.Tex
     return jsonError(ERROR_CODES.INVALID_PAYLOAD, ERROR_MESSAGES.INVALID_JSON);
   }
 
-  const { action, ...payload } = body;
+  const { action, access_token, ...payload } = body;
+
+  if (!access_token || typeof access_token !== 'string') {
+    return jsonUnauthorized();
+  }
+  const verifiedEmail = verifyToken(access_token);
+  if (!verifiedEmail) {
+    return jsonUnauthorized();
+  }
 
   switch (action) {
     case ACTIONS.INIT:

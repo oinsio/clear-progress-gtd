@@ -24,6 +24,7 @@ vi.mock("@/services/defaultServices", () => ({
 vi.mock("@/hooks/usePanelSide");
 vi.mock("@/hooks/usePanelOpen");
 vi.mock("@/components/tasks/RightFilterPanel");
+vi.mock("@/app/providers/AuthProvider");
 vi.mock("@/i18n", () => ({ default: {} }));
 vi.mock("react-i18next", () => ({
   useTranslation: () => ({ t: (key: string) => key }),
@@ -31,9 +32,11 @@ vi.mock("react-i18next", () => ({
 
 import { usePanelOpen } from "@/hooks/usePanelOpen";
 import { usePanelSide } from "@/hooks/usePanelSide";
+import { useAuth } from "@/app/providers/AuthProvider";
 
 const mockUsePanelOpen = vi.mocked(usePanelOpen);
 const mockUsePanelSide = vi.mocked(usePanelSide);
+const mockUseAuth = vi.mocked(useAuth);
 
 const TEST_URL = "https://script.google.com/macros/s/abc/exec";
 const TEST_DEPLOYMENT_ID = "AKfycbxTestDeploymentId";
@@ -52,6 +55,7 @@ describe("SetupPage", () => {
     localStorageMock.clear();
     mockUsePanelOpen.mockReturnValue({ isPanelOpen: false, togglePanelOpen: vi.fn() });
     mockUsePanelSide.mockReturnValue({ panelSide: "right", setPanelSide: vi.fn() });
+    mockUseAuth.mockReturnValue({ accessToken: "mock-token", userEmail: null, signIn: vi.fn(), signOut: vi.fn() });
   });
 
   describe("when no URL is configured", () => {
@@ -175,6 +179,48 @@ describe("SetupPage", () => {
       fireEvent.click(screen.getByTestId("setup-connect-button"));
       await waitFor(() => {
         expect(screen.getByTestId("setup-initialize-button")).toBeInTheDocument();
+      });
+    });
+
+    describe("authentication gate", () => {
+      async function reachNotInitializedPhase() {
+        mockPingUrl.mockResolvedValue({ ok: true, initialized: false });
+        renderPage();
+        fireEvent.change(screen.getByTestId("setup-url-input"), { target: { value: TEST_URL } });
+        fireEvent.click(screen.getByTestId("setup-connect-button"));
+        await waitFor(() => screen.getByTestId("setup-initialize-button"));
+      }
+
+      it("should enable initialize button when authenticated", async () => {
+        mockUseAuth.mockReturnValue({ accessToken: "token", userEmail: null, signIn: vi.fn(), signOut: vi.fn() });
+        await reachNotInitializedPhase();
+        expect(screen.getByTestId("setup-initialize-button")).not.toBeDisabled();
+      });
+
+      it("should disable initialize button when not authenticated", async () => {
+        mockUseAuth.mockReturnValue({ accessToken: null, userEmail: null, signIn: vi.fn(), signOut: vi.fn() });
+        await reachNotInitializedPhase();
+        expect(screen.getByTestId("setup-initialize-button")).toBeDisabled();
+      });
+
+      it("should show sign-in required message when not authenticated", async () => {
+        mockUseAuth.mockReturnValue({ accessToken: null, userEmail: null, signIn: vi.fn(), signOut: vi.fn() });
+        await reachNotInitializedPhase();
+        expect(screen.getByTestId("setup-sign-in-required")).toBeInTheDocument();
+      });
+
+      it("should not show sign-in required when authenticated", async () => {
+        mockUseAuth.mockReturnValue({ accessToken: "token", userEmail: null, signIn: vi.fn(), signOut: vi.fn() });
+        await reachNotInitializedPhase();
+        expect(screen.queryByTestId("setup-sign-in-required")).not.toBeInTheDocument();
+      });
+
+      it("should call signIn when sign-in button in not_initialized is clicked", async () => {
+        const signIn = vi.fn();
+        mockUseAuth.mockReturnValue({ accessToken: null, userEmail: null, signIn, signOut: vi.fn() });
+        await reachNotInitializedPhase();
+        fireEvent.click(screen.getByTestId("setup-sign-in-btn"));
+        expect(signIn).toHaveBeenCalled();
       });
     });
   });

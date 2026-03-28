@@ -12,23 +12,47 @@ const {
   mockCoverSync,
   mockCoverReuploadLocalCovers,
   mockCoverEnsureServerCovers,
-} = vi.hoisted(() => ({
-  mockPing: vi.fn(),
-  mockInit: vi.fn(),
-  mockPull: vi.fn(),
-  mockPush: vi.fn(),
-  mockInitializeLocalCovers: vi.fn(),
-  mockCoverSync: vi.fn(),
-  mockCoverReuploadLocalCovers: vi.fn(),
-  mockCoverEnsureServerCovers: vi.fn(),
-}));
+  mockSignOut,
+  MockApiAuthError,
+} = vi.hoisted(() => {
+  class MockApiAuthErrorClass extends Error {
+    constructor() {
+      super("ApiAuthError");
+      this.name = "ApiAuthError";
+    }
+  }
+  return {
+    mockPing: vi.fn(),
+    mockInit: vi.fn(),
+    mockPull: vi.fn(),
+    mockPush: vi.fn(),
+    mockInitializeLocalCovers: vi.fn(),
+    mockCoverSync: vi.fn(),
+    mockCoverReuploadLocalCovers: vi.fn(),
+    mockCoverEnsureServerCovers: vi.fn(),
+    mockSignOut: vi.fn(),
+    MockApiAuthError: MockApiAuthErrorClass,
+  };
+});
 
 vi.mock("@/services/ApiClient", () => ({
   ApiClient: vi.fn().mockImplementation(() => ({
     ping: mockPing,
     init: mockInit,
   })),
+  ApiAuthError: MockApiAuthError,
 }));
+
+vi.mock("@/app/providers/AuthProvider", () => ({
+  useAuth: vi.fn(() => ({
+    accessToken: "mock-token",
+    userEmail: "test@example.com",
+    signIn: vi.fn(),
+    signOut: mockSignOut,
+  })),
+}));
+
+import { useAuth } from "@/app/providers/AuthProvider";
 
 vi.mock("@/services/SyncService", () => ({
   SyncService: vi.fn().mockImplementation(() => ({
@@ -141,6 +165,14 @@ beforeEach(() => {
   mockCoverSync.mockResolvedValue(undefined);
   mockCoverReuploadLocalCovers.mockResolvedValue(undefined);
   mockCoverEnsureServerCovers.mockResolvedValue(undefined);
+
+  // Restore useAuth mock after vi.clearAllMocks() clears its implementation
+  vi.mocked(useAuth).mockReturnValue({
+    accessToken: "mock-token",
+    userEmail: "test@example.com",
+    signIn: vi.fn(),
+    signOut: mockSignOut,
+  });
 
   Object.defineProperty(navigator, "onLine", {
     value: true,
@@ -537,6 +569,58 @@ describe("SyncProvider — schedulePush", () => {
     });
 
     expect(mockPush).not.toHaveBeenCalled();
+  });
+});
+
+describe("SyncProvider — auth gate", () => {
+  it("should not call push or pull when accessToken is null", async () => {
+    vi.mocked(useAuth).mockReturnValue({
+      accessToken: null,
+      userEmail: null,
+      signIn: vi.fn(),
+      signOut: mockSignOut,
+    });
+
+    renderProvider();
+    await act(async () => {});
+
+    expect(mockPush).not.toHaveBeenCalled();
+    expect(mockPull).not.toHaveBeenCalled();
+  });
+
+  it("should not start periodic sync interval when accessToken is null", async () => {
+    vi.mocked(useAuth).mockReturnValue({
+      accessToken: null,
+      userEmail: null,
+      signIn: vi.fn(),
+      signOut: mockSignOut,
+    });
+
+    renderProvider();
+    await act(async () => {});
+
+    vi.clearAllMocks();
+    await act(async () => { vi.advanceTimersByTime(SYNC_INTERVAL_MS); });
+
+    expect(mockPush).not.toHaveBeenCalled();
+  });
+
+  it("should call signOut when sync throws ApiAuthError", async () => {
+    mockPull.mockRejectedValue(new MockApiAuthError());
+
+    renderProvider();
+    await act(async () => {});
+
+    expect(mockSignOut).toHaveBeenCalledTimes(1);
+  });
+
+  it("should not set error status when sync throws ApiAuthError", async () => {
+    mockPull.mockRejectedValue(new MockApiAuthError());
+
+    renderProvider();
+    await act(async () => {});
+
+    expect(screen.getByTestId("status").textContent).not.toBe("error");
   });
 });
 
