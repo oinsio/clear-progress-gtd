@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { ACTIONS, ERROR_MESSAGES } from './helpers/constants';
+import { ACTIONS, ERROR_MESSAGES, AUTH_FAILURE_REASONS } from './helpers/constants';
 import { ERROR_CODES } from './helpers/response';
 
 vi.mock('./actions/ping', () => ({ ping: vi.fn() }));
@@ -94,7 +94,7 @@ describe('doPost', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     // Default: token is valid
-    vi.mocked(verifyToken).mockReturnValue(OWNER_EMAIL);
+    vi.mocked(verifyToken).mockReturnValue({ ok: true, email: OWNER_EMAIL } as never);
   });
 
   describe('authentication', () => {
@@ -106,17 +106,57 @@ describe('doPost', () => {
       expect(response.error).toBe(ERROR_CODES.UNAUTHORIZED);
     });
 
+    it('should include TOKEN_REQUIRED message when access_token is missing', () => {
+      globals.doPost(makePostEvent({ action: ACTIONS.INIT }));
+
+      expect(parseResponse().message).toBe(ERROR_MESSAGES.TOKEN_REQUIRED);
+    });
+
     it('should return UNAUTHORIZED when access_token is not a string', () => {
       globals.doPost(makePostEvent({ action: ACTIONS.INIT, access_token: 123 }));
 
       expect(parseResponse().error).toBe(ERROR_CODES.UNAUTHORIZED);
     });
 
-    it('should return UNAUTHORIZED when verifyToken returns null', () => {
-      vi.mocked(verifyToken).mockReturnValue(null);
+    it('should include TOKEN_REQUIRED message when access_token is not a string', () => {
+      globals.doPost(makePostEvent({ action: ACTIONS.INIT, access_token: 123 }));
+
+      expect(parseResponse().message).toBe(ERROR_MESSAGES.TOKEN_REQUIRED);
+    });
+
+    it('should return UNAUTHORIZED when verifyToken returns NETWORK_ERROR', () => {
+      vi.mocked(verifyToken).mockReturnValue({ ok: false, reason: AUTH_FAILURE_REASONS.NETWORK_ERROR } as never);
       globals.doPost(makeAuthenticatedPostEvent({ action: ACTIONS.INIT }));
 
       expect(parseResponse().error).toBe(ERROR_CODES.UNAUTHORIZED);
+    });
+
+    it('should include NETWORK_ERROR message when verifyToken returns NETWORK_ERROR', () => {
+      vi.mocked(verifyToken).mockReturnValue({ ok: false, reason: AUTH_FAILURE_REASONS.NETWORK_ERROR } as never);
+      globals.doPost(makeAuthenticatedPostEvent({ action: ACTIONS.INIT }));
+
+      expect(parseResponse().message).toBe(ERROR_MESSAGES.AUTH_NETWORK_ERROR);
+    });
+
+    it('should include INVALID_RESPONSE message when verifyToken returns INVALID_RESPONSE', () => {
+      vi.mocked(verifyToken).mockReturnValue({ ok: false, reason: AUTH_FAILURE_REASONS.INVALID_RESPONSE } as never);
+      globals.doPost(makeAuthenticatedPostEvent({ action: ACTIONS.INIT }));
+
+      expect(parseResponse().message).toBe(ERROR_MESSAGES.AUTH_INVALID_RESPONSE);
+    });
+
+    it('should include EMAIL_NOT_VERIFIED message when verifyToken returns EMAIL_NOT_VERIFIED', () => {
+      vi.mocked(verifyToken).mockReturnValue({ ok: false, reason: AUTH_FAILURE_REASONS.EMAIL_NOT_VERIFIED } as never);
+      globals.doPost(makeAuthenticatedPostEvent({ action: ACTIONS.INIT }));
+
+      expect(parseResponse().message).toBe(ERROR_MESSAGES.AUTH_EMAIL_NOT_VERIFIED);
+    });
+
+    it('should include WRONG_ACCOUNT message when verifyToken returns WRONG_ACCOUNT', () => {
+      vi.mocked(verifyToken).mockReturnValue({ ok: false, reason: AUTH_FAILURE_REASONS.WRONG_ACCOUNT } as never);
+      globals.doPost(makeAuthenticatedPostEvent({ action: ACTIONS.INIT }));
+
+      expect(parseResponse().message).toBe(ERROR_MESSAGES.AUTH_WRONG_ACCOUNT);
     });
 
     it('should call verifyToken with the provided access_token', () => {
@@ -126,7 +166,7 @@ describe('doPost', () => {
     });
 
     it('should not call any action handler when unauthorized', () => {
-      vi.mocked(verifyToken).mockReturnValue(null);
+      vi.mocked(verifyToken).mockReturnValue({ ok: false, reason: AUTH_FAILURE_REASONS.WRONG_ACCOUNT } as never);
       globals.doPost(makeAuthenticatedPostEvent({ action: ACTIONS.INIT }));
 
       expect(init).not.toHaveBeenCalled();

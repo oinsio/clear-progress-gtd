@@ -7,6 +7,7 @@ import { useLanguage } from "@/hooks/useLanguage";
 import { usePanelSide } from "@/hooks/usePanelSide";
 import { usePanelOpen } from "@/hooks/usePanelOpen";
 import { useSync } from "@/app/providers/SyncProvider";
+import { useAuth } from "@/app/providers/AuthProvider";
 import { RightFilterPanel, type RightPanelMode } from "@/components/tasks/RightFilterPanel";
 import { ConfirmFullSyncDialog } from "@/components/settings/ConfirmFullSyncDialog";
 import { ConfirmDisconnectDialog } from "@/components/settings/ConfirmDisconnectDialog";
@@ -18,6 +19,7 @@ import { cn } from "@/shared/lib/cn";
 
 export default function SettingsPage() {
   const { t } = useTranslation();
+  const { accessToken, userEmail, signIn, signOut } = useAuth();
   const [filterMode, setFilterMode] = useState<RightPanelMode>(null);
   const { isPanelOpen, togglePanelOpen } = usePanelOpen();
   const [isFullSyncDialogOpen, setIsFullSyncDialogOpen] = useState(false);
@@ -225,6 +227,37 @@ export default function SettingsPage() {
 
             {/* Menu order section */}
             <MenuOrderSection />
+
+            {/* Account section */}
+            <section data-testid="settings-account" className="space-y-3">
+              <h2 className="text-sm font-medium text-gray-500 uppercase tracking-wide">
+                {t("auth.accountSection")}
+              </h2>
+              <div className="rounded-lg border border-gray-200 px-4 py-3 space-y-3">
+                {accessToken ? (
+                  <>
+                    <p data-testid="settings-user-email" className="text-sm text-gray-700 break-all">
+                      {userEmail}
+                    </p>
+                    <button
+                      data-testid="settings-sign-out-btn"
+                      onClick={signOut}
+                      className="w-full rounded-lg border border-gray-200 py-2 text-sm font-medium text-gray-700 transition-colors hover:border-gray-300"
+                    >
+                      {t("auth.signOutButton")}
+                    </button>
+                  </>
+                ) : (
+                  <button
+                    data-testid="settings-sign-in-btn"
+                    onClick={signIn}
+                    className="w-full rounded-lg bg-accent py-2 text-sm font-medium text-white transition-colors"
+                  >
+                    {t("auth.signInButton")}
+                  </button>
+                )}
+              </div>
+            </section>
 
             {/* Sync section */}
             <section data-testid="settings-sync" className="space-y-3">

@@ -31,6 +31,6 @@ export function jsonNotInitialized(): GoogleAppsScript.Content.TextOutput {
   return jsonError(ERROR_CODES.NOT_INITIALIZED, ERROR_MESSAGES.INIT_REQUIRED);
 }
 
-export function jsonUnauthorized(): GoogleAppsScript.Content.TextOutput {
-  return jsonError(ERROR_CODES.UNAUTHORIZED, ERROR_MESSAGES.UNAUTHORIZED);
+export function jsonUnauthorized(message: string): GoogleAppsScript.Content.TextOutput {
+  return jsonError(ERROR_CODES.UNAUTHORIZED, message);
 }

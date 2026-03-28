@@ -8,7 +8,7 @@ import React, {
 } from "react";
 import type { SyncStatus, FullSyncStep } from "@/types/common";
 import type { VersionMap } from "@/types/api";
-import { SYNC_INTERVAL_MS, PING_INTERVAL_MS, SYNC_DEBOUNCE_MS, STORAGE_KEYS } from "@/constants";
+import { SYNC_INTERVAL_MS, PING_INTERVAL_MS, SYNC_DEBOUNCE_MS, STORAGE_KEYS, MAX_SILENT_REFRESH_ATTEMPTS } from "@/constants";
 import { SyncService } from "@/services/SyncService";
 import { ApiClient } from "@/services/ApiClient";
 import { useAuth } from "@/app/providers/AuthProvider";
@@ -54,7 +54,7 @@ const syncService = new SyncService(
 );
 
 export function SyncProvider({ children }: { children: React.ReactNode }) {
-  const { accessToken, signOut } = useAuth();
+  const { accessToken, signOut, silentRefresh } = useAuth();
   const [syncStatus, setSyncStatus] = useState<SyncStatus>("idle");
   const [syncVersion, setSyncVersion] = useState(0);
   const [lastSyncedAt, setLastSyncedAt] = useState<string | null>(
@@ -64,6 +64,7 @@ export function SyncProvider({ children }: { children: React.ReactNode }) {
   const pingIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastSyncedAtRef = useRef<string | null>(lastSyncedAt);
+  const silentRefreshAttemptsRef = useRef(0);
 
   useEffect(() => {
     lastSyncedAtRef.current = lastSyncedAt;
@@ -96,16 +97,24 @@ export function SyncProvider({ children }: { children: React.ReactNode }) {
     setSyncStatus("syncing");
     try {
       await applySyncResult();
+      silentRefreshAttemptsRef.current = 0;
       stopPingInterval();
     } catch (error) {
       if (error instanceof Error && error.name === API_AUTH_ERROR_NAME) {
+        silentRefreshAttemptsRef.current += 1;
+        if (silentRefreshAttemptsRef.current >= MAX_SILENT_REFRESH_ATTEMPTS) {
+          silentRefreshAttemptsRef.current = 0;
+          setSyncStatus("unauthorized");
+          signOut();
+          return;
+        }
         setSyncStatus("unauthorized");
-        signOut();
+        silentRefresh();
         return;
       }
       setSyncStatus("error");
     }
-  }, [accessToken, applySyncResult, stopPingInterval, signOut]);
+  }, [accessToken, applySyncResult, stopPingInterval, signOut, silentRefresh]);
 
   const schedulePush = useCallback(() => {
     if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);

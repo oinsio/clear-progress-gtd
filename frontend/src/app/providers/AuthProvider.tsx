@@ -5,13 +5,14 @@ import { setAccessToken } from "@/services/ApiClient";
 import { STORAGE_KEYS } from "@/constants";
 
 const GOOGLE_OAUTH_SCOPES =
-  "https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/spreadsheets";
+  "https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/spreadsheets https://www.googleapis.com/auth/userinfo.profile";
 
 interface AuthContextValue {
   accessToken: string | null;
   userEmail: string | null;
   signIn: () => void;
   signOut: () => void;
+  silentRefresh: () => void;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -55,6 +56,18 @@ function GoogleAuthInner({ children }: { children: React.ReactNode }) {
     },
   });
 
+  const silentGoogleLogin = useGoogleLogin({
+    flow: "implicit",
+    scope: GOOGLE_OAUTH_SCOPES,
+    prompt: "none",
+    onSuccess: handleLoginSuccess,
+    onError: () => {
+      setAccessTokenState(null);
+      setUserEmail(null);
+      setAccessToken(null);
+    },
+  });
+
   const signIn = useCallback(() => {
     googleLogin();
   }, [googleLogin]);
@@ -65,8 +78,12 @@ function GoogleAuthInner({ children }: { children: React.ReactNode }) {
     setAccessToken(null);
   }, []);
 
+  const silentRefresh = useCallback(() => {
+    silentGoogleLogin();
+  }, [silentGoogleLogin]);
+
   return (
-    <AuthContext.Provider value={{ accessToken, userEmail, signIn, signOut }}>
+    <AuthContext.Provider value={{ accessToken, userEmail, signIn, signOut, silentRefresh }}>
       {children}
     </AuthContext.Provider>
   );
@@ -76,9 +93,10 @@ function GoogleAuthInner({ children }: { children: React.ReactNode }) {
 function NoAuthInner({ children }: { children: React.ReactNode }) {
   const signIn = useCallback(() => {}, []);
   const signOut = useCallback(() => {}, []);
+  const silentRefresh = useCallback(() => {}, []);
 
   return (
-    <AuthContext.Provider value={{ accessToken: null, userEmail: null, signIn, signOut }}>
+    <AuthContext.Provider value={{ accessToken: null, userEmail: null, signIn, signOut, silentRefresh }}>
       {children}
     </AuthContext.Provider>
   );

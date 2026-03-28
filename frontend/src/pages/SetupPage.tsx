@@ -54,14 +54,18 @@ export default function SetupPage() {
   const [errorMessage, setErrorMessage] = useState("");
   const prevAccessTokenRef = useRef<string | null>(accessToken);
 
-  // After sign-in succeeds in "awaiting_signin" phase: initialize backend if needed, then open app.
+  // After sign-in succeeds: initialize backend if needed (awaiting_signin), or go to app (connected).
   useEffect(() => {
     const previousToken = prevAccessTokenRef.current;
     prevAccessTokenRef.current = accessToken;
-    if (previousToken === null && accessToken !== null && phase === "awaiting_signin") {
-      if (needsInit) {
-        void handleInit();
-      } else {
+    if (previousToken === null && accessToken !== null) {
+      if (phase === "awaiting_signin") {
+        if (needsInit) {
+          void handleInit();
+        } else {
+          navigate(ROUTES.INBOX);
+        }
+      } else if (phase === "connected") {
         navigate(ROUTES.INBOX);
       }
     }
@@ -139,12 +143,6 @@ export default function SetupPage() {
   };
 
   const handleDisconnect = (): void => {
-    localStorage.removeItem(STORAGE_KEYS.GAS_URL);
-    localStorage.removeItem(STORAGE_KEYS.GOOGLE_CLIENT_ID);
-    window.dispatchEvent(new Event(BACKEND_CONNECTION_EVENT));
-    window.dispatchEvent(new Event(GOOGLE_CLIENT_ID_CHANGED_EVENT));
-    setUrlInput("");
-    setClientIdInput("");
     setNeedsInit(false);
     setPhase("input");
   };

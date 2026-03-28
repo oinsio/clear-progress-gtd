@@ -55,7 +55,7 @@ describe("SetupPage", () => {
     localStorageMock.clear();
     mockUsePanelOpen.mockReturnValue({ isPanelOpen: false, togglePanelOpen: vi.fn() });
     mockUsePanelSide.mockReturnValue({ panelSide: "right", setPanelSide: vi.fn() });
-    mockUseAuth.mockReturnValue({ accessToken: "mock-token", userEmail: null, signIn: vi.fn(), signOut: vi.fn() });
+    mockUseAuth.mockReturnValue({ accessToken: "mock-token", userEmail: null, signIn: vi.fn(), signOut: vi.fn(), silentRefresh: vi.fn() });
   });
 
   describe("when no URL is configured", () => {
@@ -192,32 +192,32 @@ describe("SetupPage", () => {
       }
 
       it("should enable initialize button when authenticated", async () => {
-        mockUseAuth.mockReturnValue({ accessToken: "token", userEmail: null, signIn: vi.fn(), signOut: vi.fn() });
+        mockUseAuth.mockReturnValue({ accessToken: "token", userEmail: null, signIn: vi.fn(), signOut: vi.fn(), silentRefresh: vi.fn() });
         await reachNotInitializedPhase();
         expect(screen.getByTestId("setup-initialize-button")).not.toBeDisabled();
       });
 
       it("should disable initialize button when not authenticated", async () => {
-        mockUseAuth.mockReturnValue({ accessToken: null, userEmail: null, signIn: vi.fn(), signOut: vi.fn() });
+        mockUseAuth.mockReturnValue({ accessToken: null, userEmail: null, signIn: vi.fn(), signOut: vi.fn(), silentRefresh: vi.fn() });
         await reachNotInitializedPhase();
         expect(screen.getByTestId("setup-initialize-button")).toBeDisabled();
       });
 
       it("should show sign-in required message when not authenticated", async () => {
-        mockUseAuth.mockReturnValue({ accessToken: null, userEmail: null, signIn: vi.fn(), signOut: vi.fn() });
+        mockUseAuth.mockReturnValue({ accessToken: null, userEmail: null, signIn: vi.fn(), signOut: vi.fn(), silentRefresh: vi.fn() });
         await reachNotInitializedPhase();
         expect(screen.getByTestId("setup-sign-in-required")).toBeInTheDocument();
       });
 
       it("should not show sign-in required when authenticated", async () => {
-        mockUseAuth.mockReturnValue({ accessToken: "token", userEmail: null, signIn: vi.fn(), signOut: vi.fn() });
+        mockUseAuth.mockReturnValue({ accessToken: "token", userEmail: null, signIn: vi.fn(), signOut: vi.fn(), silentRefresh: vi.fn() });
         await reachNotInitializedPhase();
         expect(screen.queryByTestId("setup-sign-in-required")).not.toBeInTheDocument();
       });
 
       it("should call signIn when sign-in button in not_initialized is clicked", async () => {
         const signIn = vi.fn();
-        mockUseAuth.mockReturnValue({ accessToken: null, userEmail: null, signIn, signOut: vi.fn() });
+        mockUseAuth.mockReturnValue({ accessToken: null, userEmail: null, signIn, signOut: vi.fn(), silentRefresh: vi.fn() });
         await reachNotInitializedPhase();
         fireEvent.click(screen.getByTestId("setup-sign-in-btn"));
         expect(signIn).toHaveBeenCalled();
@@ -286,6 +286,7 @@ describe("SetupPage", () => {
 
   describe("when URL is already configured", () => {
     const EXISTING_URL = "https://script.google.com/macros/s/existing/exec";
+    const EXISTING_CLIENT_ID = "test-client-id.apps.googleusercontent.com";
 
     beforeEach(() => {
       localStorage.setItem(STORAGE_KEYS.GAS_URL, EXISTING_URL);
@@ -301,16 +302,38 @@ describe("SetupPage", () => {
       expect(screen.getByTestId("setup-disconnect-button")).toBeInTheDocument();
     });
 
-    it("should clear URL from localStorage when disconnect is clicked", () => {
+    it("should keep GAS URL in localStorage when disconnect is clicked", () => {
       renderPage();
       fireEvent.click(screen.getByTestId("setup-disconnect-button"));
-      expect(localStorage.getItem(STORAGE_KEYS.GAS_URL)).toBeNull();
+      expect(localStorage.getItem(STORAGE_KEYS.GAS_URL)).toBe(EXISTING_URL);
+    });
+
+    it("should keep Google Client ID in localStorage when disconnect is clicked", () => {
+      localStorage.setItem(STORAGE_KEYS.GOOGLE_CLIENT_ID, EXISTING_CLIENT_ID);
+      renderPage();
+      fireEvent.click(screen.getByTestId("setup-disconnect-button"));
+      expect(localStorage.getItem(STORAGE_KEYS.GOOGLE_CLIENT_ID)).toBe(EXISTING_CLIENT_ID);
     });
 
     it("should show input form after disconnecting", () => {
       renderPage();
       fireEvent.click(screen.getByTestId("setup-disconnect-button"));
       expect(screen.getByTestId("setup-url-input")).toBeInTheDocument();
+    });
+
+    it("should navigate to inbox when sign-in completes in connected phase", async () => {
+      localStorage.setItem(STORAGE_KEYS.GOOGLE_CLIENT_ID, EXISTING_CLIENT_ID);
+      mockUseAuth.mockReturnValue({ accessToken: null, userEmail: null, signIn: vi.fn(), signOut: vi.fn(), silentRefresh: vi.fn() });
+      const { rerender } = renderPage();
+
+      expect(screen.getByTestId("setup-sign-in-required")).toBeInTheDocument();
+
+      mockUseAuth.mockReturnValue({ accessToken: "token", userEmail: null, signIn: vi.fn(), signOut: vi.fn(), silentRefresh: vi.fn() });
+      rerender(<MemoryRouter><SetupPage /></MemoryRouter>);
+
+      await waitFor(() => {
+        expect(mockNavigate).toHaveBeenCalledWith(ROUTES.INBOX);
+      });
     });
   });
 });

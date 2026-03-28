@@ -1,4 +1,4 @@
-import { ACTIONS, ERROR_MESSAGES } from './helpers/constants';
+import { ACTIONS, ERROR_MESSAGES, AUTH_FAILURE_REASONS } from './helpers/constants';
 import { jsonError, jsonUnauthorized, ERROR_CODES } from './helpers/response';
 import { verifyToken } from './helpers/auth';
 import { ping } from './actions/ping';
@@ -10,6 +10,13 @@ import { uploadCover } from './actions/upload-cover';
 import { uploadCovers } from './actions/upload-covers';
 import { deleteCover } from './actions/delete-cover';
 import { getCover } from './actions/get-cover';
+
+const AUTH_FAILURE_MESSAGES: Record<string, string> = {
+  [AUTH_FAILURE_REASONS.NETWORK_ERROR]: ERROR_MESSAGES.AUTH_NETWORK_ERROR,
+  [AUTH_FAILURE_REASONS.INVALID_RESPONSE]: ERROR_MESSAGES.AUTH_INVALID_RESPONSE,
+  [AUTH_FAILURE_REASONS.EMAIL_NOT_VERIFIED]: ERROR_MESSAGES.AUTH_EMAIL_NOT_VERIFIED,
+  [AUTH_FAILURE_REASONS.WRONG_ACCOUNT]: ERROR_MESSAGES.AUTH_WRONG_ACCOUNT,
+};
 
 // GAS entry points — must be global functions
 function doGet(e: GoogleAppsScript.Events.DoGet): GoogleAppsScript.Content.TextOutput {
@@ -30,11 +37,12 @@ function doPost(e: GoogleAppsScript.Events.DoPost): GoogleAppsScript.Content.Tex
   const { action, access_token, ...payload } = body;
 
   if (!access_token || typeof access_token !== 'string') {
-    return jsonUnauthorized();
+    return jsonUnauthorized(ERROR_MESSAGES.TOKEN_REQUIRED);
   }
-  const verifiedEmail = verifyToken(access_token);
-  if (!verifiedEmail) {
-    return jsonUnauthorized();
+
+  const authResult = verifyToken(access_token);
+  if (!authResult.ok) {
+    return jsonUnauthorized(AUTH_FAILURE_MESSAGES[authResult.reason]);
   }
 
   switch (action) {

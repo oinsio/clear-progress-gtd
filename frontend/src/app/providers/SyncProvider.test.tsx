@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, act, screen, fireEvent } from "@testing-library/react";
-import { PING_INTERVAL_MS, SYNC_INTERVAL_MS, SYNC_DEBOUNCE_MS } from "@/constants";
+import { PING_INTERVAL_MS, SYNC_INTERVAL_MS, SYNC_DEBOUNCE_MS, MAX_SILENT_REFRESH_ATTEMPTS } from "@/constants";
 import type { FullSyncStep } from "@/types/common";
 
 const {
@@ -13,6 +13,7 @@ const {
   mockCoverReuploadLocalCovers,
   mockCoverEnsureServerCovers,
   mockSignOut,
+  mockSilentRefresh,
   MockApiAuthError,
 } = vi.hoisted(() => {
   class MockApiAuthErrorClass extends Error {
@@ -31,6 +32,7 @@ const {
     mockCoverReuploadLocalCovers: vi.fn(),
     mockCoverEnsureServerCovers: vi.fn(),
     mockSignOut: vi.fn(),
+    mockSilentRefresh: vi.fn(),
     MockApiAuthError: MockApiAuthErrorClass,
   };
 });
@@ -49,6 +51,7 @@ vi.mock("@/app/providers/AuthProvider", () => ({
     userEmail: "test@example.com",
     signIn: vi.fn(),
     signOut: mockSignOut,
+    silentRefresh: mockSilentRefresh,
   })),
 }));
 
@@ -172,6 +175,7 @@ beforeEach(() => {
     userEmail: "test@example.com",
     signIn: vi.fn(),
     signOut: mockSignOut,
+    silentRefresh: mockSilentRefresh,
   });
 
   Object.defineProperty(navigator, "onLine", {
@@ -579,6 +583,7 @@ describe("SyncProvider — auth gate", () => {
       userEmail: null,
       signIn: vi.fn(),
       signOut: mockSignOut,
+      silentRefresh: mockSilentRefresh,
     });
 
     renderProvider();
@@ -594,6 +599,7 @@ describe("SyncProvider — auth gate", () => {
       userEmail: null,
       signIn: vi.fn(),
       signOut: mockSignOut,
+      silentRefresh: mockSilentRefresh,
     });
 
     renderProvider();
@@ -605,13 +611,14 @@ describe("SyncProvider — auth gate", () => {
     expect(mockPush).not.toHaveBeenCalled();
   });
 
-  it("should call signOut when sync throws ApiAuthError", async () => {
+  it("should call silentRefresh (not signOut) when sync throws ApiAuthError", async () => {
     mockPull.mockRejectedValue(new MockApiAuthError());
 
     renderProvider();
     await act(async () => {});
 
-    expect(mockSignOut).toHaveBeenCalledTimes(1);
+    expect(mockSilentRefresh).toHaveBeenCalledTimes(1);
+    expect(mockSignOut).not.toHaveBeenCalled();
   });
 
   it("should not set error status when sync throws ApiAuthError", async () => {
@@ -621,6 +628,38 @@ describe("SyncProvider — auth gate", () => {
     await act(async () => {});
 
     expect(screen.getByTestId("status").textContent).not.toBe("error");
+  });
+
+  it("should call signOut (not silentRefresh) after MAX_SILENT_REFRESH_ATTEMPTS consecutive auth errors", async () => {
+    mockPull.mockRejectedValue(new MockApiAuthError());
+
+    renderProvider();
+    await act(async () => {}); // attempt 1
+
+    for (let i = 1; i < MAX_SILENT_REFRESH_ATTEMPTS; i++) {
+      await act(async () => { vi.advanceTimersByTime(SYNC_INTERVAL_MS); }); // attempts 2..MAX
+    }
+
+    expect(mockSignOut).toHaveBeenCalledTimes(1);
+    expect(mockSilentRefresh).toHaveBeenCalledTimes(MAX_SILENT_REFRESH_ATTEMPTS - 1);
+  });
+
+  it("should reset attempt counter after successful sync and not call signOut on next auth error", async () => {
+    mockPull.mockRejectedValue(new MockApiAuthError());
+
+    renderProvider();
+    await act(async () => {}); // attempt 1 → silentRefresh
+
+    // Simulate successful sync (token refreshed: new accessToken triggers useEffect)
+    mockPull.mockResolvedValue(undefined);
+    await act(async () => { vi.advanceTimersByTime(SYNC_INTERVAL_MS); }); // success → reset counter
+
+    // Now another auth error should silentRefresh, not signOut
+    mockPull.mockRejectedValue(new MockApiAuthError());
+    await act(async () => { vi.advanceTimersByTime(SYNC_INTERVAL_MS); }); // attempt 1 again
+
+    expect(mockSignOut).not.toHaveBeenCalled();
+    expect(mockSilentRefresh).toHaveBeenCalledTimes(2);
   });
 });
 

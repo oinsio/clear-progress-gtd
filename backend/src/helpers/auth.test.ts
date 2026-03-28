@@ -1,11 +1,19 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { verifyToken } from './auth';
-import { PROPERTY_KEYS } from './constants';
+import { PROPERTY_KEYS, AUTH_FAILURE_REASONS } from './constants';
 import { resetScriptProperties, setScriptProperty } from '../../tests/setup/gas-mocks';
 
-function mockTokenInfoResponse(data: object): void {
+function mockTokenInfoResponse(data: object, statusCode = 200): void {
   vi.mocked(UrlFetchApp.fetch).mockReturnValue({
+    getResponseCode: () => statusCode,
     getContentText: () => JSON.stringify(data),
+  } as never);
+}
+
+function mockTokenInfoHttpError(statusCode: number): void {
+  vi.mocked(UrlFetchApp.fetch).mockReturnValue({
+    getResponseCode: () => statusCode,
+    getContentText: () => JSON.stringify({ error: 'invalid_token' }),
   } as never);
 }
 
@@ -30,43 +38,55 @@ describe('verifyToken', () => {
     resetScriptProperties();
   });
 
-  it('should return null when UrlFetchApp throws a network error', () => {
+  it('should return INVALID_RESPONSE reason when tokeninfo returns non-200 HTTP status', () => {
+    mockTokenInfoHttpError(400);
+    const result = verifyToken('expired-or-invalid-token');
+    expect(result).toEqual({ ok: false, reason: AUTH_FAILURE_REASONS.INVALID_RESPONSE });
+  });
+
+  it('should return NETWORK_ERROR reason when UrlFetchApp throws', () => {
     mockTokenInfoError();
-    expect(verifyToken('any-token')).toBeNull();
+    const result = verifyToken('any-token');
+    expect(result).toEqual({ ok: false, reason: AUTH_FAILURE_REASONS.NETWORK_ERROR });
   });
 
-  it('should return null when tokeninfo response has email_verified !== "true"', () => {
+  it('should return EMAIL_NOT_VERIFIED reason when email_verified !== "true"', () => {
     mockTokenInfoResponse({ email: VALID_EMAIL, email_verified: 'false' });
-    expect(verifyToken('some-token')).toBeNull();
+    const result = verifyToken('some-token');
+    expect(result).toEqual({ ok: false, reason: AUTH_FAILURE_REASONS.EMAIL_NOT_VERIFIED });
   });
 
-  it('should return null when tokeninfo response is missing email field', () => {
+  it('should return INVALID_RESPONSE reason when tokeninfo response is missing email field', () => {
     mockTokenInfoResponse({ email_verified: 'true', sub: '123' });
-    expect(verifyToken('some-token')).toBeNull();
+    const result = verifyToken('some-token');
+    expect(result).toEqual({ ok: false, reason: AUTH_FAILURE_REASONS.INVALID_RESPONSE });
   });
 
-  it('should return null when tokeninfo response is not a valid object', () => {
+  it('should return INVALID_RESPONSE reason when tokeninfo response is not a valid object', () => {
     mockTokenInfoResponse('invalid' as unknown as object);
-    expect(verifyToken('some-token')).toBeNull();
+    const result = verifyToken('some-token');
+    expect(result).toEqual({ ok: false, reason: AUTH_FAILURE_REASONS.INVALID_RESPONSE });
   });
 
-  it('should self-register OWNER_EMAIL on first valid call', () => {
+  it('should self-register OWNER_EMAIL on first valid call and return ok with email', () => {
     mockTokenInfoResponse(VALID_TOKEN_INFO);
     const result = verifyToken('first-token');
-    expect(result).toBe(VALID_EMAIL);
+    expect(result).toEqual({ ok: true, email: VALID_EMAIL });
     expect(PropertiesService.getScriptProperties().getProperty(PROPERTY_KEYS.OWNER_EMAIL)).toBe(VALID_EMAIL);
   });
 
-  it('should return the email when token matches registered OWNER_EMAIL', () => {
+  it('should return ok with email when token matches registered OWNER_EMAIL', () => {
     setScriptProperty(PROPERTY_KEYS.OWNER_EMAIL, VALID_EMAIL);
     mockTokenInfoResponse(VALID_TOKEN_INFO);
-    expect(verifyToken('valid-token')).toBe(VALID_EMAIL);
+    const result = verifyToken('valid-token');
+    expect(result).toEqual({ ok: true, email: VALID_EMAIL });
   });
 
-  it('should return null when token email does not match registered OWNER_EMAIL', () => {
+  it('should return WRONG_ACCOUNT reason when token email does not match registered OWNER_EMAIL', () => {
     setScriptProperty(PROPERTY_KEYS.OWNER_EMAIL, VALID_EMAIL);
     mockTokenInfoResponse({ email: OTHER_EMAIL, email_verified: 'true' });
-    expect(verifyToken('other-token')).toBeNull();
+    const result = verifyToken('other-token');
+    expect(result).toEqual({ ok: false, reason: AUTH_FAILURE_REASONS.WRONG_ACCOUNT });
   });
 
   it('should call UrlFetchApp.fetch with the tokeninfo URL containing the token', () => {

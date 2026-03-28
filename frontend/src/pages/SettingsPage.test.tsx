@@ -95,7 +95,7 @@ describe("SettingsPage", () => {
       schedulePush: vi.fn(),
       triggerFullSync: vi.fn().mockResolvedValue(undefined),
     });
-    mockUseAuth.mockReturnValue({ accessToken: null, userEmail: null, signIn: vi.fn(), signOut: vi.fn() });
+    mockUseAuth.mockReturnValue({ accessToken: null, userEmail: null, signIn: vi.fn(), signOut: vi.fn(), silentRefresh: vi.fn() });
     mockConfirmFullSyncDialog.mockReturnValue(null);
   });
 
@@ -208,26 +208,26 @@ describe("SettingsPage", () => {
     });
 
     it("should show user email when authenticated", () => {
-      mockUseAuth.mockReturnValue({ accessToken: "token", userEmail: "test@example.com", signIn: vi.fn(), signOut: vi.fn() });
+      mockUseAuth.mockReturnValue({ accessToken: "token", userEmail: "test@example.com", signIn: vi.fn(), signOut: vi.fn(), silentRefresh: vi.fn() });
       renderPage();
       expect(screen.getByTestId("settings-user-email")).toHaveTextContent("test@example.com");
     });
 
     it("should show sign-out button when authenticated", () => {
-      mockUseAuth.mockReturnValue({ accessToken: "token", userEmail: "test@example.com", signIn: vi.fn(), signOut: vi.fn() });
+      mockUseAuth.mockReturnValue({ accessToken: "token", userEmail: "test@example.com", signIn: vi.fn(), signOut: vi.fn(), silentRefresh: vi.fn() });
       renderPage();
       expect(screen.getByTestId("settings-sign-out-btn")).toBeInTheDocument();
     });
 
     it("should not show sign-in button when authenticated", () => {
-      mockUseAuth.mockReturnValue({ accessToken: "token", userEmail: "test@example.com", signIn: vi.fn(), signOut: vi.fn() });
+      mockUseAuth.mockReturnValue({ accessToken: "token", userEmail: "test@example.com", signIn: vi.fn(), signOut: vi.fn(), silentRefresh: vi.fn() });
       renderPage();
       expect(screen.queryByTestId("settings-sign-in-btn")).not.toBeInTheDocument();
     });
 
     it("should call signIn when sign-in button is clicked", () => {
       const signIn = vi.fn();
-      mockUseAuth.mockReturnValue({ accessToken: null, userEmail: null, signIn, signOut: vi.fn() });
+      mockUseAuth.mockReturnValue({ accessToken: null, userEmail: null, signIn, signOut: vi.fn(), silentRefresh: vi.fn() });
       renderPage();
       fireEvent.click(screen.getByTestId("settings-sign-in-btn"));
       expect(signIn).toHaveBeenCalled();
@@ -235,7 +235,7 @@ describe("SettingsPage", () => {
 
     it("should call signOut when sign-out button is clicked", () => {
       const signOut = vi.fn();
-      mockUseAuth.mockReturnValue({ accessToken: "token", userEmail: "test@example.com", signIn: vi.fn(), signOut });
+      mockUseAuth.mockReturnValue({ accessToken: "token", userEmail: "test@example.com", signIn: vi.fn(), signOut, silentRefresh: vi.fn() });
       renderPage();
       fireEvent.click(screen.getByTestId("settings-sign-out-btn"));
       expect(signOut).toHaveBeenCalled();

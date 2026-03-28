@@ -115,10 +115,22 @@ export function buildFolderQuery(folderId: string): string {
   return `'${folderId}' in parents and trashed = false`;
 }
 
+export const AUTH_FAILURE_REASONS = {
+  NETWORK_ERROR: 'NETWORK_ERROR',
+  INVALID_RESPONSE: 'INVALID_RESPONSE',
+  EMAIL_NOT_VERIFIED: 'EMAIL_NOT_VERIFIED',
+  WRONG_ACCOUNT: 'WRONG_ACCOUNT',
+} as const;
+
+export type AuthFailureReason = typeof AUTH_FAILURE_REASONS[keyof typeof AUTH_FAILURE_REASONS];
+
 export const ERROR_MESSAGES = {
   UNKNOWN_ACTION: 'Unknown action',
-  UNAUTHORIZED: 'Unauthorized: invalid token or wrong account',
   TOKEN_REQUIRED: 'access_token is required',
+  AUTH_NETWORK_ERROR: 'Token verification failed: network error',
+  AUTH_INVALID_RESPONSE: 'Token is invalid or expired',
+  AUTH_EMAIL_NOT_VERIFIED: 'Google account email is not verified',
+  AUTH_WRONG_ACCOUNT: 'Token belongs to a different account',
   INVALID_JSON: 'Request body must be valid JSON',
   COVER_TOO_LARGE: 'Cover image must be 2 MB or less',
   FILE_ID_REQUIRED: 'file_id is required',
