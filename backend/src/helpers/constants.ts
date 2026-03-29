@@ -117,6 +117,7 @@ export function buildFolderQuery(folderId: string): string {
 
 export const AUTH_FAILURE_REASONS = {
   NETWORK_ERROR: 'NETWORK_ERROR',
+  GAS_PERMISSION_ERROR: 'GAS_PERMISSION_ERROR',
   INVALID_RESPONSE: 'INVALID_RESPONSE',
   EMAIL_NOT_VERIFIED: 'EMAIL_NOT_VERIFIED',
   WRONG_ACCOUNT: 'WRONG_ACCOUNT',
@@ -128,6 +129,7 @@ export const ERROR_MESSAGES = {
   UNKNOWN_ACTION: 'Unknown action',
   TOKEN_REQUIRED: 'access_token is required',
   AUTH_NETWORK_ERROR: 'Token verification failed: network error',
+  AUTH_GAS_PERMISSION_ERROR: 'GAS script is not authorized to make external requests — re-authorize the script in the Apps Script editor',
   AUTH_INVALID_RESPONSE: 'Token is invalid or expired',
   AUTH_EMAIL_NOT_VERIFIED: 'Google account email is not verified',
   AUTH_WRONG_ACCOUNT: 'Token belongs to a different account',

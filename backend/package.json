@@ -3,7 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "node esbuild.config.mjs && cp appsscript.json dist/",
+    "build": "node esbuild.config.mjs && cp appsscript.json dist/ && cp authorize.js dist/",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",

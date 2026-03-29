@@ -33,6 +33,9 @@ export function verifyToken(accessToken: string): AuthResult {
   } catch (networkError) {
     const details = networkError instanceof Error ? networkError.message : String(networkError);
     console.error('[verifyToken] UrlFetchApp error:', networkError);
+    if (details.includes('https://www.googleapis.com/auth/')) {
+      return { ok: false, reason: AUTH_FAILURE_REASONS.GAS_PERMISSION_ERROR, details };
+    }
     return { ok: false, reason: AUTH_FAILURE_REASONS.NETWORK_ERROR, details };
   }
 

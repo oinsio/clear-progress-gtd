@@ -23,6 +23,12 @@ function mockTokenInfoError(): void {
   });
 }
 
+function mockTokenInfoPermissionError(scope = 'https://www.googleapis.com/auth/script.external_request'): void {
+  vi.mocked(UrlFetchApp.fetch).mockImplementation(() => {
+    throw new Error(`You do not have permission to call UrlFetchApp.fetch. Required permissions: ${scope}.`);
+  });
+}
+
 const VALID_EMAIL = 'owner@example.com';
 const OTHER_EMAIL = 'other@example.com';
 
@@ -65,6 +71,24 @@ describe('verifyToken', () => {
       expect.any(Error)
     );
     consoleErrorSpy.mockRestore();
+  });
+
+  it('should return GAS_PERMISSION_ERROR reason when UrlFetchApp throws a permission error', () => {
+    mockTokenInfoPermissionError();
+    const result = verifyToken('any-token');
+    expect(result).toMatchObject({ ok: false, reason: AUTH_FAILURE_REASONS.GAS_PERMISSION_ERROR });
+  });
+
+  it('should include error details when GAS permission error is thrown', () => {
+    mockTokenInfoPermissionError();
+    const result = verifyToken('any-token');
+    expect(result).toMatchObject({ ok: false, details: expect.stringContaining('script.external_request') });
+  });
+
+  it('should return GAS_PERMISSION_ERROR for any googleapis.com/auth scope, not just external_request', () => {
+    mockTokenInfoPermissionError('https://www.googleapis.com/auth/spreadsheets');
+    const result = verifyToken('any-token');
+    expect(result).toMatchObject({ ok: false, reason: AUTH_FAILURE_REASONS.GAS_PERMISSION_ERROR });
   });
 
   it('should return EMAIL_NOT_VERIFIED reason when email_verified !== "true"', () => {
