@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { getAllCategories, getCategoriesByVersion, deleteCategoriesByIds } from './categories.sheet';
+import { getAllCategories, getCategoriesByVersion, deleteCategoriesByIds, upsertCategories } from './categories.sheet';
+import type { Category } from '../types';
 import { SHEET_HEADERS, SHEET_NAMES } from '../helpers/constants';
 import { getSheet } from './client';
 
@@ -283,5 +284,29 @@ describe('deleteCategoriesByIds', () => {
     deleteCategoriesByIds(['cat-1']);
 
     expect(sheetMock.deleteRow).toHaveBeenCalledWith(2);
+  });
+});
+
+describe('upsertCategories', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('should call appendRow when adding a new category', () => {
+    const sheetMock = makeSheetMock([CAT_HEADERS]);
+    vi.mocked(getSheet).mockReturnValue(sheetMock as never);
+
+    const newCategory: Category = {
+      id: 'cat-new',
+      name: 'Fitness',
+      sort_order: 0,
+      is_deleted: false,
+      created_at: '2025-01-01T00:00:00.000Z',
+      updated_at: '2025-01-01T00:00:00.000Z',
+      version: 1,
+    };
+    upsertCategories([newCategory]);
+
+    expect(sheetMock.appendRow).toHaveBeenCalledTimes(1);
   });
 });

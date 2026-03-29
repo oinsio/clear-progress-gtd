@@ -261,6 +261,21 @@ describe('push', () => {
     });
   });
 
+  describe('find correct server record by id', () => {
+    it('should use the matching server record version when multiple records exist', () => {
+      const serverTask1 = makeTask({ id: '11111111-1111-4111-a111-111111111111', version: 5, updated_at: '2025-01-01T00:00:00.000Z' });
+      const serverTask2 = makeTask({ id: '22222222-2222-4222-a222-222222222222', version: 10, updated_at: '2025-01-01T00:00:00.000Z' });
+      vi.mocked(getAllTasks).mockReturnValue([serverTask1, serverTask2]);
+
+      const clientTask = makeTask({ id: '22222222-2222-4222-a222-222222222222', updated_at: '2025-06-01T00:00:00.000Z' });
+      push({ tasks: [clientTask] });
+
+      const results = parseResponse().results as Record<string, unknown[]>;
+      // serverTask2.version (10) + 1 = 11; if find() matched serverTask1, version would be 6
+      expect(results.tasks[0]).toMatchObject({ version: 11 });
+    });
+  });
+
   describe('multiple records in one push', () => {
     it('should return results for all records in the array', () => {
       const newTask = makeTask({ id: 'aaaaaaaa-aaaa-4aaa-aaaa-aaaaaaaaaaaa' });
@@ -407,6 +422,22 @@ describe('push', () => {
 
       const results = parseResponse().results as Record<string, unknown[]>;
       expect(results.settings[0]).toMatchObject({ id: 'default_box', status: PUSH_STATUSES.CONFLICT });
+    });
+
+    it('should match setting by key not by position when multiple server settings exist', () => {
+      // default_box has newer server time; accent_color has older server time
+      vi.mocked(getAllSettings).mockReturnValue([
+        { key: 'default_box', value: 'inbox', updated_at: '2025-01-02T00:00:00.000Z' },
+        { key: 'accent_color', value: 'green', updated_at: '2024-01-01T00:00:00.000Z' },
+      ]);
+
+      // Pushing accent_color with updated_at newer than accent_color server time → should be ACCEPTED
+      const clientSetting: Setting = { key: 'accent_color', value: 'purple', updated_at: '2025-01-01T00:00:00.000Z' };
+      push({ settings: [clientSetting] });
+
+      const results = parseResponse().results as Record<string, unknown[]>;
+      // If find() incorrectly matched default_box (first), client (2025-01-01) < server (2025-01-02) → CONFLICT
+      expect(results.settings[0]).toMatchObject({ id: 'accent_color', status: PUSH_STATUSES.ACCEPTED });
     });
   });
 

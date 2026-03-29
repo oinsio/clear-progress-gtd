@@ -144,4 +144,37 @@ describe('verifyToken', () => {
     verifyToken('token');
     expect(PropertiesService.getScriptProperties().getProperty(PROPERTY_KEYS.OWNER_EMAIL)).toBe(VALID_EMAIL);
   });
+
+  it('should return INVALID_RESPONSE when tokeninfo JSON body is null', () => {
+    vi.mocked(UrlFetchApp.fetch).mockReturnValue({
+      getResponseCode: () => 200,
+      getContentText: () => 'null',
+    } as never);
+    const result = verifyToken('some-token');
+    expect(result).toEqual({ ok: false, reason: AUTH_FAILURE_REASONS.INVALID_RESPONSE });
+  });
+
+  it('should return INVALID_RESPONSE when tokeninfo response has email but no email_verified field', () => {
+    mockTokenInfoResponse({ email: VALID_EMAIL } as unknown as object);
+    const result = verifyToken('some-token');
+    expect(result).toEqual({ ok: false, reason: AUTH_FAILURE_REASONS.INVALID_RESPONSE });
+  });
+
+  it('should call UrlFetchApp.fetch with muteHttpExceptions: true', () => {
+    mockTokenInfoResponse(VALID_TOKEN_INFO);
+    verifyToken('my-token');
+    expect(UrlFetchApp.fetch).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.objectContaining({ muteHttpExceptions: true })
+    );
+  });
+
+  it('should return INVALID_RESPONSE when response code is non-200 even if body looks valid', () => {
+    vi.mocked(UrlFetchApp.fetch).mockReturnValue({
+      getResponseCode: () => 401,
+      getContentText: () => JSON.stringify({ email: VALID_EMAIL, email_verified: 'true' }),
+    } as never);
+    const result = verifyToken('expired-token');
+    expect(result).toEqual({ ok: false, reason: AUTH_FAILURE_REASONS.INVALID_RESPONSE });
+  });
 });

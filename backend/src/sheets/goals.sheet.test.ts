@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { getAllGoals, getGoalsByVersion, getCoverFileIds, deleteGoalsByIds } from './goals.sheet';
+import { getAllGoals, getGoalsByVersion, getCoverFileIds, deleteGoalsByIds, upsertGoals } from './goals.sheet';
+import type { Goal } from '../types';
 import { SHEET_HEADERS, SHEET_NAMES } from '../helpers/constants';
 import { getSheet } from './client';
 
@@ -384,5 +385,32 @@ describe('deleteGoalsByIds', () => {
     deleteGoalsByIds(['goal-1']);
 
     expect(sheetMock.deleteRow).toHaveBeenCalledWith(2);
+  });
+});
+
+describe('upsertGoals', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('should call appendRow when adding a new goal', () => {
+    const sheetMock = makeSheetMock([GOAL_HEADERS]);
+    vi.mocked(getSheet).mockReturnValue(sheetMock as never);
+
+    const newGoal: Goal = {
+      id: 'goal-new',
+      title: 'Learn TypeScript',
+      description: '',
+      cover_file_id: '',
+      status: 'planning',
+      sort_order: 0,
+      is_deleted: false,
+      created_at: '2025-01-01T00:00:00.000Z',
+      updated_at: '2025-01-01T00:00:00.000Z',
+      version: 1,
+    };
+    upsertGoals([newGoal]);
+
+    expect(sheetMock.appendRow).toHaveBeenCalledTimes(1);
   });
 });

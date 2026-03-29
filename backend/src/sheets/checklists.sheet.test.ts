@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { getAllChecklistItems, getChecklistItemsByVersion, deleteChecklistItemsByIds } from './checklists.sheet';
+import { getAllChecklistItems, getChecklistItemsByVersion, deleteChecklistItemsByIds, upsertChecklistItems } from './checklists.sheet';
+import type { ChecklistItem } from '../types';
 import { SHEET_HEADERS, SHEET_NAMES } from '../helpers/constants';
 import { getSheet } from './client';
 
@@ -306,5 +307,31 @@ describe('deleteChecklistItemsByIds', () => {
     deleteChecklistItemsByIds(['item-1']);
 
     expect(sheetMock.deleteRow).toHaveBeenCalledWith(2);
+  });
+});
+
+describe('upsertChecklistItems', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('should call appendRow when adding a new checklist item', () => {
+    const sheetMock = makeSheetMock([ITEM_HEADERS]);
+    vi.mocked(getSheet).mockReturnValue(sheetMock as never);
+
+    const newItem: ChecklistItem = {
+      id: 'item-new',
+      task_id: '11111111-1111-4111-a111-111111111111',
+      title: 'Buy milk',
+      is_completed: false,
+      sort_order: 0,
+      is_deleted: false,
+      created_at: '2025-01-01T00:00:00.000Z',
+      updated_at: '2025-01-01T00:00:00.000Z',
+      version: 1,
+    };
+    upsertChecklistItems([newItem]);
+
+    expect(sheetMock.appendRow).toHaveBeenCalledTimes(1);
   });
 });

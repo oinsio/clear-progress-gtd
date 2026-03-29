@@ -1,6 +1,7 @@
 /// <reference lib="esnext" />
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { recordToRow, getAllRecords, upsertRecord, upsertRecords, deleteRecordsByIds } from './base';
+import { recordToRow, getAllRecords, upsertRecord, upsertRecords, deleteRecordsByIds, rowToNamedEntity } from './base';
+import { colMap } from '../helpers/constants';
 import { SHEET_HEADERS, SHEET_NAMES } from '../helpers/constants';
 import { getSheet } from './client';
 
@@ -65,6 +66,20 @@ describe('recordToRow', () => {
     const record = { id: 'abc' };
     const row = recordToRow(SHEET_NAMES.TASKS, record);
     expect(row[TASK_COL.title]).toBeUndefined();
+  });
+});
+
+describe('rowToNamedEntity', () => {
+  it('should return empty string for id when id cell is null', () => {
+    const cols = colMap(SHEET_NAMES.CATEGORIES);
+    const numCols = Object.keys(cols).length;
+    const row = new Array(numCols).fill('');
+    row[cols.id] = null;
+    row[cols.name] = 'Work';
+    row[cols.version] = 1;
+
+    const result = rowToNamedEntity(row, cols);
+    expect(result.id).toBe('');
   });
 });
 
@@ -320,6 +335,18 @@ describe('upsertRecords', () => {
     upsertRecords(SHEET_NAMES.TASKS, [{ id: 'x' }]);
 
     expect(getSheet).toHaveBeenCalledWith(SHEET_NAMES.TASKS);
+  });
+
+  it('should append a new record when the sheet has an empty-id row', () => {
+    // Empty row (blank first column) should NOT be treated as an existing record
+    const emptyRow = Array(NUM_TASK_COLS).fill('');
+    const sheetMock = setupSheet([TASK_HEADERS, emptyRow]);
+
+    upsertRecords(SHEET_NAMES.TASKS, [{ id: 'new-task' }]);
+
+    // Record not found in idToRowIndex → should be appended, not update the empty row
+    expect(sheetMock.appendRow).toHaveBeenCalledTimes(1);
+    expect(sheetMock._setValues).not.toHaveBeenCalled();
   });
 });
 

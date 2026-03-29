@@ -209,4 +209,9 @@ describe('init — first time setup', () => {
     expect(response.spreadsheet_id).toBe(MOCK_SPREADSHEET_ID);
     expect(response.folder_id).toBe(MOCK_ROOT_FOLDER_ID);
   });
+
+  it('should not call driveFileExists when SPREADSHEET_ID is not set', () => {
+    init();
+    expect(driveFileExists).not.toHaveBeenCalled();
+  });
 });

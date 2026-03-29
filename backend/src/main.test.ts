@@ -8,7 +8,9 @@ vi.mock('./actions/pull', () => ({ pull: vi.fn() }));
 vi.mock('./actions/push', () => ({ push: vi.fn() }));
 vi.mock('./actions/purge', () => ({ purge: vi.fn() }));
 vi.mock('./actions/upload-cover', () => ({ uploadCover: vi.fn() }));
+vi.mock('./actions/upload-covers', () => ({ uploadCovers: vi.fn() }));
 vi.mock('./actions/delete-cover', () => ({ deleteCover: vi.fn() }));
+vi.mock('./actions/get-cover', () => ({ getCover: vi.fn() }));
 vi.mock('./helpers/auth', () => ({ verifyToken: vi.fn() }));
 
 import { ping } from './actions/ping';
@@ -17,7 +19,9 @@ import { pull } from './actions/pull';
 import { push } from './actions/push';
 import { purge } from './actions/purge';
 import { uploadCover } from './actions/upload-cover';
+import { uploadCovers } from './actions/upload-covers';
 import { deleteCover } from './actions/delete-cover';
+import { getCover } from './actions/get-cover';
 import { verifyToken } from './helpers/auth';
 
 // Import main.ts to trigger globalThis assignment of doGet/doPost
@@ -85,6 +89,12 @@ describe('doGet', () => {
 
   it('should return INVALID_ACTION when no action parameter is provided', () => {
     globals.doGet(makeGetEvent());
+
+    expect(parseResponse().error).toBe(ERROR_CODES.INVALID_ACTION);
+  });
+
+  it('should return INVALID_ACTION when doGet event has no parameter property', () => {
+    globals.doGet({} as never);
 
     expect(parseResponse().error).toBe(ERROR_CODES.INVALID_ACTION);
   });
@@ -171,6 +181,17 @@ describe('doPost', () => {
 
       expect(init).not.toHaveBeenCalled();
     });
+
+    it('should include auth failure details in the error message when verifyToken returns details', () => {
+      vi.mocked(verifyToken).mockReturnValue({
+        ok: false,
+        reason: AUTH_FAILURE_REASONS.NETWORK_ERROR,
+        details: 'connection refused',
+      } as never);
+      globals.doPost(makeAuthenticatedPostEvent({ action: ACTIONS.INIT }));
+
+      expect(parseResponse().message).toContain('connection refused');
+    });
   });
 
   it('should return INVALID_PAYLOAD when body is not valid JSON', () => {
@@ -221,6 +242,38 @@ describe('doPost', () => {
     globals.doPost(makeAuthenticatedPostEvent({ action: ACTIONS.DELETE_COVER, file_id: 'file-abc' }));
 
     expect(deleteCover).toHaveBeenCalledWith({ file_id: 'file-abc' });
+  });
+
+  it('should call uploadCovers() with payload fields (excluding action and access_token)', () => {
+    const coversPayload = { covers: [{ goal_id: 'g-1', filename: 'a.jpg', mime_type: 'image/jpeg', data: 'b64' }] };
+
+    globals.doPost(makeAuthenticatedPostEvent({ action: ACTIONS.UPLOAD_COVERS, ...coversPayload }));
+
+    expect(uploadCovers).toHaveBeenCalledWith(coversPayload);
+  });
+
+  it('should return the result of uploadCovers()', () => {
+    const mockOutput = { setMimeType: vi.fn().mockReturnThis() };
+    vi.mocked(uploadCovers).mockReturnValue(mockOutput as never);
+
+    const result = globals.doPost(makeAuthenticatedPostEvent({ action: ACTIONS.UPLOAD_COVERS }));
+
+    expect(result).toBe(mockOutput);
+  });
+
+  it('should call getCover() with payload fields (excluding action and access_token)', () => {
+    globals.doPost(makeAuthenticatedPostEvent({ action: ACTIONS.GET_COVER, file_ids: ['file-1'] }));
+
+    expect(getCover).toHaveBeenCalledWith({ file_ids: ['file-1'] });
+  });
+
+  it('should return the result of getCover()', () => {
+    const mockOutput = { setMimeType: vi.fn().mockReturnThis() };
+    vi.mocked(getCover).mockReturnValue(mockOutput as never);
+
+    const result = globals.doPost(makeAuthenticatedPostEvent({ action: ACTIONS.GET_COVER }));
+
+    expect(result).toBe(mockOutput);
   });
 
   it('should call purge() with payload fields (excluding action and access_token)', () => {

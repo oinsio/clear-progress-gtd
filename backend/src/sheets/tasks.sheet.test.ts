@@ -1,5 +1,6 @@
 import {beforeEach, describe, expect, it, vi} from 'vitest';
-import {deleteTasksByIds, getAllTasks, getTasksByVersion} from './tasks.sheet';
+import {deleteTasksByIds, getAllTasks, getTasksByVersion, upsertTasks} from './tasks.sheet';
+import type { Task } from '../types';
 import {SHEET_HEADERS, SHEET_NAMES} from '../helpers/constants';
 import {getSheet} from './client';
 
@@ -338,5 +339,37 @@ describe('deleteTasksByIds', () => {
     deleteTasksByIds(['task-1']);
 
     expect(sheetMock.deleteRow).toHaveBeenCalledWith(2);
+  });
+});
+
+describe('upsertTasks', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('should call appendRow when adding a new task', () => {
+    const sheetMock = makeSheetMock([TASK_HEADERS]);
+    vi.mocked(getSheet).mockReturnValue(sheetMock as never);
+
+    const newTask: Task = {
+      id: 'task-new',
+      title: 'Buy groceries',
+      notes: '',
+      box: 'inbox',
+      goal_id: '',
+      context_id: '',
+      category_id: '',
+      is_completed: false,
+      completed_at: '',
+      repeat_rule: '',
+      sort_order: 0,
+      is_deleted: false,
+      created_at: '2025-01-01T00:00:00.000Z',
+      updated_at: '2025-01-01T00:00:00.000Z',
+      version: 1,
+    };
+    upsertTasks([newTask]);
+
+    expect(sheetMock.appendRow).toHaveBeenCalledTimes(1);
   });
 });

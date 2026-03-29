@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { getAllContexts, getContextsByVersion, deleteContextsByIds } from './contexts.sheet';
+import { getAllContexts, getContextsByVersion, deleteContextsByIds, upsertContexts } from './contexts.sheet';
+import type { Context } from '../types';
 import { SHEET_HEADERS, SHEET_NAMES } from '../helpers/constants';
 import { getSheet } from './client';
 
@@ -283,5 +284,29 @@ describe('deleteContextsByIds', () => {
     deleteContextsByIds(['ctx-1']);
 
     expect(sheetMock.deleteRow).toHaveBeenCalledWith(2);
+  });
+});
+
+describe('upsertContexts', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('should call appendRow when adding a new context', () => {
+    const sheetMock = makeSheetMock([CTX_HEADERS]);
+    vi.mocked(getSheet).mockReturnValue(sheetMock as never);
+
+    const newContext: Context = {
+      id: 'ctx-new',
+      name: '@Work',
+      sort_order: 0,
+      is_deleted: false,
+      created_at: '2025-01-01T00:00:00.000Z',
+      updated_at: '2025-01-01T00:00:00.000Z',
+      version: 1,
+    };
+    upsertContexts([newContext]);
+
+    expect(sheetMock.appendRow).toHaveBeenCalledTimes(1);
   });
 });
