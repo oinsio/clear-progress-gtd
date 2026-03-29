@@ -14,46 +14,51 @@ function isTokenInfoResponse(data: unknown): data is TokenInfoResponse {
 
 export type AuthResult =
   | { ok: true; email: string }
-  | { ok: false; reason: AuthFailureReason };
+  | { ok: false; reason: AuthFailureReason; details?: string };
 
 /**
  * Verifies an OAuth access token via Google's tokeninfo endpoint.
  * On the first valid call, self-registers the token owner's email as OWNER_EMAIL
  * in PropertiesService. Subsequent calls must match that email.
  *
- * Returns { ok: true, email } on success or { ok: false, reason } on failure.
+ * Returns { ok: true, email } on success or { ok: false, reason, details } on failure.
  */
 export function verifyToken(accessToken: string): AuthResult {
+  let response: GoogleAppsScript.URL_Fetch.HTTPResponse;
   try {
-    const response = UrlFetchApp.fetch(
+    response = UrlFetchApp.fetch(
       `${GOOGLE_TOKENINFO_URL}?access_token=${encodeURIComponent(accessToken)}`,
       { muteHttpExceptions: true }
     );
-    if (response.getResponseCode() !== 200) {
-      return { ok: false, reason: AUTH_FAILURE_REASONS.INVALID_RESPONSE };
-    }
-    const parsed: unknown = JSON.parse(response.getContentText());
-
-    if (!isTokenInfoResponse(parsed)) {
-      return { ok: false, reason: AUTH_FAILURE_REASONS.INVALID_RESPONSE };
-    }
-    if (parsed.email_verified !== 'true') {
-      return { ok: false, reason: AUTH_FAILURE_REASONS.EMAIL_NOT_VERIFIED };
-    }
-
-    const properties = PropertiesService.getScriptProperties();
-    const ownerEmail = properties.getProperty(PROPERTY_KEYS.OWNER_EMAIL);
-
-    if (!ownerEmail) {
-      properties.setProperty(PROPERTY_KEYS.OWNER_EMAIL, parsed.email);
-      return { ok: true, email: parsed.email };
-    }
-
-    if (parsed.email !== ownerEmail) {
-      return { ok: false, reason: AUTH_FAILURE_REASONS.WRONG_ACCOUNT };
-    }
-    return { ok: true, email: parsed.email };
-  } catch {
-    return { ok: false, reason: AUTH_FAILURE_REASONS.NETWORK_ERROR };
+  } catch (networkError) {
+    const details = networkError instanceof Error ? networkError.message : String(networkError);
+    console.error('[verifyToken] UrlFetchApp error:', networkError);
+    return { ok: false, reason: AUTH_FAILURE_REASONS.NETWORK_ERROR, details };
   }
+
+  if (response.getResponseCode() !== 200) {
+    return { ok: false, reason: AUTH_FAILURE_REASONS.INVALID_RESPONSE };
+  }
+
+  const parsed: unknown = JSON.parse(response.getContentText());
+
+  if (!isTokenInfoResponse(parsed)) {
+    return { ok: false, reason: AUTH_FAILURE_REASONS.INVALID_RESPONSE };
+  }
+  if (parsed.email_verified !== 'true') {
+    return { ok: false, reason: AUTH_FAILURE_REASONS.EMAIL_NOT_VERIFIED };
+  }
+
+  const properties = PropertiesService.getScriptProperties();
+  const ownerEmail = properties.getProperty(PROPERTY_KEYS.OWNER_EMAIL);
+
+  if (!ownerEmail) {
+    properties.setProperty(PROPERTY_KEYS.OWNER_EMAIL, parsed.email);
+    return { ok: true, email: parsed.email };
+  }
+
+  if (parsed.email !== ownerEmail) {
+    return { ok: false, reason: AUTH_FAILURE_REASONS.WRONG_ACCOUNT };
+  }
+  return { ok: true, email: parsed.email };
 }

@@ -47,7 +47,24 @@ describe('verifyToken', () => {
   it('should return NETWORK_ERROR reason when UrlFetchApp throws', () => {
     mockTokenInfoError();
     const result = verifyToken('any-token');
-    expect(result).toEqual({ ok: false, reason: AUTH_FAILURE_REASONS.NETWORK_ERROR });
+    expect(result).toMatchObject({ ok: false, reason: AUTH_FAILURE_REASONS.NETWORK_ERROR });
+  });
+
+  it('should include error details in result when UrlFetchApp throws', () => {
+    mockTokenInfoError();
+    const result = verifyToken('any-token');
+    expect(result).toMatchObject({ ok: false, details: 'Network error' });
+  });
+
+  it('should log the error to console when UrlFetchApp throws', () => {
+    const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    mockTokenInfoError();
+    verifyToken('any-token');
+    expect(consoleErrorSpy).toHaveBeenCalledWith(
+      '[verifyToken] UrlFetchApp error:',
+      expect.any(Error)
+    );
+    consoleErrorSpy.mockRestore();
   });
 
   it('should return EMAIL_NOT_VERIFIED reason when email_verified !== "true"', () => {

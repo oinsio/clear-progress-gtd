@@ -42,7 +42,9 @@ function doPost(e: GoogleAppsScript.Events.DoPost): GoogleAppsScript.Content.Tex
 
   const authResult = verifyToken(access_token);
   if (!authResult.ok) {
-    return jsonUnauthorized(AUTH_FAILURE_MESSAGES[authResult.reason]);
+    const baseMessage = AUTH_FAILURE_MESSAGES[authResult.reason];
+    const fullMessage = authResult.details ? `${baseMessage}: ${authResult.details}` : baseMessage;
+    return jsonUnauthorized(fullMessage);
   }
 
   switch (action) {
