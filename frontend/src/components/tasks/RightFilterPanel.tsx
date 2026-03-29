@@ -16,6 +16,7 @@ import { cn } from "@/shared/lib/cn";
 import type { PanelSide, MenuMode } from "@/types/common";
 import { ROUTES } from "@/constants";
 import { useSync } from "@/app/providers/SyncProvider";
+import { useAuth } from "@/app/providers/AuthProvider";
 import { useBackendConnected } from "@/hooks/useBackendConnected";
 import { useMenuOrder } from "@/hooks/useMenuOrder";
 import * as React from "react";
@@ -70,6 +71,7 @@ export function RightFilterPanel({
   const navigate = useNavigate();
   const { t } = useTranslation();
   const { syncStatus, pull } = useSync();
+  const { userPicture } = useAuth();
   const isBackendConnected = useBackendConnected();
   const { menuOrder } = useMenuOrder();
 
@@ -164,7 +166,15 @@ export function RightFilterPanel({
               onClick={(e) => { e.stopPropagation(); navigate(ROUTES.SETTINGS); }}
               className="flex-shrink-0 flex items-center justify-center px-4 py-4 text-white hover:bg-black/15 transition-colors"
             >
-              <CircleUser className="w-8 h-8" aria-hidden="true" />
+              {userPicture ? (
+                <img
+                  src={userPicture}
+                  alt={t("settings.avatarAlt")}
+                  className="w-8 h-8 rounded-full object-cover"
+                />
+              ) : (
+                <CircleUser className="w-8 h-8" aria-hidden="true" />
+              )}
             </button>
           </div>
 
@@ -251,7 +261,15 @@ export function RightFilterPanel({
               onClick={(e) => { e.stopPropagation(); navigate(ROUTES.SETTINGS); }}
               className="w-10 h-10 flex items-center justify-center mt-3 mb-1 rounded-xl text-white/80 hover:bg-white/10 hover:text-white transition-colors"
             >
-              <CircleUser className="w-6 h-6" aria-hidden="true" />
+              {userPicture ? (
+                <img
+                  src={userPicture}
+                  alt={t("settings.avatarAlt")}
+                  className="w-6 h-6 rounded-full object-cover"
+                />
+              ) : (
+                <CircleUser className="w-6 h-6" aria-hidden="true" />
+              )}
             </button>
           )}
 

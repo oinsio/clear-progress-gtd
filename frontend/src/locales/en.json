@@ -144,6 +144,7 @@
     "login": "Sign in",
     "loginAriaLabel": "Sign in to account",
     "settingsAriaLabel": "Settings",
+    "avatarAlt": "User avatar",
     "syncSection": "Sync",
     "syncConnected": "Connected",
     "syncNotConnected": "Not connected",

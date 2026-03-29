@@ -144,6 +144,7 @@
     "login": "Войдите",
     "loginAriaLabel": "Войти в аккаунт",
     "settingsAriaLabel": "Настройки",
+    "avatarAlt": "Аватар пользователя",
     "syncSection": "Синхронизация",
     "syncConnected": "Подключено",
     "syncNotConnected": "Не подключено",
@@ -187,7 +188,11 @@
     "goToApp": "К страданиям",
     "errorConnection": "Не удалось подключиться. Проверьте URL.",
     "errorInit": "Ошибка инициализации. Не удивительно.",
-    "connectedUrl": "Текущий адрес:"
+    "connectedUrl": "Текущий адрес:",
+    "awaitingSignin": "Подключение есть. Войдите в Google для начала мучений.",
+    "clientIdLabel": "Google Client ID",
+    "clientIdPlaceholder": "1234567890-xxx.apps.googleusercontent.com",
+    "clientIdDescription": "Создайте OAuth 2.0 Client ID в Google Cloud Console. Должно быть несложно."
   },
   "selector": {
     "goal": "Иллюзия",
@@ -283,12 +288,24 @@
     "contexts": "Контексты",
     "categories": "Категории",
     "checklists": "Чек-листы",
-    "checklistParent": "Страдание: {{task}}"
+    "checklistParent": "Страдание: {{task}}",
+    "restore": "Реанимировать",
+    "restoreAriaLabel": "Реанимировать {{title}}"
+  },
+  "auth": {
+    "accountSection": "Личное дело",
+    "signedInAs": "Пациент: {{email}}",
+    "signInButton": "Войти через Google",
+    "signOutButton": "Отключить от кислорода",
+    "signInRequired": "Войдите в Google, чтобы инициализировать хранилище страданий.",
+    "sessionExpired": "Сессия умерла. Войдите снова для синхронизации.",
+    "errorSignIn": "Не удалось войти. Не удивительно."
   },
   "sync": {
     "syncing": "Обновляю...",
     "synced": "Обновлено (редкий успех)",
     "noConnection": "Нет связи. Неожиданно.",
+    "unauthorized": "Доступ закрыт. Кем? Неважно.",
     "ariaLabel": "Обновить"
   }
 }

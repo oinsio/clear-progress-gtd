@@ -144,6 +144,7 @@
     "login": "Войдите",
     "loginAriaLabel": "Войти в аккаунт",
     "settingsAriaLabel": "Настройки",
+    "avatarAlt": "Аватар пользователя",
     "syncSection": "Синхронизация",
     "syncConnected": "Подключено",
     "syncNotConnected": "Не подключено",

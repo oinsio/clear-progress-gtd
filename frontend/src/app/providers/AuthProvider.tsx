@@ -2,7 +2,7 @@ import { createContext, useCallback, useContext, useState } from "react";
 import * as React from "react";
 import { useGoogleLogin } from "@react-oauth/google";
 import { setAccessToken } from "@/services/ApiClient";
-import { STORAGE_KEYS } from "@/constants";
+import { GOOGLE_USERINFO_URL, STORAGE_KEYS } from "@/constants";
 
 const GOOGLE_OAUTH_SCOPES =
   "https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/spreadsheets https://www.googleapis.com/auth/userinfo.profile";
@@ -10,6 +10,7 @@ const GOOGLE_OAUTH_SCOPES =
 interface AuthContextValue {
   accessToken: string | null;
   userEmail: string | null;
+  userPicture: string | null;
   signIn: () => void;
   signOut: () => void;
   silentRefresh: () => void;
@@ -30,12 +31,20 @@ function isGoogleTokenResponse(data: unknown): data is GoogleTokenResponse {
   return typeof record.access_token === "string" && typeof record.expires_in === "number";
 }
 
+interface GoogleUserInfo {
+  picture?: string;
+  email?: string;
+}
+
 /** Used when VITE_GOOGLE_CLIENT_ID is configured — enables real Google OAuth flow. */
 function GoogleAuthInner({ children }: { children: React.ReactNode }) {
   const [accessToken, setAccessTokenState] = useState<string | null>(null);
   const [userEmail, setUserEmail] = useState<string | null>(null);
+  const [userPicture, setUserPicture] = useState<string | null>(
+    () => localStorage.getItem(STORAGE_KEYS.USER_PICTURE),
+  );
 
-  const handleLoginSuccess = useCallback((tokenResponse: unknown) => {
+  const handleLoginSuccess = useCallback(async (tokenResponse: unknown) => {
     if (!isGoogleTokenResponse(tokenResponse)) return;
     setAccessTokenState(tokenResponse.access_token);
     setAccessToken(tokenResponse.access_token, tokenResponse.expires_in);
@@ -43,15 +52,32 @@ function GoogleAuthInner({ children }: { children: React.ReactNode }) {
     if (typeof record.email === "string") {
       setUserEmail(record.email);
     }
+    try {
+      const userInfoResponse = await fetch(GOOGLE_USERINFO_URL, {
+        headers: { Authorization: `Bearer ${tokenResponse.access_token}` },
+      });
+      const userInfo = (await userInfoResponse.json()) as GoogleUserInfo;
+      const pictureUrl = userInfo.picture ?? null;
+      setUserPicture(pictureUrl);
+      if (pictureUrl) {
+        localStorage.setItem(STORAGE_KEYS.USER_PICTURE, pictureUrl);
+      } else {
+        localStorage.removeItem(STORAGE_KEYS.USER_PICTURE);
+      }
+    } catch {
+      // non-critical — avatar is a nice-to-have
+    }
   }, []);
 
   const googleLogin = useGoogleLogin({
     flow: "implicit",
     scope: GOOGLE_OAUTH_SCOPES,
-    onSuccess: handleLoginSuccess,
+    onSuccess: (tokenResponse) => { void handleLoginSuccess(tokenResponse); },
     onError: () => {
       setAccessTokenState(null);
       setUserEmail(null);
+      setUserPicture(null);
+      localStorage.removeItem(STORAGE_KEYS.USER_PICTURE);
       setAccessToken(null);
     },
   });
@@ -60,10 +86,12 @@ function GoogleAuthInner({ children }: { children: React.ReactNode }) {
     flow: "implicit",
     scope: GOOGLE_OAUTH_SCOPES,
     prompt: "none",
-    onSuccess: handleLoginSuccess,
+    onSuccess: (tokenResponse) => { void handleLoginSuccess(tokenResponse); },
     onError: () => {
       setAccessTokenState(null);
       setUserEmail(null);
+      setUserPicture(null);
+      localStorage.removeItem(STORAGE_KEYS.USER_PICTURE);
       setAccessToken(null);
     },
   });
@@ -75,6 +103,8 @@ function GoogleAuthInner({ children }: { children: React.ReactNode }) {
   const signOut = useCallback(() => {
     setAccessTokenState(null);
     setUserEmail(null);
+    setUserPicture(null);
+    localStorage.removeItem(STORAGE_KEYS.USER_PICTURE);
     setAccessToken(null);
   }, []);
 
@@ -83,7 +113,7 @@ function GoogleAuthInner({ children }: { children: React.ReactNode }) {
   }, [silentGoogleLogin]);
 
   return (
-    <AuthContext.Provider value={{ accessToken, userEmail, signIn, signOut, silentRefresh }}>
+    <AuthContext.Provider value={{ accessToken, userEmail, userPicture, signIn, signOut, silentRefresh }}>
       {children}
     </AuthContext.Provider>
   );
@@ -96,7 +126,7 @@ function NoAuthInner({ children }: { children: React.ReactNode }) {
   const silentRefresh = useCallback(() => {}, []);
 
   return (
-    <AuthContext.Provider value={{ accessToken: null, userEmail: null, signIn, signOut, silentRefresh }}>
+    <AuthContext.Provider value={{ accessToken: null, userEmail: null, userPicture: null, signIn, signOut, silentRefresh }}>
       {children}
     </AuthContext.Provider>
   );
